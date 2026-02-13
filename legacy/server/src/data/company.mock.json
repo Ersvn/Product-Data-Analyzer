@@ -1,0 +1,62 @@
+[
+  {
+    "id": 3,
+    "name": "iPhone 15 Pro 1TB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 19990,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-1tb",
+    "ean": "0194252874895"
+  },
+  {
+    "id": 4,
+    "name": "iPhone 15 Pro Max 256GB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 16990,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-max-256gb",
+    "ean": "0194252874901"
+  },
+  {
+    "id": 5,
+    "name": "iPhone 15 Pro Max 512GB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 18990,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-max-512gb",
+    "ean": "0194252874918"
+  },
+  {
+    "id": 6,
+    "name": "iPhone 15 Pro Max 1TB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 21990,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-max-1tb",
+    "ean": "0194252874925"
+  },
+  {
+    "id": 7,
+    "name": "iPhone 15 128GB Black",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 11990,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/iphone-15-128gb",
+    "ean": "0194252874932"
+  },
+  {
+    "id": 8,
+    "name": "iPhone 15 256GB Black",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 12990,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/iphone-15-256gb",
+    "ean": "0194252874949"
+  }
+]

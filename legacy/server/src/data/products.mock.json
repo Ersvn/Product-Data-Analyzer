@@ -1,0 +1,1742 @@
+[
+  {
+    "id": 1,
+    "name": "iPhone 15 Pro 256GB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 14744,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-256gb",
+    "ean": "0194250000887"
+  },
+  {
+    "id": 2,
+    "name": "iPhone 15 Pro 256GB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 15262,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-256gb",
+    "ean": "0194250000221"
+  },
+  {
+    "id": 3,
+    "name": "iPhone 15 Pro 512GB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 17844,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-512gb",
+    "ean": "0194250001822"
+  },
+  {
+    "id": 4,
+    "name": "iPhone 15 Pro 512GB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 16817,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-512gb",
+    "ean": "0194250007725"
+  },
+  {
+    "id": 5,
+    "name": "iPhone 15 Pro 1TB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 20982,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-1tb",
+    "ean": "0194250008944"
+  },
+  {
+    "id": 6,
+    "name": "iPhone 15 Pro 1TB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 20016,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-1tb",
+    "ean": "0194250007244"
+  },
+  {
+    "id": 7,
+    "name": "iPhone 15 Pro Max 256GB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 17557,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-max-256gb",
+    "ean": "0194250004014"
+  },
+  {
+    "id": 8,
+    "name": "iPhone 15 Pro Max 256GB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 18116,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-max-256gb",
+    "ean": "0194250000528"
+  },
+  {
+    "id": 9,
+    "name": "iPhone 15 Pro Max 512GB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 19983,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-max-512gb",
+    "ean": "0194250001341"
+  },
+  {
+    "id": 10,
+    "name": "iPhone 15 Pro Max 512GB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 19259,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-max-512gb",
+    "ean": "0194250007428"
+  },
+  {
+    "id": 11,
+    "name": "iPhone 15 Pro Max 1TB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 23169,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-max-1tb",
+    "ean": "0194250003208"
+  },
+  {
+    "id": 12,
+    "name": "iPhone 15 Pro Max 1TB Natural Titanium",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 22092,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/iphone-15-pro-max-1tb",
+    "ean": "0194250002911"
+  },
+  {
+    "id": 13,
+    "name": "iPhone 15 128GB Black",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 12244,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/iphone-15-128gb",
+    "ean": "0194250003789"
+  },
+  {
+    "id": 14,
+    "name": "iPhone 15 128GB Black",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 12444,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/iphone-15-128gb",
+    "ean": "0194250002928"
+  },
+  {
+    "id": 15,
+    "name": "iPhone 15 256GB Black",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 13912,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/iphone-15-256gb",
+    "ean": "0194250007183"
+  },
+  {
+    "id": 16,
+    "name": "iPhone 15 256GB Black",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 13955,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/iphone-15-256gb",
+    "ean": "0194250009514"
+  },
+  {
+    "id": 17,
+    "name": "iPhone 15 512GB Black",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 14904,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/iphone-15-512gb",
+    "ean": "0194250008296"
+  },
+  {
+    "id": 18,
+    "name": "iPhone 15 512GB Black",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 14565,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/iphone-15-512gb",
+    "ean": "0194250004120"
+  },
+  {
+    "id": 19,
+    "name": "iPhone 15 Plus 128GB Blue",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 13471,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/iphone-15-plus-128gb",
+    "ean": "0194250007770"
+  },
+  {
+    "id": 20,
+    "name": "iPhone 15 Plus 128GB Blue",
+    "brand": "Apple",
+    "category": "Mobiltelefoner",
+    "price": 13388,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/iphone-15-plus-128gb",
+    "ean": "0194250007176"
+  },
+  {
+    "id": 21,
+    "name": "Samsung Galaxy S24 Ultra 256GB Titanium Gray",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 16989,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/samsung-s24-ultra-256gb",
+    "ean": "8806090001734"
+  },
+  {
+    "id": 22,
+    "name": "Samsung Galaxy S24 Ultra 256GB Titanium Gray",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 16752,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/samsung-s24-ultra-256gb",
+    "ean": "8806090009334"
+  },
+  {
+    "id": 23,
+    "name": "Samsung Galaxy S24 Ultra 512GB Titanium Gray",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 17550,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/samsung-s24-ultra-512gb",
+    "ean": "8806090002137"
+  },
+  {
+    "id": 24,
+    "name": "Samsung Galaxy S24 Ultra 512GB Titanium Gray",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 17875,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/samsung-s24-ultra-512gb",
+    "ean": "8806090007934"
+  },
+  {
+    "id": 25,
+    "name": "Samsung Galaxy S24 Ultra 1TB Titanium Gray",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 21630,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/samsung-s24-ultra-1tb",
+    "ean": "8806090008108"
+  },
+  {
+    "id": 26,
+    "name": "Samsung Galaxy S24 Ultra 1TB Titanium Gray",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 20016,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/samsung-s24-ultra-1tb",
+    "ean": "8806090010224"
+  },
+  {
+    "id": 27,
+    "name": "Samsung Galaxy S24+ 256GB Onyx Black",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 13845,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/mobil/samsung-s24-plus",
+    "ean": "8806090005985"
+  },
+  {
+    "id": 28,
+    "name": "Samsung Galaxy S24+ 256GB Onyx Black",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 13424,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/mobil/samsung-s24-plus",
+    "ean": "8806090007668"
+  },
+  {
+    "id": 29,
+    "name": "Samsung Galaxy S24+ 512GB Onyx Black",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 17078,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/mobil/samsung-s24-plus-512gb",
+    "ean": "8806090009204"
+  },
+  {
+    "id": 30,
+    "name": "Samsung Galaxy S24+ 512GB Onyx Black",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 15458,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/mobil/samsung-s24-plus-512gb",
+    "ean": "8806090006197"
+  },
+  {
+    "id": 31,
+    "name": "Samsung Galaxy S24 256GB Marble Gray",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 11995,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/mobil/samsung-s24",
+    "ean": "8806090009303"
+  },
+  {
+    "id": 32,
+    "name": "Samsung Galaxy S24 256GB Marble Gray",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 11430,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/mobil/samsung-s24",
+    "ean": "8806090007194"
+  },
+  {
+    "id": 33,
+    "name": "Samsung Galaxy S23 Ultra 256GB Phantom Black",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 13943,
+    "store": "Tele2",
+    "url": "https://www.tele2.se/mobil/samsung-s23-ultra",
+    "ean": "8806090006364"
+  },
+  {
+    "id": 34,
+    "name": "Samsung Galaxy S23 Ultra 256GB Phantom Black",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 13545,
+    "store": "Tele2",
+    "url": "https://www.tele2.se/mobil/samsung-s23-ultra",
+    "ean": "8806090003592"
+  },
+  {
+    "id": 35,
+    "name": "Samsung Galaxy S23 Ultra 512GB Phantom Black",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 15437,
+    "store": "Tele2",
+    "url": "https://www.tele2.se/mobil/samsung-s23-ultra-512gb",
+    "ean": "8806090009242"
+  },
+  {
+    "id": 36,
+    "name": "Samsung Galaxy S23 Ultra 512GB Phantom Black",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 17310,
+    "store": "Tele2",
+    "url": "https://www.tele2.se/mobil/samsung-s23-ultra-512gb",
+    "ean": "8806090005428"
+  },
+  {
+    "id": 37,
+    "name": "Samsung Galaxy S23+ 256GB Cream",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 12118,
+    "store": "Tele2",
+    "url": "https://www.tele2.se/mobil/samsung-s23-plus",
+    "ean": "8806090007446"
+  },
+  {
+    "id": 38,
+    "name": "Samsung Galaxy S23+ 256GB Cream",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 11459,
+    "store": "Tele2",
+    "url": "https://www.tele2.se/mobil/samsung-s23-plus",
+    "ean": "8806090007439"
+  },
+  {
+    "id": 39,
+    "name": "Samsung Galaxy S23 256GB Lavender",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 9861,
+    "store": "Tele2",
+    "url": "https://www.tele2.se/mobil/samsung-s23",
+    "ean": "8806090000812"
+  },
+  {
+    "id": 40,
+    "name": "Samsung Galaxy S23 256GB Lavender",
+    "brand": "Samsung",
+    "category": "Mobiltelefoner",
+    "price": 10828,
+    "store": "Tele2",
+    "url": "https://www.tele2.se/mobil/samsung-s23",
+    "ean": "8806090010170"
+  },
+  {
+    "id": 41,
+    "name": "Google Pixel 8 Pro 256GB Obsidian",
+    "brand": "Google",
+    "category": "Mobiltelefoner",
+    "price": 13778,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/google-pixel-8-pro",
+    "ean": "6940550005497"
+  },
+  {
+    "id": 42,
+    "name": "Google Pixel 8 Pro 256GB Obsidian",
+    "brand": "Google",
+    "category": "Mobiltelefoner",
+    "price": 12529,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/google-pixel-8-pro",
+    "ean": "6940550009174"
+  },
+  {
+    "id": 43,
+    "name": "Google Pixel 8 Pro 512GB Obsidian",
+    "brand": "Google",
+    "category": "Mobiltelefoner",
+    "price": 15301,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/google-pixel-8-pro-512gb",
+    "ean": "6940550004278"
+  },
+  {
+    "id": 44,
+    "name": "Google Pixel 8 Pro 512GB Obsidian",
+    "brand": "Google",
+    "category": "Mobiltelefoner",
+    "price": 15797,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/google-pixel-8-pro-512gb",
+    "ean": "6940550001765"
+  },
+  {
+    "id": 45,
+    "name": "Google Pixel 8 256GB Obsidian",
+    "brand": "Google",
+    "category": "Mobiltelefoner",
+    "price": 10600,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/google-pixel-8",
+    "ean": "6940550005435"
+  },
+  {
+    "id": 46,
+    "name": "Google Pixel 8 256GB Obsidian",
+    "brand": "Google",
+    "category": "Mobiltelefoner",
+    "price": 10405,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/google-pixel-8",
+    "ean": "6940550001130"
+  },
+  {
+    "id": 47,
+    "name": "Google Pixel 8 128GB Hazel",
+    "brand": "Google",
+    "category": "Mobiltelefoner",
+    "price": 8604,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/google-pixel-8-128gb",
+    "ean": "6940550009730"
+  },
+  {
+    "id": 48,
+    "name": "Google Pixel 8 128GB Hazel",
+    "brand": "Google",
+    "category": "Mobiltelefoner",
+    "price": 8806,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/google-pixel-8-128gb",
+    "ean": "6940550009297"
+  },
+  {
+    "id": 49,
+    "name": "OnePlus 12 256GB Flowy Emerald",
+    "brand": "OnePlus",
+    "category": "Mobiltelefoner",
+    "price": 11649,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/oneplus-12",
+    "ean": "6940550003684"
+  },
+  {
+    "id": 50,
+    "name": "OnePlus 12 256GB Flowy Emerald",
+    "brand": "OnePlus",
+    "category": "Mobiltelefoner",
+    "price": 11729,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/oneplus-12",
+    "ean": "6940550001031"
+  },
+  {
+    "id": 51,
+    "name": "OnePlus 12 512GB Flowy Emerald",
+    "brand": "OnePlus",
+    "category": "Mobiltelefoner",
+    "price": 14066,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/oneplus-12-512gb",
+    "ean": "6940550005961"
+  },
+  {
+    "id": 52,
+    "name": "OnePlus 12 512GB Flowy Emerald",
+    "brand": "OnePlus",
+    "category": "Mobiltelefoner",
+    "price": 13565,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/oneplus-12-512gb",
+    "ean": "6940550008672"
+  },
+  {
+    "id": 53,
+    "name": "OnePlus Open 512GB Emerald Dusk",
+    "brand": "OnePlus",
+    "category": "Mobiltelefoner",
+    "price": 19734,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/oneplus-open",
+    "ean": "6940550000713"
+  },
+  {
+    "id": 54,
+    "name": "OnePlus Open 512GB Emerald Dusk",
+    "brand": "OnePlus",
+    "category": "Mobiltelefoner",
+    "price": 19637,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/oneplus-open",
+    "ean": "6940550001536"
+  },
+  {
+    "id": 55,
+    "name": "Nothing Phone (2) 256GB White",
+    "brand": "Nothing",
+    "category": "Mobiltelefoner",
+    "price": 8919,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/mobil/nothing-phone-2",
+    "ean": "8809440005277"
+  },
+  {
+    "id": 56,
+    "name": "Nothing Phone (2) 256GB White",
+    "brand": "Nothing",
+    "category": "Mobiltelefoner",
+    "price": 8843,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/mobil/nothing-phone-2",
+    "ean": "8809440005215"
+  },
+  {
+    "id": 57,
+    "name": "Nothing Phone (2) 512GB Dark Gray",
+    "brand": "Nothing",
+    "category": "Mobiltelefoner",
+    "price": 11543,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/mobil/nothing-phone-2-512gb",
+    "ean": "8809440010448"
+  },
+  {
+    "id": 58,
+    "name": "Nothing Phone (2) 512GB Dark Gray",
+    "brand": "Nothing",
+    "category": "Mobiltelefoner",
+    "price": 11105,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/mobil/nothing-phone-2-512gb",
+    "ean": "8809440001811"
+  },
+  {
+    "id": 59,
+    "name": "Xiaomi 14 Pro 512GB Black",
+    "brand": "Xiaomi",
+    "category": "Mobiltelefoner",
+    "price": 13543,
+    "store": "Inet",
+    "url": "https://www.inet.se/produkt/xiaomi-14-pro",
+    "ean": "6934170009676"
+  },
+  {
+    "id": 60,
+    "name": "Xiaomi 14 Pro 512GB Black",
+    "brand": "Xiaomi",
+    "category": "Mobiltelefoner",
+    "price": 13738,
+    "store": "Inet",
+    "url": "https://www.inet.se/produkt/xiaomi-14-pro",
+    "ean": "6934170004404"
+  },
+  {
+    "id": 61,
+    "name": "Xiaomi 14 256GB White",
+    "brand": "Xiaomi",
+    "category": "Mobiltelefoner",
+    "price": 10574,
+    "store": "Inet",
+    "url": "https://www.inet.se/produkt/xiaomi-14",
+    "ean": "6934170009096"
+  },
+  {
+    "id": 62,
+    "name": "Xiaomi 14 256GB White",
+    "brand": "Xiaomi",
+    "category": "Mobiltelefoner",
+    "price": 11346,
+    "store": "Inet",
+    "url": "https://www.inet.se/produkt/xiaomi-14",
+    "ean": "6934170001700"
+  },
+  {
+    "id": 63,
+    "name": "Sony Xperia 1 V 256GB Black",
+    "brand": "Sony",
+    "category": "Mobiltelefoner",
+    "price": 16373,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/sony-xperia-1-v",
+    "ean": "4905520010293"
+  },
+  {
+    "id": 64,
+    "name": "Sony Xperia 1 V 256GB Black",
+    "brand": "Sony",
+    "category": "Mobiltelefoner",
+    "price": 16420,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/sony-xperia-1-v",
+    "ean": "4905520004971"
+  },
+  {
+    "id": 65,
+    "name": "Sony Xperia 5 V 256GB Blue",
+    "brand": "Sony",
+    "category": "Mobiltelefoner",
+    "price": 12322,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/sony-xperia-5-v",
+    "ean": "4905520003219"
+  },
+  {
+    "id": 66,
+    "name": "Sony Xperia 5 V 256GB Blue",
+    "brand": "Sony",
+    "category": "Mobiltelefoner",
+    "price": 11750,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/sony-xperia-5-v",
+    "ean": "4905520005077"
+  },
+  {
+    "id": 67,
+    "name": "AirPods Pro (2nd generation) with MagSafe Case",
+    "brand": "Apple",
+    "category": "Trådlösa hörlurar",
+    "price": 2910,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/airpods-pro",
+    "ean": "0194250001617"
+  },
+  {
+    "id": 68,
+    "name": "AirPods Pro (2nd generation) with MagSafe Case",
+    "brand": "Apple",
+    "category": "Trådlösa hörlurar",
+    "price": 3029,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/airpods-pro",
+    "ean": "0194250004250"
+  },
+  {
+    "id": 69,
+    "name": "AirPods Pro (2nd generation) with USB-C Case",
+    "brand": "Apple",
+    "category": "Trådlösa hörlurar",
+    "price": 3253,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/airpods-pro-usbc",
+    "ean": "0194250010411"
+  },
+  {
+    "id": 70,
+    "name": "AirPods Pro (2nd generation) with USB-C Case",
+    "brand": "Apple",
+    "category": "Trådlösa hörlurar",
+    "price": 3230,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/airpods-pro-usbc",
+    "ean": "0194250006162"
+  },
+  {
+    "id": 71,
+    "name": "AirPods (3rd generation) with MagSafe Case",
+    "brand": "Apple",
+    "category": "Trådlösa hörlurar",
+    "price": 2241,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/airpods-3rd-gen",
+    "ean": "0194250006988"
+  },
+  {
+    "id": 72,
+    "name": "AirPods (3rd generation) with MagSafe Case",
+    "brand": "Apple",
+    "category": "Trådlösa hörlurar",
+    "price": 2241,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/airpods-3rd-gen",
+    "ean": "0194250001419"
+  },
+  {
+    "id": 73,
+    "name": "AirPods Max Silver",
+    "brand": "Apple",
+    "category": "Trådlösa hörlurar",
+    "price": 6833,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/airpods-max",
+    "ean": "0194250010565"
+  },
+  {
+    "id": 74,
+    "name": "AirPods Max Silver",
+    "brand": "Apple",
+    "category": "Trådlösa hörlurar",
+    "price": 7433,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/airpods-max",
+    "ean": "0194250003345"
+  },
+  {
+    "id": 75,
+    "name": "AirPods Max Space Gray",
+    "brand": "Apple",
+    "category": "Trådlösa hörlurar",
+    "price": 6652,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/airpods-max-space-gray",
+    "ean": "0194250008951"
+  },
+  {
+    "id": 76,
+    "name": "AirPods Max Space Gray",
+    "brand": "Apple",
+    "category": "Trådlösa hörlurar",
+    "price": 7077,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/airpods-max-space-gray",
+    "ean": "0194250002225"
+  },
+  {
+    "id": 77,
+    "name": "Samsung Galaxy Buds2 Pro Graphite",
+    "brand": "Samsung",
+    "category": "Trådlösa hörlurar",
+    "price": 1961,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/samsung-galaxy-buds2-pro",
+    "ean": "8806090009280"
+  },
+  {
+    "id": 78,
+    "name": "Samsung Galaxy Buds2 Pro Graphite",
+    "brand": "Samsung",
+    "category": "Trådlösa hörlurar",
+    "price": 1950,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/samsung-galaxy-buds2-pro",
+    "ean": "8806090003189"
+  },
+  {
+    "id": 79,
+    "name": "Samsung Galaxy Buds2 Pro White",
+    "brand": "Samsung",
+    "category": "Trådlösa hörlurar",
+    "price": 2008,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/samsung-galaxy-buds2-pro-white",
+    "ean": "8806090010002"
+  },
+  {
+    "id": 80,
+    "name": "Samsung Galaxy Buds2 Pro White",
+    "brand": "Samsung",
+    "category": "Trådlösa hörlurar",
+    "price": 1950,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/samsung-galaxy-buds2-pro-white",
+    "ean": "8806090001215"
+  },
+  {
+    "id": 81,
+    "name": "Samsung Galaxy Buds2 Pro Bora Purple",
+    "brand": "Samsung",
+    "category": "Trådlösa hörlurar",
+    "price": 2091,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/samsung-galaxy-buds2-pro-purple",
+    "ean": "8806090006968"
+  },
+  {
+    "id": 82,
+    "name": "Samsung Galaxy Buds2 Pro Bora Purple",
+    "brand": "Samsung",
+    "category": "Trådlösa hörlurar",
+    "price": 2121,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/samsung-galaxy-buds2-pro-purple",
+    "ean": "8806090005435"
+  },
+  {
+    "id": 83,
+    "name": "Samsung Galaxy Buds FE Graphite",
+    "brand": "Samsung",
+    "category": "Trådlösa hörlurar",
+    "price": 1210,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/samsung-galaxy-buds-fe",
+    "ean": "8806090005039"
+  },
+  {
+    "id": 84,
+    "name": "Samsung Galaxy Buds FE Graphite",
+    "brand": "Samsung",
+    "category": "Trådlösa hörlurar",
+    "price": 1263,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/samsung-galaxy-buds-fe",
+    "ean": "8806090005404"
+  },
+  {
+    "id": 85,
+    "name": "Samsung Galaxy Buds FE White",
+    "brand": "Samsung",
+    "category": "Trådlösa hörlurar",
+    "price": 1181,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/samsung-galaxy-buds-fe-white",
+    "ean": "8806090006777"
+  },
+  {
+    "id": 86,
+    "name": "Samsung Galaxy Buds FE White",
+    "brand": "Samsung",
+    "category": "Trådlösa hörlurar",
+    "price": 1268,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/samsung-galaxy-buds-fe-white",
+    "ean": "8806090001130"
+  },
+  {
+    "id": 87,
+    "name": "Sony WH-1000XM5 Black",
+    "brand": "Sony",
+    "category": "Trådlösa hörlurar",
+    "price": 3526,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/sony-wh-1000xm5-black",
+    "ean": "4905520006852"
+  },
+  {
+    "id": 88,
+    "name": "Sony WH-1000XM5 Black",
+    "brand": "Sony",
+    "category": "Trådlösa hörlurar",
+    "price": 3677,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/sony-wh-1000xm5-black",
+    "ean": "4905520007644"
+  },
+  {
+    "id": 89,
+    "name": "Sony WH-1000XM5 Silver",
+    "brand": "Sony",
+    "category": "Trådlösa hörlurar",
+    "price": 3458,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/sony-wh-1000xm5-silver",
+    "ean": "4905520001239"
+  },
+  {
+    "id": 90,
+    "name": "Sony WH-1000XM5 Silver",
+    "brand": "Sony",
+    "category": "Trådlösa hörlurar",
+    "price": 3559,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/sony-wh-1000xm5-silver",
+    "ean": "4905520009471"
+  },
+  {
+    "id": 91,
+    "name": "Sony WF-1000XM5 Black",
+    "brand": "Sony",
+    "category": "Trådlösa hörlurar",
+    "price": 2933,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/sony-wf-1000xm5",
+    "ean": "4905520007231"
+  },
+  {
+    "id": 92,
+    "name": "Sony WF-1000XM5 Black",
+    "brand": "Sony",
+    "category": "Trådlösa hörlurar",
+    "price": 3193,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/sony-wf-1000xm5",
+    "ean": "4905520010750"
+  },
+  {
+    "id": 93,
+    "name": "Sony WF-1000XM5 Silver",
+    "brand": "Sony",
+    "category": "Trådlösa hörlurar",
+    "price": 3039,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/sony-wf-1000xm5-silver",
+    "ean": "4905520003998"
+  },
+  {
+    "id": 94,
+    "name": "Sony WF-1000XM5 Silver",
+    "brand": "Sony",
+    "category": "Trådlösa hörlurar",
+    "price": 2932,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/sony-wf-1000xm5-silver",
+    "ean": "4905520004896"
+  },
+  {
+    "id": 95,
+    "name": "OnePlus Buds Pro 2 Black",
+    "brand": "OnePlus",
+    "category": "Trådlösa hörlurar",
+    "price": 1951,
+    "store": "Inet",
+    "url": "https://www.inet.se/produkt/oneplus-buds-pro-2",
+    "ean": "6940550007170"
+  },
+  {
+    "id": 96,
+    "name": "OnePlus Buds Pro 2 Black",
+    "brand": "OnePlus",
+    "category": "Trådlösa hörlurar",
+    "price": 1720,
+    "store": "Inet",
+    "url": "https://www.inet.se/produkt/oneplus-buds-pro-2",
+    "ean": "6940550002076"
+  },
+  {
+    "id": 97,
+    "name": "OnePlus Buds Pro 2 Green",
+    "brand": "OnePlus",
+    "category": "Trådlösa hörlurar",
+    "price": 1941,
+    "store": "Inet",
+    "url": "https://www.inet.se/produkt/oneplus-buds-pro-2-green",
+    "ean": "6940550007842"
+  },
+  {
+    "id": 98,
+    "name": "OnePlus Buds Pro 2 Green",
+    "brand": "OnePlus",
+    "category": "Trådlösa hörlurar",
+    "price": 1709,
+    "store": "Inet",
+    "url": "https://www.inet.se/produkt/oneplus-buds-pro-2-green",
+    "ean": "6940550002427"
+  },
+  {
+    "id": 99,
+    "name": "MacBook Pro 16\" M3 Pro 512GB Space Black",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 33521,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-pro-16",
+    "ean": "0194250007084"
+  },
+  {
+    "id": 100,
+    "name": "MacBook Pro 16\" M3 Pro 512GB Space Black",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 36693,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-pro-16",
+    "ean": "0194250005622"
+  },
+  {
+    "id": 101,
+    "name": "MacBook Pro 16\" M3 Pro 1TB Space Black",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 41874,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-pro-16-1tb",
+    "ean": "0194250004571"
+  },
+  {
+    "id": 102,
+    "name": "MacBook Pro 16\" M3 Pro 1TB Space Black",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 42405,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-pro-16-1tb",
+    "ean": "0194250006346"
+  },
+  {
+    "id": 103,
+    "name": "MacBook Pro 16\" M3 Max 1TB Space Black",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 47324,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-pro-16-m3-max",
+    "ean": "0194250004656"
+  },
+  {
+    "id": 104,
+    "name": "MacBook Pro 16\" M3 Max 1TB Space Black",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 43987,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-pro-16-m3-max",
+    "ean": "0194250009347"
+  },
+  {
+    "id": 105,
+    "name": "MacBook Pro 16\" M3 Max 2TB Space Black",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 58220,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-pro-16-2tb",
+    "ean": "0194250010879"
+  },
+  {
+    "id": 106,
+    "name": "MacBook Pro 16\" M3 Max 2TB Space Black",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 54561,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-pro-16-2tb",
+    "ean": "0194250005677"
+  },
+  {
+    "id": 107,
+    "name": "MacBook Pro 14\" M3 512GB Space Gray",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 23809,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-pro-14",
+    "ean": "0194250001815"
+  },
+  {
+    "id": 108,
+    "name": "MacBook Pro 14\" M3 512GB Space Gray",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 22106,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-pro-14",
+    "ean": "0194250010763"
+  },
+  {
+    "id": 109,
+    "name": "MacBook Pro 14\" M3 Pro 512GB Space Gray",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 32165,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-pro-14-m3-pro",
+    "ean": "0194250009354"
+  },
+  {
+    "id": 110,
+    "name": "MacBook Pro 14\" M3 Pro 512GB Space Gray",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 30897,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-pro-14-m3-pro",
+    "ean": "0194250006360"
+  },
+  {
+    "id": 111,
+    "name": "MacBook Pro 14\" M3 Pro 1TB Space Gray",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 34832,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-pro-14-1tb",
+    "ean": "0194250005691"
+  },
+  {
+    "id": 112,
+    "name": "MacBook Pro 14\" M3 Pro 1TB Space Gray",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 35995,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-pro-14-1tb",
+    "ean": "0194250003734"
+  },
+  {
+    "id": 113,
+    "name": "MacBook Air 15\" M2 256GB Midnight",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 17600,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-air-15",
+    "ean": "0194250007732"
+  },
+  {
+    "id": 114,
+    "name": "MacBook Air 15\" M2 256GB Midnight",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 19489,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-air-15",
+    "ean": "0194250008715"
+  },
+  {
+    "id": 115,
+    "name": "MacBook Air 15\" M2 512GB Midnight",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 21776,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-air-15-512gb",
+    "ean": "0194250003024"
+  },
+  {
+    "id": 116,
+    "name": "MacBook Air 15\" M2 512GB Midnight",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 20576,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-air-15-512gb",
+    "ean": "0194250004229"
+  },
+  {
+    "id": 117,
+    "name": "MacBook Air 13\" M2 256GB Starlight",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 15427,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-air-13",
+    "ean": "0194250004397"
+  },
+  {
+    "id": 118,
+    "name": "MacBook Air 13\" M2 256GB Starlight",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 15098,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-air-13",
+    "ean": "0194250004038"
+  },
+  {
+    "id": 119,
+    "name": "MacBook Air 13\" M2 512GB Starlight",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 18207,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-air-13-512gb",
+    "ean": "0194250004861"
+  },
+  {
+    "id": 120,
+    "name": "MacBook Air 13\" M2 512GB Starlight",
+    "brand": "Apple",
+    "category": "Bärbara datorer",
+    "price": 19550,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/macbook-air-13-512gb",
+    "ean": "0194250009170"
+  },
+  {
+    "id": 121,
+    "name": "Zyxel Armor Z2 AX6000 Router",
+    "brand": "Zyxel",
+    "category": "Router",
+    "price": 2400,
+    "store": "Inet",
+    "url": "https://www.inet.se/produkt/zyxel-armor-z2",
+    "ean": "4718930010032"
+  },
+  {
+    "id": 122,
+    "name": "Zyxel Armor Z2 AX6000 Router",
+    "brand": "Zyxel",
+    "category": "Router",
+    "price": 2665,
+    "store": "Inet",
+    "url": "https://www.inet.se/produkt/zyxel-armor-z2",
+    "ean": "4718930007001"
+  },
+  {
+    "id": 123,
+    "name": "Zyxel Armor G5 AX5400 Router",
+    "brand": "Zyxel",
+    "category": "Router",
+    "price": 1896,
+    "store": "Inet",
+    "url": "https://www.inet.se/produkt/zyxel-armor-g5",
+    "ean": "4718930006943"
+  },
+  {
+    "id": 124,
+    "name": "Zyxel Armor G5 AX5400 Router",
+    "brand": "Zyxel",
+    "category": "Router",
+    "price": 1927,
+    "store": "Inet",
+    "url": "https://www.inet.se/produkt/zyxel-armor-g5",
+    "ean": "4718930007032"
+  },
+  {
+    "id": 125,
+    "name": "Zyxel Armor X1 AX1800 Router",
+    "brand": "Zyxel",
+    "category": "Router",
+    "price": 1045,
+    "store": "Inet",
+    "url": "https://www.inet.se/produkt/zyxel-armor-x1",
+    "ean": "4718930006813"
+  },
+  {
+    "id": 126,
+    "name": "Zyxel Armor X1 AX1800 Router",
+    "brand": "Zyxel",
+    "category": "Router",
+    "price": 1013,
+    "store": "Inet",
+    "url": "https://www.inet.se/produkt/zyxel-armor-x1",
+    "ean": "4718930009029"
+  },
+  {
+    "id": 127,
+    "name": "TP-Link Archer AX73 Router",
+    "brand": "TP-Link",
+    "category": "Router",
+    "price": 1394,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/nat/tp-link-archer-ax73",
+    "ean": "6935360004471"
+  },
+  {
+    "id": 128,
+    "name": "TP-Link Archer AX73 Router",
+    "brand": "TP-Link",
+    "category": "Router",
+    "price": 1342,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/nat/tp-link-archer-ax73",
+    "ean": "6935360008295"
+  },
+  {
+    "id": 129,
+    "name": "TP-Link Archer AXE75 Router",
+    "brand": "TP-Link",
+    "category": "Router",
+    "price": 1956,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/nat/tp-link-archer-axe75",
+    "ean": "6935360005119"
+  },
+  {
+    "id": 130,
+    "name": "TP-Link Archer AXE75 Router",
+    "brand": "TP-Link",
+    "category": "Router",
+    "price": 1748,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/nat/tp-link-archer-axe75",
+    "ean": "6935360001821"
+  },
+  {
+    "id": 131,
+    "name": "TP-Link Deco XE75 Mesh System (2-pack)",
+    "brand": "TP-Link",
+    "category": "Router",
+    "price": 3272,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/nat/tp-link-deco-xe75",
+    "ean": "6935360006352"
+  },
+  {
+    "id": 132,
+    "name": "TP-Link Deco XE75 Mesh System (2-pack)",
+    "brand": "TP-Link",
+    "category": "Router",
+    "price": 3079,
+    "store": "NetOnNet",
+    "url": "https://www.netonnet.se/product/nat/tp-link-deco-xe75",
+    "ean": "6935360008363"
+  },
+  {
+    "id": 133,
+    "name": "Asus ROG Rapture GT-AX11000 Router",
+    "brand": "Asus",
+    "category": "Router",
+    "price": 3903,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/asus-rog-gt-ax11000",
+    "ean": "4718010007853"
+  },
+  {
+    "id": 134,
+    "name": "Asus ROG Rapture GT-AX11000 Router",
+    "brand": "Asus",
+    "category": "Router",
+    "price": 3990,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/asus-rog-gt-ax11000",
+    "ean": "4718010002506"
+  },
+  {
+    "id": 135,
+    "name": "Asus RT-AX86U Router",
+    "brand": "Asus",
+    "category": "Router",
+    "price": 2326,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/asus-rt-ax86u",
+    "ean": "4718010003992"
+  },
+  {
+    "id": 136,
+    "name": "Asus RT-AX86U Router",
+    "brand": "Asus",
+    "category": "Router",
+    "price": 2197,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/asus-rt-ax86u",
+    "ean": "4718010007099"
+  },
+  {
+    "id": 137,
+    "name": "Asus RT-AX82U Router",
+    "brand": "Asus",
+    "category": "Router",
+    "price": 1927,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/asus-rt-ax82u",
+    "ean": "4718010002445"
+  },
+  {
+    "id": 138,
+    "name": "Asus RT-AX82U Router",
+    "brand": "Asus",
+    "category": "Router",
+    "price": 1821,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/asus-rt-ax82u",
+    "ean": "4718010010327"
+  },
+  {
+    "id": 139,
+    "name": "Netgear Nighthawk RAXE300 Router",
+    "brand": "Netgear",
+    "category": "Router",
+    "price": 3643,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/router/netgear-raxe300",
+    "ean": "6064490010196"
+  },
+  {
+    "id": 140,
+    "name": "Netgear Nighthawk RAXE300 Router",
+    "brand": "Netgear",
+    "category": "Router",
+    "price": 3804,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/router/netgear-raxe300",
+    "ean": "6064490002658"
+  },
+  {
+    "id": 141,
+    "name": "Netgear Nighthawk RAX70 Router",
+    "brand": "Netgear",
+    "category": "Router",
+    "price": 2035,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/router/netgear-rax70",
+    "ean": "6064490007318"
+  },
+  {
+    "id": 142,
+    "name": "Netgear Nighthawk RAX70 Router",
+    "brand": "Netgear",
+    "category": "Router",
+    "price": 1898,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/router/netgear-rax70",
+    "ean": "6064490002801"
+  },
+  {
+    "id": 143,
+    "name": "Netgear Orbi RBK753 Mesh System (3-pack)",
+    "brand": "Netgear",
+    "category": "Router",
+    "price": 7503,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/router/netgear-orbi-rbk753",
+    "ean": "6064490008346"
+  },
+  {
+    "id": 144,
+    "name": "Netgear Orbi RBK753 Mesh System (3-pack)",
+    "brand": "Netgear",
+    "category": "Router",
+    "price": 7012,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/router/netgear-orbi-rbk753",
+    "ean": "6064490010523"
+  },
+  {
+    "id": 145,
+    "name": "Linksys Hydra Pro 6E Router",
+    "brand": "Linksys",
+    "category": "Router",
+    "price": 2177,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/router/linksys-hydra-pro-6e",
+    "ean": "7458830009121"
+  },
+  {
+    "id": 146,
+    "name": "Linksys Hydra Pro 6E Router",
+    "brand": "Linksys",
+    "category": "Router",
+    "price": 2445,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/router/linksys-hydra-pro-6e",
+    "ean": "7458830003716"
+  },
+  {
+    "id": 147,
+    "name": "Linksys Atlas Pro 6 Router",
+    "brand": "Linksys",
+    "category": "Router",
+    "price": 1769,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/router/linksys-atlas-pro-6",
+    "ean": "7458830009220"
+  },
+  {
+    "id": 148,
+    "name": "Linksys Atlas Pro 6 Router",
+    "brand": "Linksys",
+    "category": "Router",
+    "price": 1876,
+    "store": "MediaMarkt",
+    "url": "https://www.mediamarkt.se/product/router/linksys-atlas-pro-6",
+    "ean": "7458830006014"
+  },
+  {
+    "id": 149,
+    "name": "Apple Watch Series 9 41mm GPS Aluminum",
+    "brand": "Apple",
+    "category": "Smartklockor",
+    "price": 5143,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/apple-watch-series-9",
+    "ean": "0194250010848"
+  },
+  {
+    "id": 150,
+    "name": "Apple Watch Series 9 41mm GPS Aluminum",
+    "brand": "Apple",
+    "category": "Smartklockor",
+    "price": 5182,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/apple-watch-series-9",
+    "ean": "0194250001501"
+  },
+  {
+    "id": 151,
+    "name": "Apple Watch Series 9 45mm GPS Aluminum",
+    "brand": "Apple",
+    "category": "Smartklockor",
+    "price": 5299,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/apple-watch-series-9-45mm",
+    "ean": "0194250010787"
+  },
+  {
+    "id": 152,
+    "name": "Apple Watch Series 9 45mm GPS Aluminum",
+    "brand": "Apple",
+    "category": "Smartklockor",
+    "price": 5640,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/apple-watch-series-9-45mm",
+    "ean": "0194250004199"
+  },
+  {
+    "id": 153,
+    "name": "Apple Watch Series 9 41mm GPS + Cellular",
+    "brand": "Apple",
+    "category": "Smartklockor",
+    "price": 5972,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/apple-watch-series-9-cellular",
+    "ean": "0194250001891"
+  },
+  {
+    "id": 154,
+    "name": "Apple Watch Series 9 41mm GPS + Cellular",
+    "brand": "Apple",
+    "category": "Smartklockor",
+    "price": 6359,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/apple-watch-series-9-cellular",
+    "ean": "0194250003055"
+  },
+  {
+    "id": 155,
+    "name": "Apple Watch Series 9 45mm GPS + Cellular",
+    "brand": "Apple",
+    "category": "Smartklockor",
+    "price": 6773,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/apple-watch-series-9-45mm-cellular",
+    "ean": "0194250004663"
+  },
+  {
+    "id": 156,
+    "name": "Apple Watch Series 9 45mm GPS + Cellular",
+    "brand": "Apple",
+    "category": "Smartklockor",
+    "price": 6911,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/apple-watch-series-9-45mm-cellular",
+    "ean": "0194250005486"
+  },
+  {
+    "id": 157,
+    "name": "Apple Watch Ultra 2 49mm GPS + Cellular",
+    "brand": "Apple",
+    "category": "Smartklockor",
+    "price": 10476,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/apple-watch-ultra-2",
+    "ean": "0194250006315"
+  },
+  {
+    "id": 158,
+    "name": "Apple Watch Ultra 2 49mm GPS + Cellular",
+    "brand": "Apple",
+    "category": "Smartklockor",
+    "price": 10664,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/apple-watch-ultra-2",
+    "ean": "0194250003833"
+  },
+  {
+    "id": 159,
+    "name": "Apple Watch SE 40mm GPS",
+    "brand": "Apple",
+    "category": "Smartklockor",
+    "price": 3595,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/apple-watch-se",
+    "ean": "0194250008333"
+  },
+  {
+    "id": 160,
+    "name": "Apple Watch SE 40mm GPS",
+    "brand": "Apple",
+    "category": "Smartklockor",
+    "price": 3260,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/apple-watch-se",
+    "ean": "0194250006476"
+  },
+  {
+    "id": 161,
+    "name": "Apple Watch SE 44mm GPS",
+    "brand": "Apple",
+    "category": "Smartklockor",
+    "price": 3925,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/apple-watch-se-44mm",
+    "ean": "0194250009521"
+  },
+  {
+    "id": 162,
+    "name": "Apple Watch SE 44mm GPS",
+    "brand": "Apple",
+    "category": "Smartklockor",
+    "price": 3644,
+    "store": "Apple Store",
+    "url": "https://www.apple.com/se/apple-watch-se-44mm",
+    "ean": "0194250004779"
+  },
+  {
+    "id": 163,
+    "name": "Samsung Galaxy Watch6 40mm Graphite",
+    "brand": "Samsung",
+    "category": "Smartklockor",
+    "price": 2946,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/smartklockor/samsung-galaxy-watch6-40mm",
+    "ean": "8806090010774"
+  },
+  {
+    "id": 164,
+    "name": "Samsung Galaxy Watch6 40mm Graphite",
+    "brand": "Samsung",
+    "category": "Smartklockor",
+    "price": 3263,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/smartklockor/samsung-galaxy-watch6-40mm",
+    "ean": "8806090006173"
+  },
+  {
+    "id": 165,
+    "name": "Samsung Galaxy Watch6 44mm Graphite",
+    "brand": "Samsung",
+    "category": "Smartklockor",
+    "price": 3334,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/smartklockor/samsung-galaxy-watch6-44mm",
+    "ean": "8806090006302"
+  },
+  {
+    "id": 166,
+    "name": "Samsung Galaxy Watch6 44mm Graphite",
+    "brand": "Samsung",
+    "category": "Smartklockor",
+    "price": 3408,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/smartklockor/samsung-galaxy-watch6-44mm",
+    "ean": "8806090003424"
+  },
+  {
+    "id": 167,
+    "name": "Samsung Galaxy Watch6 Classic 47mm Black",
+    "brand": "Samsung",
+    "category": "Smartklockor",
+    "price": 4229,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/smartklockor/samsung-galaxy-watch6-classic",
+    "ean": "8806090005336"
+  },
+  {
+    "id": 168,
+    "name": "Samsung Galaxy Watch6 Classic 47mm Black",
+    "brand": "Samsung",
+    "category": "Smartklockor",
+    "price": 3868,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/smartklockor/samsung-galaxy-watch6-classic",
+    "ean": "8806090010460"
+  },
+  {
+    "id": 169,
+    "name": "Samsung Galaxy Watch6 Classic 43mm Silver",
+    "brand": "Samsung",
+    "category": "Smartklockor",
+    "price": 3547,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/smartklockor/samsung-galaxy-watch6-classic-43mm",
+    "ean": "8806090004810"
+  },
+  {
+    "id": 170,
+    "name": "Samsung Galaxy Watch6 Classic 43mm Silver",
+    "brand": "Samsung",
+    "category": "Smartklockor",
+    "price": 3911,
+    "store": "Elgiganten",
+    "url": "https://www.elgiganten.se/product/smartklockor/samsung-galaxy-watch6-classic-43mm",
+    "ean": "8806090009372"
+  },
+  {
+    "id": 171,
+    "name": "Google Pixel Watch 2 WiFi",
+    "brand": "Google",
+    "category": "Smartklockor",
+    "price": 3835,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/google-pixel-watch-2",
+    "ean": "6940550004971"
+  },
+  {
+    "id": 172,
+    "name": "Google Pixel Watch 2 WiFi",
+    "brand": "Google",
+    "category": "Smartklockor",
+    "price": 3691,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/google-pixel-watch-2",
+    "ean": "6940550004858"
+  },
+  {
+    "id": 173,
+    "name": "Google Pixel Watch 2 LTE",
+    "brand": "Google",
+    "category": "Smartklockor",
+    "price": 4585,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/google-pixel-watch-2-lte",
+    "ean": "6940550004193"
+  },
+  {
+    "id": 174,
+    "name": "Google Pixel Watch 2 LTE",
+    "brand": "Google",
+    "category": "Smartklockor",
+    "price": 4660,
+    "store": "Webhallen",
+    "url": "https://www.webhallen.com/se/product/google-pixel-watch-2-lte",
+    "ean": "6940550004049"
+  }
+]

@@ -1,0 +1,780 @@
+/* =========================================================
+   FINTECH / BLOOMBERG THEME
+   - Dark: terminal premium (deep slate/ink), crisp strokes, less glow
+   - Light: paper-gray (no glare), strong typography contrast
+   ========================================================= */
+
+:root {
+  /* ---------- DARK (default) ---------- */
+  /* Bloomberg-ish: djupare “terminal” */
+  --bg: #070a12;
+
+  /* Paneler: mer “solid terminal glass” än dimmig grå */
+  --panel: rgba(14, 18, 30, 0.90);
+  --panel2: rgba(14, 18, 30, 0.72);
+
+  /* Strokes: tydliga men inte kritvita */
+  --stroke: rgba(255, 255, 255, 0.12);
+
+  /* Text: hög kontrast men inte 100% vit */
+  --text: rgba(250, 252, 255, 0.92);
+  --muted: rgba(250, 252, 255, 0.70);
+  --muted2: rgba(250, 252, 255, 0.54);
+
+  /* Accent: “finance blue” (kontrollerad, inte neon) */
+  --accent: #7aa2ff;
+
+  /* Solida ytor */
+  --surface: rgba(10, 12, 20, 0.94);
+  --surface2: rgba(10, 12, 20, 0.88);
+
+  /* Charts: crisp grid */
+  --chartGrid: rgba(255, 255, 255, 0.14);
+  --chartTick: rgba(250, 252, 255, 0.72);
+
+  /* Linjer */
+  --marketStroke: #7aa2ff;
+  --companyStroke: #22c55e; /* “trade green” */
+
+  /* Listor */
+  --zebra1: rgba(255, 255, 255, 0.045);
+  --zebra2: rgba(255, 255, 255, 0.014);
+  --hoverBg: rgba(122, 162, 255, 0.16);
+  --selectedBg: rgba(122, 162, 255, 0.24);
+  --tableRowBorder: rgba(255, 255, 255, 0.12);
+
+  /* Scroll hint */
+  --scrollHint: rgba(122, 162, 255, 0.22);
+
+  /* Status */
+  --good: rgba(34, 197, 94, 0.16);
+  --goodStroke: rgba(34, 197, 94, 0.32);
+  --bad: rgba(255, 90, 105, 0.16);
+  --badStroke: rgba(255, 90, 105, 0.30);
+  --neutral: rgba(255, 255, 255, 0.07);
+  --neutralStroke: rgba(255, 255, 255, 0.14);
+
+  /* PRO tokens */
+  --radius-lg: 16px; /* lite “stramare” fintech */
+  --radius-md: 12px;
+  --radius-sm: 10px;
+
+  /* Skuggor: mer “tight”/kontrollerat */
+  --shadow-lg: 0 18px 60px rgba(0,0,0,0.50);
+  --shadow-md: 0 12px 34px rgba(0,0,0,0.34);
+  --shadow-sm: 0 8px 22px rgba(0,0,0,0.22);
+
+  /* Fokus-ring: mer subtil */
+  --ring: 0 0 0 3px rgba(122, 162, 255, 0.18);
+}
+
+/* =========================================================
+   LIGHT MODE (paper-gray, no glare)
+   ========================================================= */
+html[data-theme="light"] {
+  /* “Newsroom paper”: mer grå än vit */
+  --bg: #e7eaee;
+
+  /* Paneler: svagt varmvit/grå (inte bländ) */
+  --panel: rgba(248, 249, 251, 0.82);
+  --panel2: rgba(248, 249, 251, 0.66);
+
+  /* Stroke: lite tydligare så UI känns “enterprise” */
+  --stroke: rgba(15, 23, 42, 0.14);
+
+  /* Text: mer ink */
+  --text: rgba(11, 15, 26, 0.90);
+  --muted: rgba(11, 15, 26, 0.62);
+  --muted2: rgba(11, 15, 26, 0.46);
+
+  /* Accent: samma “finance blue”, men tydlig */
+  --accent: #2453ff;
+
+  --surface: rgba(246, 247, 249, 0.92);
+  --surface2: rgba(246, 247, 249, 0.86);
+
+  /* Charts */
+  --chartGrid: rgba(11, 15, 26, 0.12);
+  --chartTick: rgba(11, 15, 26, 0.60);
+
+  /* Linjer */
+  --marketStroke: #2453ff;
+  --companyStroke: #0f8f67;
+
+  /* Listor */
+  --zebra1: rgba(11, 15, 26, 0.025);
+  --zebra2: rgba(11, 15, 26, 0.00);
+  --hoverBg: rgba(36, 83, 255, 0.08);
+  --selectedBg: rgba(36, 83, 255, 0.14);
+  --tableRowBorder: rgba(11, 15, 26, 0.085);
+
+  --scrollHint: rgba(36, 83, 255, 0.14);
+
+  /* Status */
+  --good: rgba(15, 143, 103, 0.12);
+  --goodStroke: rgba(15, 143, 103, 0.22);
+  --bad: rgba(255, 90, 105, 0.10);
+  --badStroke: rgba(255, 90, 105, 0.18);
+  --neutral: rgba(11, 15, 26, 0.05);
+  --neutralStroke: rgba(11, 15, 26, 0.11);
+
+  /* Light shadows (tight) */
+  --shadow-lg: 0 16px 54px rgba(11,15,26,0.14);
+  --shadow-md: 0 10px 30px rgba(11,15,26,0.12);
+  --shadow-sm: 0 6px 18px rgba(11,15,26,0.10);
+
+  --ring: 0 0 0 3px rgba(36, 83, 255, 0.18);
+}
+
+/* =========================================================
+   GLOBAL BASE
+   ========================================================= */
+* { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+
+  /* Dark: minimal glow (Bloomberg = less gradient, more “room”) */
+  background:
+          radial-gradient(900px 560px at 18% -10%, rgba(122,162,255,0.10), transparent 60%),
+          radial-gradient(900px 540px at 88% 0%, rgba(34,197,94,0.06), transparent 62%),
+          radial-gradient(1100px 700px at 50% 120%, rgba(255,255,255,0.03), transparent 65%),
+          var(--bg);
+
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* Light: less glow, more paper */
+html[data-theme="light"] body,
+html[data-theme="light"] #root {
+  background:
+          radial-gradient(1200px 760px at 20% -12%, rgba(36,83,255,0.10), transparent 60%),
+          radial-gradient(900px 620px at 90% 6%, rgba(11,15,26,0.06), transparent 64%),
+          var(--bg);
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+input, button, select {
+  color: var(--text);
+  background: var(--panel2);
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+}
+
+input::placeholder { color: var(--muted2); }
+
+button { cursor: pointer; }
+button:hover { filter: brightness(1.03); }
+
+::selection { background: rgba(122, 162, 255, 0.22); }
+html[data-theme="light"] ::selection { background: rgba(36, 83, 255, 0.18); }
+
+/* =========================================================
+   PRO LAYER (layout + components)
+   ========================================================= */
+
+.container{
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 22px;
+}
+
+.topbar{
+  position: sticky;
+  top: 0;
+  z-index: 20;
+
+  padding: 14px;
+  margin: -22px -22px 18px;
+  border-bottom: 1px solid var(--stroke);
+
+  background: linear-gradient(to bottom, rgba(0,0,0,0.26), rgba(0,0,0,0.0));
+  backdrop-filter: blur(12px);
+}
+html[data-theme="light"] .topbar{
+  background: linear-gradient(to bottom, rgba(248,249,251,0.84), rgba(248,249,251,0.40));
+}
+
+.h1{
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.6px;
+  line-height: 1.1;
+}
+
+.subtle{
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.actions{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap: wrap;
+}
+
+.card{
+  background: var(--panel);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(10px);
+}
+
+.card-pad{ padding: 16px; }
+
+.grid-metrics{
+  display:grid;
+  gap: 14px;
+  margin-top: 18px;
+  grid-template-columns: repeat(12, 1fr);
+}
+
+.metric{
+  grid-column: span 3;
+  min-width: 240px;
+}
+
+@media (max-width: 1100px){
+  .metric{ grid-column: span 6; }
+}
+@media (max-width: 640px){
+  .metric{ grid-column: span 12; }
+}
+
+.kicker{
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.28px; /* fintech: lite mer “label” */
+  text-transform: none;
+  margin-bottom: 10px;
+}
+
+.metricValue{
+  font-size: 34px;
+  font-weight: 850;
+  line-height: 1.05;
+  letter-spacing: -0.4px;
+}
+
+.metricSub{
+  color: var(--muted2);
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+/* Inputs / Buttons */
+.input{
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--stroke);
+  background: var(--panel2);
+  font-size: 14px;
+  outline: none;
+}
+
+.input:focus{
+  box-shadow: var(--ring);
+  border-color: rgba(122,162,255,0.28);
+}
+html[data-theme="light"] .input:focus{
+  border-color: rgba(36,83,255,0.22);
+}
+
+.btn{
+  border: 1px solid var(--stroke);
+  background: var(--panel2);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 820;
+  cursor: pointer;
+  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+}
+
+.btn:hover{ filter: brightness(1.03); }
+.btn:active{ transform: translateY(1px); }
+.btn:focus{ outline: none; box-shadow: var(--ring); }
+
+.btnPrimary{
+  background: var(--hoverBg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Sections */
+.section{ margin-top: 26px; }
+.sectionTitle{
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: -0.2px;
+}
+.sectionHint{
+  margin-top: 6px;
+  color: var(--muted2);
+  font-size: 13px;
+}
+
+/* Table */
+.tableWrap{
+  margin-top: 12px;
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--stroke);
+  background: var(--panel2);
+  backdrop-filter: blur(10px);
+}
+
+.table{
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.th{
+  text-align: left;
+  padding: 14px 14px;
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--stroke);
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+}
+
+.tr{
+  cursor: pointer;
+  background: var(--zebra1);
+}
+.tr:nth-child(even){
+  background: var(--zebra2);
+}
+.tr:hover{
+  background: var(--hoverBg);
+}
+
+.td{
+  padding: 14px 14px;
+  border-bottom: 1px solid var(--tableRowBorder);
+  white-space: nowrap;
+}
+
+.footerNote{
+  margin-top: 18px;
+  color: var(--muted2);
+  font-size: 12px;
+}
+
+/* =========================================================
+   AllProducts (virtual list) + Drawer
+   ========================================================= */
+
+.chip{
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: var(--panel2);
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.segmented{
+  display: inline-flex;
+  border-radius: 16px;
+  border: 1px solid var(--stroke);
+  background: var(--panel2);
+  padding: 6px;
+  gap: 6px;
+  box-shadow: var(--shadow-sm);
+}
+
+.segBtn{
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  font-weight: 850;
+  cursor: pointer;
+  min-width: 170px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.segBtn:focus{ outline: none; box-shadow: var(--ring); }
+.segBtnActive{
+  background: var(--selectedBg);
+  box-shadow: var(--shadow-sm);
+}
+
+.segDot{
+  width: 10px;
+  height: 10px;
+  border-radius: 99px;
+  background: rgba(127,127,127,0.28);
+}
+.segDotActive{
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(122,162,255,0.14);
+}
+html[data-theme="light"] .segDotActive{
+  box-shadow: 0 0 0 4px rgba(36,83,255,0.12);
+}
+
+.selectWrap{ position: relative; }
+.select{
+  padding: 12px 40px 12px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: var(--panel2);
+  color: var(--text);
+  font-weight: 820;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+.select:focus{ box-shadow: var(--ring); }
+.selectChevron{
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--muted2);
+  font-weight: 900;
+}
+
+.virtualWrap{
+  height: 620px;
+  overflow: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--stroke);
+  background: var(--panel2);
+  position: relative;
+}
+
+.virtualInner{
+  width: 100%;
+  position: relative;
+  direction: ltr;
+}
+
+.virtualRow{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--tableRowBorder);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+
+  cursor: pointer;
+  transition: background 120ms ease, outline-color 120ms ease;
+}
+
+.virtualRow:hover{
+  background: var(--hoverBg) !important;
+}
+
+.virtualRow:focus{
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.virtualRowSelected{
+  background: var(--selectedBg) !important;
+  outline: 2px solid rgba(122,162,255,0.26);
+  outline-offset: -1px;
+}
+html[data-theme="light"] .virtualRowSelected{
+  outline: 2px solid rgba(36,83,255,0.20);
+}
+
+.virtualLeft{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.virtualTexts{ min-width: 0; }
+.virtualTitle{
+  font-weight: 950;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+.virtualMeta{
+  margin-top: 4px;
+  color: var(--muted2);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.virtualRight{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.virtualPrice{
+  font-weight: 950;
+  color: var(--text);
+}
+
+.virtualLink{
+  font-weight: 900;
+}
+
+.scrollHint{
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  pointer-events: none;
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
+  background: linear-gradient(to right, var(--scrollHint), transparent);
+  box-shadow: inset 1px 0 0 rgba(122,162,255,0.22);
+  opacity: 0.95;
+}
+html[data-theme="light"] .scrollHint{
+  box-shadow: inset 1px 0 0 rgba(36,83,255,0.16);
+}
+
+/* Drawer */
+.drawerOverlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.16);
+  pointer-events: none;
+  z-index: 9998;
+}
+html[data-theme="light"] .drawerOverlay{
+  background: rgba(11,15,26,0.10);
+}
+
+.drawer{
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(560px, 96vw);
+  z-index: 9999;
+
+  background: var(--surface);
+  border-left: 1px solid var(--stroke);
+  box-shadow: -20px 0 68px rgba(0,0,0,0.36);
+
+  padding: 18px;
+  overflow-y: auto;
+  color: var(--text);
+}
+
+.drawerImgBox{
+  margin-bottom: 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--stroke);
+  background: var(--panel2);
+  padding: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.drawerImg{
+  max-height: 180px;
+  width: 100%;
+  object-fit: contain;
+}
+
+.drawerHeader{
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.drawerTitle{
+  font-size: 18px;
+  font-weight: 950;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawerSub{
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.drawerCard{
+  margin-top: 14px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  padding: 14px;
+}
+
+.drawerCardTop{
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.drawerLabel{
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.drawerPrice{
+  font-weight: 950;
+  font-size: 22px;
+}
+
+.drawerEan{
+  font-weight: 900;
+}
+
+.drawerMeta{
+  margin-top: 10px;
+  color: var(--muted2);
+  font-size: 12px;
+}
+
+/* =========================================================
+   PriceHistory
+   ========================================================= */
+
+.phHeader{
+  display:flex;
+  justify-content:space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items:center;
+}
+
+.phTitle{
+  font-weight: 900;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.phSub{
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.phToolbar{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap: wrap;
+}
+
+.phDivider{
+  height: 1px;
+  background: var(--stroke);
+  margin-top: 12px;
+  margin-bottom: 12px;
+  opacity: 0.95;
+}
+
+.phLegend{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items:center;
+}
+
+.phLegendPill{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: var(--panel2);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.phDot{
+  width: 10px;
+  height: 10px;
+  border-radius: 99px;
+}
+
+.phError{
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(239,68,68,0.35);
+  background: rgba(239,68,68,0.10);
+  color: var(--text);
+}
+
+.phStats{
+  display:flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.phStat{
+  min-width: 160px;
+}
+
+.phStatLabel{
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.phStatValue{
+  font-weight: 900;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.phChart{
+  margin-top: 14px;
+  height: 300px;
+}

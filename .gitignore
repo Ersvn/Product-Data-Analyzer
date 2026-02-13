@@ -1,0 +1,62 @@
+################################
+# OS
+################################
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+################################
+# IDE
+################################
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+################################
+# Logs
+################################
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+################################
+# Frontend (dashboard)
+################################
+dashboard/node_modules/
+dashboard/dist/
+dashboard/dist-ssr/
+dashboard/.vite/
+dashboard/*.local
+dashboard/.env
+dashboard/.env.*
+
+################################
+# Backend (Spring / Gradle)
+################################
+backend/**/.gradle/
+backend/**/build/
+backend/**/out/
+backend/**/bin/
+backend/**/target/
+
+################################
+# Gradle (root cache too, if any)
+################################
+.gradle/
+build/
+
+################################
+# Coverage / misc
+################################
+coverage/
+*.swp
+*.swo
+*~
+
+node_modules/
