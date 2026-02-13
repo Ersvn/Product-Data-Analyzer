@@ -1,40 +1,70 @@
 # Product-Data-Analyzer
-En fullstack-applikation som tar produktfeeds via API eller maskininläsningsformat (JSON/XML/CSV), jämför nuvarande priser för produkter av ens företag och visas på en dashboard. Produktbeskrivningar, prishistorik och mer finns.
+![Java](https://img.shields.io/badge/Java-21-007396?style=for-the-badge&logo=java&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![React](https://img.shields.io/badge/React-18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-Frontend-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![REST API](https://img.shields.io/badge/API-REST-FF6F00?style=for-the-badge)
 
 
-## Projektet består av två huvuddelar:
+![Preview](docs/screenshots/hero-preview.png)
+
+En fullstack-applikation som tar produktfeeds via API eller maskinläsningsformat (JSON/XML/CSV), jämför aktuella produktpriser mot marknadsdata och visualiserar resultatet i en interaktiv dashboard. Systemet visar produktinformation, prisdifferenser, historik och analys i realtid.
+
+---
+
+## Projektet består av två huvuddelar
 
 ### Dashboard
-#### Frontend byggd i React som visar produkter, prisjämförelser och historik i ett tydligt gränssnitt.
+Frontend byggd i React som presenterar produkter, prisjämförelser och historik i ett tydligt och responsivt gränssnitt.
 
 ### Backend
+Backend byggd i Spring Boot som hanterar datainsamling, bearbetning, matchning och API-logik.
 
-#### Backend byggd i Spring Boot som hanterar datainsamling, bearbetning, matchning och API-logik.
+---
 
-##### Systemarkitektur
-Frontend kommunicerar med backend via REST-API. Backend hämtar data från interna filer och externa källor, bearbetar den och returnerar strukturerad JSON som frontend visualiserar.
+## Systemarkitektur
+Frontend kommunicerar med backend via REST-API. Backend hämtar data från interna filer och externa källor, bearbetar informationen och returnerar strukturerad JSON som frontend visualiserar.
 
-##### Syfte
+---
+
+## Syfte
 Syftet med projektet är att automatisera delar av processen kring produktanalys och prissättning. Istället för manuella kontroller kan systemet samla information, jämföra priser och presentera resultatet i ett gränssnitt som gör analysen snabbare och mer tillförlitlig.
 
-##### Nuvarande funktioner
-Visning av produkter
-Prisjämförelse mellan marknadspris och eget pris.
-Graf över prishistorik
-Periodfilter för historik
-Stabil datamodell med stöd för flera datakällor
+---
 
-##### Planerade förbättringar
-Möjlighet att ändra produktpris direkt i dashboarden
-Integration av fler datakällor och API-tjänster
-Mer avancerad analys och rekommendationer
-Databasstöd istället för enbart filbaserad data
+## Screenshots
 
-#### Tekniker
-Java 21,
-Spring Boot,
-React,
-Vite,
-REST API
+### Dashboard overview
+![Dashboard](docs/screenshots/dashboard-overview-clean.png)
 
-#### Projektet är uppbyggt modulärt så att nya datakällor, funktioner och analysmetoder enkelt kan läggas till utan att ändra systemets grundstruktur.
+### Price history
+![Chart](docs/screenshots/price-history-chart-optimized.png)
+
+### Comparison view
+![Comparison](docs/screenshots/comparison-table-optimized.png)
+
+### Product details
+![Drawer](docs/screenshots/product-drawer-clean.png)
+
+---
+
+## Nuvarande funktioner
+- Visning av produkter
+- Prisjämförelse mellan marknadspris och eget pris
+- Graf över prishistorik
+- Periodfilter för historik
+- Stabil datamodell med stöd för flera datakällor
+
+---
+
+## Planerade förbättringar
+- Möjlighet att ändra produktpris direkt i dashboarden
+- Integration av fler datakällor och API-tjänster
+- Mer avancerad analys och rekommendationer
+- Databasstöd istället för enbart filbaserad data
+
+---
+
+
+## Arkitekturprincip
+Projektet är uppbyggt modulärt så att nya datakällor, funktioner och analysmetoder enkelt kan läggas till utan att ändra systemets grundstruktur.
