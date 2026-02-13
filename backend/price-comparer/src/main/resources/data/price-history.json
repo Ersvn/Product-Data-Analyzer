@@ -1,0 +1,16 @@
+[
+  {
+    "ean": "0195950627770",
+    "source": "market",
+    "price": 13990,
+    "currency": "SEK",
+    "ts": "2026-01-01T00:00:00Z"
+  },
+  {
+    "ean": "0195950627770",
+    "source": "company",
+    "price": 14590,
+    "currency": "SEK",
+    "ts": "2026-01-01T00:00:00Z"
+  }
+]
