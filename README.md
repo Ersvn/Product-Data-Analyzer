@@ -5,10 +5,69 @@
 ![Vite](https://img.shields.io/badge/Vite-Frontend-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 ![REST API](https://img.shields.io/badge/API-REST-FF6F00?style=for-the-badge)
 
-
 ![Preview](docs/screenshots/hero-preview.png)
 
 En fullstack-applikation som tar produktfeeds via API eller maskinläsningsformat (JSON/XML/CSV), jämför aktuella produktpriser mot marknadsdata och visualiserar resultatet i en interaktiv dashboard. Systemet visar produktinformation, prisdifferenser, historik och analys i realtid.
+
+---
+
+## Starta projektet lokalt
+
+### Backend
+
+**Alternativ 1 (rekommenderat):** starta applikationen via `PriceComparerApplication.main()` i din IDE (t.ex. IntelliJ).
+Detta är det enklaste sättet att köra backenden lokalt.
+
+**Alternativ 2:** starta via Gradle (terminal)
+
+```
+cd backend/price-comparer
+./gradlew bootRun
+```
+
+Windows:
+```
+cd backend/price-comparer
+gradlew.bat bootRun
+```
+
+Backend startar normalt på:
+```
+http://localhost:3001
+```
+
+---
+
+### Frontend
+Navigera till klienten och starta Vite-servern:
+
+```
+cd frontend/dashboard/client
+npm run dev
+```
+
+Om du får fel som t.ex.
+
+```
+'vite' is not recognized
+```
+
+eller om projektet är nyklonat, kör först:
+
+```
+npm install
+```
+
+och sedan igen:
+
+```
+npm run dev
+```
+
+Frontend startar normalt på:
+```
+http://localhost:5173
+```
 
 ---
 
@@ -58,7 +117,6 @@ Syftet med projektet är att automatisera delar av processen kring produktanalys
   <img src="docs/screenshots/product-drawer.png" width="950">
 </p>
 
-
 ---
 
 ## Nuvarande funktioner
@@ -77,7 +135,6 @@ Syftet med projektet är att automatisera delar av processen kring produktanalys
 - Databasstöd istället för enbart filbaserad data
 
 ---
-
 
 ## Arkitekturprincip
 Projektet är uppbyggt modulärt så att nya datakällor, funktioner och analysmetoder enkelt kan läggas till utan att ändra systemets grundstruktur.
