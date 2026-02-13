@@ -34,17 +34,30 @@ Syftet med projektet är att automatisera delar av processen kring produktanalys
 
 ## Screenshots
 
+<p align="center">
+  <img src="docs/screenshots/hero-preview.png" width="1000">
+</p>
+
 ### Dashboard overview
-![Dashboard](docs/screenshots/dashboard-overview-clean.png)
+<p align="center">
+  <img src="docs/screenshots/dashboard-overview.png" width="950">
+</p>
 
 ### Price history
-![Chart](docs/screenshots/price-history-chart-optimized.png)
+<p align="center">
+  <img src="docs/screenshots/price-history-chart.png" width="950">
+</p>
 
 ### Comparison view
-![Comparison](docs/screenshots/comparison-table-optimized.png)
+<p align="center">
+  <img src="docs/screenshots/comparison-table.png" width="950">
+</p>
 
 ### Product details
-![Drawer](docs/screenshots/product-drawer-clean.png)
+<p align="center">
+  <img src="docs/screenshots/product-drawer.png" width="950">
+</p>
+
 
 ---
 
