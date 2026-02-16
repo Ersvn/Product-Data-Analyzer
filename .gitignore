@@ -32,10 +32,9 @@ frontend/dashboard/client/node_modules/
 frontend/dashboard/client/dist/
 frontend/dashboard/client/dist-ssr/
 frontend/dashboard/client/.vite/
-frontend/dashboard/client/*.local
 frontend/dashboard/client/.env
 frontend/dashboard/client/.env.*
-
+frontend/dashboard/client/*.local
 
 ################################
 # Backend (Spring / Gradle)
