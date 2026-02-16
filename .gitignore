@@ -26,15 +26,16 @@ pnpm-debug.log*
 lerna-debug.log*
 
 ################################
-# Frontend (dashboard)
+# Frontend (React dashboard)
 ################################
-dashboard/node_modules/
-dashboard/dist/
-dashboard/dist-ssr/
-dashboard/.vite/
-dashboard/*.local
-dashboard/.env
-dashboard/.env.*
+frontend/dashboard/client/node_modules/
+frontend/dashboard/client/dist/
+frontend/dashboard/client/dist-ssr/
+frontend/dashboard/client/.vite/
+frontend/dashboard/client/*.local
+frontend/dashboard/client/.env
+frontend/dashboard/client/.env.*
+
 
 ################################
 # Backend (Spring / Gradle)
@@ -46,7 +47,7 @@ backend/**/bin/
 backend/**/target/
 
 ################################
-# Gradle (root cache too, if any)
+# Gradle root cache
 ################################
 .gradle/
 build/
@@ -59,4 +60,7 @@ coverage/
 *.swo
 *~
 
+################################
+# Global node_modules safeguard
+################################
 node_modules/
