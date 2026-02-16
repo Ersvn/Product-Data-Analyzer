@@ -1,37 +1,31 @@
 # Product-Data-Analyzer
-![Java](https://img.shields.io/badge/Java-21-007396?style=for-the-badge&logo=java&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
-![React](https://img.shields.io/badge/React-18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Vite](https://img.shields.io/badge/Vite-Frontend-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+
+![Java](https://img.shields.io/badge/Java-21-007396?style=for-the-badge\&logo=java\&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.x-6DB33F?style=for-the-badge\&logo=springboot\&logoColor=white)
+![React](https://img.shields.io/badge/React-19-20232A?style=for-the-badge\&logo=react\&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-Frontend-646CFF?style=for-the-badge\&logo=vite\&logoColor=white)
 ![REST API](https://img.shields.io/badge/API-REST-FF6F00?style=for-the-badge)
 
 ![Preview](docs/screenshots/hero-preview.png)
 
-En fullstack-applikation som tar produktfeeds via API eller maskinläsningsformat (JSON/XML/CSV), jämför aktuella produktpriser mot marknadsdata och visualiserar resultatet i en interaktiv dashboard. Systemet visar produktinformation, prisdifferenser, historik och analys i realtid.
+**Product Data Analyzer** är en fullstack-applikation som analyserar produktdata och marknadspriser i realtid.
+Systemet hämtar produktfeeds via API eller maskinläsbara format (JSON/XML/CSV), jämför priser mot marknadsdata och visualiserar resultatet i en interaktiv dashboard.
+
+Projektet är designat som en **skalbar analysplattform** för e-handel, där syftet är att automatisera prissättning, produktanalys och marknadsinsikter.
 
 ---
 
-## Starta projektet lokalt
+# 🚀 Quick start (2 minuter)
 
 ### Backend
 
-**Alternativ 1 (rekommenderat):** starta applikationen via `PriceComparerApplication.main()` i din IDE (t.ex. IntelliJ).
-Detta är det enklaste sättet att köra backenden lokalt.
-
-**Alternativ 2:** starta via Gradle (terminal)
-
-```
-cd backend/price-comparer
-./gradlew bootRun
-```
-
-Windows:
-```
+```bash
 cd backend/price-comparer
 gradlew.bat bootRun
 ```
 
-Backend startar normalt på:
+Backend startar på:
+
 ```
 http://localhost:3001
 ```
@@ -39,102 +33,190 @@ http://localhost:3001
 ---
 
 ### Frontend
-Navigera till klienten och starta Vite-servern:
 
-```
+```bash
 cd frontend/dashboard/client
-npm run dev
-```
-
-Om du får fel som t.ex.
-
-```
-'vite' is not recognized
-```
-
-eller om projektet är nyklonat, kör först:
-
-```
 npm install
-```
-
-och sedan igen:
-
-```
 npm run dev
 ```
 
-Frontend startar normalt på:
+Frontend startar på:
+
 ```
 http://localhost:5173
 ```
 
 ---
 
-## Projektet består av två huvuddelar
+### Environment setup
+
+Skapa `.env` i:
+
+```
+frontend/dashboard/client/
+```
+
+med innehåll:
+
+```
+VITE_API_URL=http://localhost:3001
+VITE_DASH_USER=admin
+VITE_DASH_PASS=admin
+```
+
+---
+
+# 🧱 Systemarkitektur
+
+Frontend kommunicerar med backend via REST API.
+
+```
+React Dashboard
+      ↓
+Spring Boot API
+      ↓
+Data sources
+(JSON/XML/API/CSV)
+```
+
+Backend ansvarar för:
+
+* datainsamling
+* normalisering
+* matchning
+* analys
+* prissimulering
+
+Frontend ansvarar för:
+
+* visualisering
+* interaktiv analys
+* filter och historik
+* användarinteraktion
+
+---
+
+# 📊 Funktioner
 
 ### Dashboard
-Frontend byggd i React som presenterar produkter, prisjämförelser och historik i ett tydligt och responsivt gränssnitt.
 
-### Backend
-Backend byggd i Spring Boot som hanterar datainsamling, bearbetning, matchning och API-logik.
+* Produktlista med marknadsjämförelse
+* Realtidsanalys av prisdifferenser
+* Dynamisk visualisering
+* Responsiv layout
+
+### Analys
+
+* Prisjämförelse mot marknad
+* Historikgrafer
+* Periodfilter
+* Matchning via EAN / identifierare
+
+### Backend-engine
+
+* Stöd för flera datakällor
+* Modulär parser-arkitektur
+* Robust JSON-hantering
+* REST-API för dashboard
 
 ---
 
-## Systemarkitektur
-Frontend kommunicerar med backend via REST-API. Backend hämtar data från interna filer och externa källor, bearbetar informationen och returnerar strukturerad JSON som frontend visualiserar.
+# 💰 Pricing Engine (pågående modul)
+
+Systemet är designat för att stödja både automatiska och manuella prisstrategier.
+
+Planerad funktionalitet:
+
+* rekommenderat pris baserat på marknadsmedian
+* automatisk undercut-strategi (t.ex −2%)
+* avrundningslogik (.90-pricing)
+* manuellt override-läge per produkt
+* audit-historik över prisändringar
+* stöd för ML-baserade rekommendationer
+
+Arkitekturen är byggd så att regelbaserad och ML-baserad prissättning kan samexistera utan att ändra API eller frontend.
 
 ---
 
-## Syfte
-Syftet med projektet är att automatisera delar av processen kring produktanalys och prissättning. Istället för manuella kontroller kan systemet samla information, jämföra priser och presentera resultatet i ett gränssnitt som gör analysen snabbare och mer tillförlitlig.
+# 🎯 Syfte
+
+Målet är att automatisera manuella analyser inom e-handel.
+Istället för att manuellt kontrollera konkurrentpriser kan systemet:
+
+* samla data
+* analysera marknaden
+* föreslå optimala priser
+* visualisera beslutstöd
 
 ---
 
-## Screenshots
+# 🖥 Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/hero-preview.png" width="1000">
+<img src="docs/screenshots/dashboard-overview.png" width="950">
 </p>
 
-### Dashboard overview
 <p align="center">
-  <img src="docs/screenshots/dashboard-overview.png" width="950">
+<img src="docs/screenshots/price-history-chart.png" width="950">
 </p>
 
-### Price history
 <p align="center">
-  <img src="docs/screenshots/price-history-chart.png" width="950">
+<img src="docs/screenshots/comparison-table.png" width="950">
 </p>
 
-### Comparison view
 <p align="center">
-  <img src="docs/screenshots/comparison-table.png" width="950">
-</p>
-
-### Product details
-<p align="center">
-  <img src="docs/screenshots/product-drawer.png" width="950">
+<img src="docs/screenshots/product-drawer.png" width="950">
 </p>
 
 ---
 
-## Nuvarande funktioner
-- Visning av produkter
-- Prisjämförelse mellan marknadspris och eget pris
-- Graf över prishistorik
-- Periodfilter för historik
-- Stabil datamodell med stöd för flera datakällor
+# 🧠 Arkitekturprincip
+
+Projektet är uppbyggt modulärt enligt principen:
+
+> **Nya funktioner ska kunna läggas till utan att ändra existerande systemlogik**
+
+Det innebär att nya datakällor, analysmotorer eller prissättningsstrategier kan implementeras som separata moduler.
 
 ---
 
-## Planerade förbättringar
-- Möjlighet att ändra produktpris direkt i dashboarden
-- Integration av fler datakällor och API-tjänster
-- Mer avancerad analys och rekommendationer
-- Databasstöd istället för enbart filbaserad data
+# 🔮 Roadmap
+
+Planerade förbättringar:
+
+* direkt prisändring i dashboard
+* fler datakällor
+* ML-baserad prissimulering
+* databasstöd
+* multi-tenant-stöd
+* notifieringar vid prisförändringar
 
 ---
 
-## Arkitekturprincip
-Projektet är uppbyggt modulärt så att nya datakällor, funktioner och analysmetoder enkelt kan läggas till utan att ändra systemets grundstruktur.
+# 🧩 Designfilosofi
+
+Projektet är byggt enligt riktlinjer inspirerade av enterprise-system:
+
+* separerad logik
+* tydlig API-struktur
+* modulär arkitektur
+* skalbar datamodell
+* framtidssäker design
+
+---
+
+# 👨‍💻 Användningsområden
+
+Systemet kan användas för:
+
+* e-handelsanalys
+* prisövervakning
+* marknadsjämförelser
+* beslutsstöd
+* intern BI-visualisering
+
+---
+
+# 📄 Licens
+
+MIT License
