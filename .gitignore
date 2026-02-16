@@ -6,7 +6,7 @@ Thumbs.db
 Desktop.ini
 
 ################################
-# IDE
+# IDE / Editors
 ################################
 .idea/
 .vscode/
@@ -26,14 +26,25 @@ pnpm-debug.log*
 lerna-debug.log*
 
 ################################
+# Environment files (ROOT)
+################################
+.env
+.env.*
+!.env.example
+
+################################
 # Frontend (React dashboard)
 ################################
 frontend/dashboard/client/node_modules/
 frontend/dashboard/client/dist/
 frontend/dashboard/client/dist-ssr/
 frontend/dashboard/client/.vite/
+
+# ignore real envs but allow example
 frontend/dashboard/client/.env
 frontend/dashboard/client/.env.*
+!frontend/dashboard/client/.env.example
+
 frontend/dashboard/client/*.local
 
 ################################
@@ -52,7 +63,7 @@ backend/**/target/
 build/
 
 ################################
-# Coverage / misc
+# Coverage / temp
 ################################
 coverage/
 *.swp
@@ -60,6 +71,6 @@ coverage/
 *~
 
 ################################
-# Global node_modules safeguard
+# Global safety nets
 ################################
 node_modules/
