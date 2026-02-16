@@ -26,11 +26,9 @@ public class ProductController {
     @Value("${app.data.companyPath}")
     private String companyPath;
 
-    // enrichment får vara enabled utan att vi automatiskt använder enriched som market
     @Value("${enrichment.enabled:false}")
     private boolean enrichmentEnabled;
 
-    // ✅ ny flagga som styr vilken market-källa som används
     @Value("${app.data.useEnrichedMarket:false}")
     private boolean useEnrichedMarket;
 
@@ -89,6 +87,15 @@ public class ProductController {
     public QueryResult<Product> company(@RequestParam Map<String, String> query) {
         return queryService.query(store.company(), query);
     }
+
+    @GetMapping("/api/company/products/{id}")
+    public Product companyById(@PathVariable String id) {
+        return store.company().stream()
+                .filter(p -> String.valueOf(p.id).equals(id))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("Company product not found"));
+    }
+
 
     @GetMapping("/api/all")
     public QueryResult<Product> all(@RequestParam Map<String, String> query) {

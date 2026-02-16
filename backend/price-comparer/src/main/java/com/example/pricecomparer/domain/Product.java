@@ -1,6 +1,7 @@
 package com.example.pricecomparer.domain;
 
 public class Product {
+
     public long id;
     public String name;
     public String brand;
@@ -15,5 +16,24 @@ public class Product {
     public Integer offersCount;
     public String lastUpdated;
     public String imageUrl;
+    public PriceMode priceMode = PriceMode.AUTO;
+    public Double manualPrice;
+    public Double recommendedPrice;
+
     public Product() {}
+
+    public PriceMode getPriceMode() {
+        return priceMode == null ? PriceMode.AUTO : priceMode;
+    }
+
+    public Double getEffectivePrice() {
+        if (getPriceMode() == PriceMode.MANUAL && manualPrice != null) {
+            return manualPrice;
+        }
+        return recommendedPrice;
+    }
+
+    public boolean isManual() {
+        return getPriceMode() == PriceMode.MANUAL;
+    }
 }

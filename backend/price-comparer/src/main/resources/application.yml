@@ -9,24 +9,14 @@ app:
     - "http://localhost:5173"
 
   data:
-    # LIGGER I: src/main/resources/data/
     marketPath: "classpath:data/products.mock.json"
-    companyPath: "classpath:data/company.mock.json"
+    companyPath: "file:C:/Users/eriks/eclipse-workspace/Product-Data-Analyzer/backend/price-comparer/data/company.products.json"
     historyPath: "classpath:data/price-history.json"
     useEnrichedMarket: false
 
     # finns kvar men används bara om du uttryckligen väljer det + enrichment använder det
     enrichedMarketPath: "file:./data/products.enriched.json"
 
-# =========================
-# PricesAPI (används bara om enrichment körs)
-# =========================
-#pricesapi:
-#  baseUrl: "https://api.pricesapi.io/api/v1"
-#  apiKey: "pricesapi_8UYyo4uJk4I1N3IV6jC9TboLFVy44R"
-#  country: "se"
-#  cacheTtlHours: 24
-#  authMode: "header"   # header | query
 
 # =========================
 # Enrichment
@@ -34,7 +24,6 @@ app:
 enrichment:
   enabled: true
 
-  # 🔒 Viktigt: kör inte enrichment automatiskt när du vill ha manuell kontroll
   runOnStartup: false
 
   maxProductsPerRun: 20

@@ -1,11 +1,13 @@
 package com.example.pricecomparer.service;
 
+import com.example.pricecomparer.domain.PriceMode;
 import com.example.pricecomparer.domain.Product;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -21,6 +23,7 @@ public class DataStoreService {
     private final AtomicReference<Map<String, Product>> marketByEan = new AtomicReference<>(Map.of());
     private final AtomicReference<Map<String, Product>> companyByEan = new AtomicReference<>(Map.of());
     private final AtomicReference<String> lastLoadedAt = new AtomicReference<>(null);
+    private final AtomicReference<String> lastCompanySource = new AtomicReference<>(null);
 
     public DataStoreService(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
@@ -43,6 +46,9 @@ public class DataStoreService {
         try {
             String effectiveMarketPath = pickMarketPath(marketPath, enrichedMarketPath, useEnrichedMarket);
 
+            // Enterprise: if companyPath is a file: path and missing, seed it from classpath mock
+            ensureCompanyFileIfMissing(companyPath);
+
             List<Map<String, Object>> rawMarket = readJsonArrayOrWrapped(effectiveMarketPath);
             List<Map<String, Object>> rawCompany = readJsonArrayOrWrapped(companyPath);
 
@@ -51,6 +57,14 @@ public class DataStoreService {
 
             m = m.stream().filter(p -> p.ean != null && !p.ean.isBlank()).toList();
             c = c.stream().filter(p -> p.ean != null && !p.ean.isBlank()).toList();
+
+            // Remember where company data came from (needed for persist)
+            lastCompanySource.set(companyPath);
+
+            // Defaults (backwards compatible)
+            for (Product p : c) {
+                if (p.priceMode == null) p.priceMode = PriceMode.AUTO;
+            }
 
             marketProducts.set(m);
             companyProducts.set(c);
@@ -65,6 +79,187 @@ public class DataStoreService {
             throw new RuntimeException("Failed to load JSON: " + e.getMessage(), e);
         }
     }
+
+    /* =========================================================
+       ENTERPRISE BOOT FIX: seed missing company file
+       ========================================================= */
+
+    private void ensureCompanyFileIfMissing(String companyPath) {
+        try {
+            if (companyPath == null || companyPath.isBlank()) return;
+
+            // Only seed writable file paths
+            if (!companyPath.startsWith("file:")) return;
+
+            Resource r = resourceLoader.getResource(companyPath);
+            if (r.exists()) return;
+
+            // Seed from classpath mock
+            Resource seed = resourceLoader.getResource("classpath:data/company.mock.json");
+            if (!seed.exists()) return;
+
+            File target = r.getFile();
+            File parent = target.getParentFile();
+            if (parent != null) parent.mkdirs();
+
+            Object root = om.readValue(seed.getInputStream(), Object.class);
+            om.writerWithDefaultPrettyPrinter().writeValue(target, root);
+
+            System.out.printf("[DATA] seeded missing company file from classpath: %s%n", target.getAbsolutePath());
+        } catch (Exception e) {
+            // Do not crash app boot because of seeding attempt
+            System.out.printf("[DATA] seed company file skipped: %s%n", e.getMessage());
+        }
+    }
+
+    /* =========================================================
+       PERSIST (company products)
+       ========================================================= */
+
+    public synchronized Map<String, Object> persistCompany() {
+        String source = lastCompanySource.get();
+        if (source == null || source.isBlank()) {
+            return Map.of("ok", false, "reason", "companyPath not set");
+        }
+
+        try {
+            boolean isClasspath = source.startsWith("classpath:");
+            if (isClasspath) {
+                return Map.of(
+                        "ok", false,
+                        "reason", "companyPath is classpath (read-only)",
+                        "companyPath", source,
+                        "hint", "set app.data.companyPath to a writable path, e.g. file:./data/company.products.json"
+                );
+            }
+
+            Resource r = resourceLoader.getResource(source);
+
+            File file = r.getFile();
+            File parent = file.getParentFile();
+            if (parent != null) parent.mkdirs();
+
+            om.writerWithDefaultPrettyPrinter().writeValue(file, companyProducts.get());
+
+            return Map.of(
+                    "ok", true,
+                    "writtenTo", file.getAbsolutePath(),
+                    "count", companyProducts.get().size()
+            );
+        } catch (Exception e) {
+            return Map.of(
+                    "ok", false,
+                    "reason", e.getMessage(),
+                    "companyPath", source
+            );
+        }
+    }
+
+    /* =========================================================
+       PRICING ENGINE MVP (in-memory)
+       ========================================================= */
+
+    public Product getCompanyById(long id) {
+        for (Product p : companyProducts.get()) {
+            if (p != null && p.id == id) return p;
+        }
+        return null;
+    }
+
+    public Product getCompanyByEan(String ean) {
+        if (ean == null || ean.isBlank()) return null;
+        return companyByEan.get().get(ean);
+    }
+
+    public Product setManualPrice(long productId, double manualPrice) {
+        if (manualPrice <= 0) throw new IllegalArgumentException("manualPrice must be > 0");
+        Product p = requireCompanyProduct(productId);
+        p.manualPrice = manualPrice;
+        p.priceMode = PriceMode.MANUAL;
+        p.lastUpdated = Instant.now().toString();
+        return p;
+    }
+
+    public Product setPriceMode(long productId, PriceMode mode) {
+        if (mode == null) mode = PriceMode.AUTO;
+        Product p = requireCompanyProduct(productId);
+        p.priceMode = mode;
+        p.lastUpdated = Instant.now().toString();
+        return p;
+    }
+
+    public Product recomputeRecommendedPrice(long productId) {
+        Product p = requireCompanyProduct(productId);
+        Double median = estimateMarketMedianFor(p);
+        if (median == null || median <= 0) {
+            p.recommendedPrice = null;
+            return p;
+        }
+
+        double undercut = median * 0.98; // MVP default: -2%
+        double rounded = roundToPoint90(undercut);
+
+        p.recommendedPrice = rounded;
+        p.lastUpdated = Instant.now().toString();
+        return p;
+    }
+
+    public Double getEffectivePrice(Product p) {
+        if (p == null) return null;
+        PriceMode mode = (p.priceMode == null) ? PriceMode.AUTO : p.priceMode;
+        if (mode == PriceMode.MANUAL && p.manualPrice != null) return p.manualPrice;
+        return p.recommendedPrice;
+    }
+
+    private Product requireCompanyProduct(long id) {
+        Product p = getCompanyById(id);
+        if (p == null) throw new NoSuchElementException("Company product not found: " + id);
+        if (p.priceMode == null) p.priceMode = PriceMode.AUTO;
+        return p;
+    }
+
+    /**
+     * MVP "median-ish":
+     * - Prefer market.priceMin/priceMax average when available
+     * - Else use market.price when present (>0)
+     */
+    private Double estimateMarketMedianFor(Product companyProduct) {
+        if (companyProduct == null || companyProduct.ean == null || companyProduct.ean.isBlank()) return null;
+
+        Product m = marketByEan.get().get(companyProduct.ean);
+        if (m == null) return null;
+
+        if (m.priceMin != null && m.priceMax != null && m.priceMin > 0 && m.priceMax > 0) {
+            return (m.priceMin + m.priceMax) / 2.0;
+        }
+        if (m.priceMin != null && m.priceMin > 0) return m.priceMin;
+        if (m.priceMax != null && m.priceMax > 0) return m.priceMax;
+        if (m.price > 0) return m.price;
+
+        return null;
+    }
+
+    /**
+     * Rounds to price ending with .90 (e.g., 199.90, 200.90).
+     * Always rounds UP to the next *.90 if needed.
+     */
+    private double roundToPoint90(double v) {
+        if (v <= 0) return 0;
+
+        double floor = Math.floor(v);
+        double candidate = floor + 0.90;
+
+        if (candidate + 1e-9 < v) {
+            candidate = (floor + 1.0) + 0.90;
+        }
+
+        if (candidate < 0.90) candidate = 0.90;
+        return Math.round(candidate * 100.0) / 100.0;
+    }
+
+    /* =========================================================
+       Existing loader/normalizer
+       ========================================================= */
 
     private String pickMarketPath(String marketPath, String enrichedMarketPath, boolean useEnrichedMarket) {
         if (!useEnrichedMarket) return marketPath;
@@ -107,15 +302,15 @@ public class DataStoreService {
 
         out.id = toLong(p.getOrDefault("id", idx), idx);
 
-        out.name = firstNonBlank(p, "name", "title", "productName");
-        if (out.name == null || out.name.isBlank()) out.name = "Unknown";
+        out.name = safeText(firstNonBlank(p, "name", "title", "productName"));
+        if (out.name.isBlank()) out.name = "Unknown";
 
-        out.brand = firstNonBlank(p, "brand", "manufacturer", "vendor", "Brand");
-        out.category = firstNonBlank(p, "category", "Category", "cat");
-        out.store = firstNonBlank(p, "store", "merchant");
-        out.url = firstNonBlank(p, "url", "link");
+        out.brand = safeText(firstNonBlank(p, "brand", "manufacturer", "vendor", "Brand"));
+        out.category = safeText(firstNonBlank(p, "category", "Category", "cat"));
+        out.store = safeText(firstNonBlank(p, "store", "merchant"));
+        out.url = safeText(firstNonBlank(p, "url", "link"));
 
-        out.imageUrl = firstNonBlank(p,
+        out.imageUrl = safeText(firstNonBlank(p,
                 "imageUrl",
                 "image_url",
                 "image",
@@ -125,7 +320,7 @@ public class DataStoreService {
                 "LowPic",
                 "smallImage",
                 "SmallImage"
-        );
+        ));
 
         Object priceObj = p.get("price");
         if (priceObj instanceof Map<?, ?> priceMap) {
@@ -135,14 +330,29 @@ public class DataStoreService {
             out.price = toDouble(priceObj, 0);
         }
 
-        out.ean = normalizeString(firstString(p, "ean", "gtin", "ean13"));
+        out.ean = safeText(normalizeString(firstString(p, "ean", "gtin", "ean13")));
 
         // optional enrichment fields
         out.priceMin = toNullableDouble(p.get("priceMin"));
         out.priceMax = toNullableDouble(p.get("priceMax"));
         out.ourPrice = toNullableDouble(p.get("ourPrice"));
         out.offersCount = toNullableInt(p.get("offersCount"));
-        out.lastUpdated = firstNonBlank(p, "lastUpdated");
+        out.lastUpdated = safeText(firstNonBlank(p, "lastUpdated"));
+
+        // Pricing fields (optional, backwards compatible)
+        out.manualPrice = toNullableDouble(p.get("manualPrice"));
+        out.recommendedPrice = toNullableDouble(p.get("recommendedPrice"));
+
+        Object pm = p.get("priceMode");
+        if (pm != null) {
+            try {
+                out.priceMode = PriceMode.valueOf(String.valueOf(pm).trim().toUpperCase(Locale.ROOT));
+            } catch (Exception ignored) {
+                out.priceMode = PriceMode.AUTO;
+            }
+        } else {
+            out.priceMode = PriceMode.AUTO;
+        }
 
         return out;
     }
@@ -178,6 +388,10 @@ public class DataStoreService {
         String x = s.trim();
         if (x.equalsIgnoreCase("null")) return "";
         return x;
+    }
+
+    private String safeText(String s) {
+        return s == null ? "" : s;
     }
 
     private long toLong(Object v, long fallback) {

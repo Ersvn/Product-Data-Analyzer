@@ -82,11 +82,16 @@ public class CompareController {
     }
 
     private double pickCompanyPrice(Product cp) {
-        // Om du använder ourPrice som “vårt pris”, välj den först
+        // Pricing Engine effective price (MANUAL overrides)
+        Double eff = cp.getEffectivePrice();
+        if (eff != null && eff > 0) return eff;
+
+        // Existing behavior fallback
         if (cp.ourPrice != null && cp.ourPrice > 0) return cp.ourPrice;
         if (cp.price > 0) return cp.price;
         return 0.0;
     }
+
 
     private boolean anyContains(String needle, String... vals) {
         for (String v : vals) {
