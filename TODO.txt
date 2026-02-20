@@ -1,0 +1,38 @@
+PRICING ENGINE ROADMAP
+
+CORE
+[ ] PricingStrategyEngine
+[ ] PricingContext
+[ ] PricingRule interface
+[ ] RuleRegistry
+
+RULES
+[ ] UndercutIfCompetitionRule
+[ ] SoloMarketPremiumRule
+[ ] IgnoreBelowCostRule
+[ ] MinMarginRule
+[ ] MaxMarginRule
+[ ] StockBasedPricingRule
+[ ] CompetitorCountRule
+
+POST PROCESSORS
+[ ] PsychologicalPricingProcessor
+[ ] CurrencyRoundingProcessor
+[ ] VATProcessor
+
+DATA SOURCES
+[ ] MarketDataProvider
+[ ] SupplierFeedProvider
+[ ] CacheLayer
+
+INFRA
+[ ] Metrics (Micrometer)
+[ ] Logging
+[ ] Rule tracing
+[ ] Rule timing profiler
+
+FUTURE
+[ ] Rule DSL
+[ ] Rule JSON config
+[ ] A/B pricing tests
+[ ] ML prediction adapter

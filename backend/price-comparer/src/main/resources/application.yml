@@ -9,14 +9,20 @@ app:
     - "http://localhost:5173"
 
   data:
-    marketPath: "classpath:data/products.mock.json"
-    companyPath: "file:C:/Users/eriks/eclipse-workspace/Product-Data-Analyzer/backend/price-comparer/data/company.products.json"
-    historyPath: "classpath:data/price-history.json"
+    # MARKNAD
+    marketPath: "classpath:data/company.mock.json"
+
+    # VÅRT LAGER (dina produkter)
+    companyPath: "classpath:data/products.mock.json"
+    historyPath: "file:./data/price-history.jsonl"
+    auditPath: "file:./data/audit-log.jsonl"
     useEnrichedMarket: false
 
     # finns kvar men används bara om du uttryckligen väljer det + enrichment använder det
     enrichedMarketPath: "file:./data/products.enriched.json"
 
+    overridesPath: "file:C:/Users/eriks/eclipse-workspace/Product-Data-Analyzer/backend/price-comparer/data/overrides.json"
+    autoPersistOverrides: true
 
 # =========================
 # Enrichment
@@ -95,3 +101,23 @@ icecat:
   enabled: true
   path: "file:C:/Users/eriks/Desktop/Icecat/daily.index.xml"
   prefer: high
+
+pricing:
+  mode: FIRST_MATCH_WINS   # eller APPLY_ALL
+
+  rules:
+    undercutIfCompetition:
+      enabled: true
+      undercutPercent: 0.01        # 1% under marketMin
+      requireCompetitors: true     # bara om competitorCount > 0
+
+    soloMarketPremium:
+      enabled: true
+      premiumFactor: 0.98          # marketMax * 0.98 när ensam (competitorCount == 0)
+
+    ignoreBelowCostMarket:
+      enabled: true
+
+  post:
+    psychological90:
+      enabled: true

@@ -1,0 +1,6 @@
+rootProject.name = "product-data-analyzer"
+
+include("core-engine")
+include("price-comparer")
+
+project(":price-comparer").projectDir = file("backend/price-comparer")

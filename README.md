@@ -8,10 +8,10 @@
 
 ![Preview](docs/screenshots/hero-preview.png)
 
-**Product Data Analyzer** är en fullstack-applikation som analyserar produktdata och marknadspriser i realtid.
-Systemet hämtar produktfeeds via API eller maskinläsbara format (JSON/XML/CSV), jämför priser mot marknadsdata och visualiserar resultatet i en interaktiv dashboard.
+**Product Data Analyzer** är en fullstack-plattform för realtidsanalys av produktdata och marknadspriser.
+Systemet analyserar produktfeeds (JSON/XML/API/CSV), matchar produkter via identifierare och genererar beslutsstöd för prissättning i en interaktiv dashboard.
 
-Projektet är designat som en **skalbar analysplattform** för e-handel, där syftet är att automatisera prissättning, produktanalys och marknadsinsikter.
+Projektet är designat som en **skalbar analys- och pricing-engine för e-handel** där fokus ligger på automation, datakvalitet och beslutsstöd.
 
 ---
 
@@ -19,7 +19,7 @@ Projektet är designat som en **skalbar analysplattform** för e-handel, där sy
 
 ### Backend
 
-```bash
+```
 cd backend/price-comparer
 gradlew.bat bootRun
 ```
@@ -34,7 +34,7 @@ http://localhost:3001
 
 ### Frontend
 
-```bash
+```
 cd frontend/dashboard/client
 npm install
 npm run dev
@@ -56,19 +56,15 @@ Skapa `.env` i:
 frontend/dashboard/client/
 ```
 
-med innehåll:
-
 ```
 VITE_API_URL=http://localhost:3001
 VITE_DASH_USER=admin
-VITE_DASH_PASS=admin
+VITE_DASH_PASS=change-me
 ```
 
 ---
 
 # 🧱 Systemarkitektur
-
-Frontend kommunicerar med backend via REST API.
 
 ```
 React Dashboard
@@ -79,74 +75,113 @@ Data sources
 (JSON/XML/API/CSV)
 ```
 
-Backend ansvarar för:
+### Backend ansvarar för
 
 * datainsamling
 * normalisering
-* matchning
-* analys
-* prissimulering
+* matchning via EAN
+* prisanalys
+* pricing-rekommendationer
+* API-exponering
 
-Frontend ansvarar för:
+### Frontend ansvarar för
 
 * visualisering
-* interaktiv analys
-* filter och historik
-* användarinteraktion
+* realtidsanalys
+* filter / sök
+* produktdetaljer
+* pricing-kontroller
 
 ---
 
 # 📊 Funktioner
 
-### Dashboard
+## Dashboard
 
-* Produktlista med marknadsjämförelse
-* Realtidsanalys av prisdifferenser
-* Dynamisk visualisering
-* Responsiv layout
+* Virtualized produktlista (snabb även med stora dataset)
+* Dynamisk sökning
+* Pagination + infinite loading
+* Drawer-baserad produktvy
+* Prishistorikgrafer
 
-### Analys
+## Analysmotor
 
-* Prisjämförelse mot marknad
-* Historikgrafer
-* Periodfilter
-* Matchning via EAN / identifierare
+* Marknadspris vs eget pris
+* Matchning via EAN
+* Prisintervall-stöd
+* Historikfilter
 
-### Backend-engine
+## Data Engine
 
-* Stöd för flera datakällor
-* Modulär parser-arkitektur
-* Robust JSON-hantering
-* REST-API för dashboard
+* Multi-source ingestion
+* Automatisk normalisering
+* Robust parserlogik
+* Fel-tolerant datahantering
 
 ---
 
-# 💰 Pricing Engine (pågående modul)
+# 💰 Pricing Engine (aktiv modul)
 
-Systemet är designat för att stödja både automatiska och manuella prisstrategier.
+Systemet stödjer nu både automatiska och manuella prisstrategier.
 
-Planerad funktionalitet:
+### Implementerat
 
-* rekommenderat pris baserat på marknadsmedian
-* automatisk undercut-strategi (t.ex −2%)
-* avrundningslogik (.90-pricing)
-* manuellt override-läge per produkt
-* audit-historik över prisändringar
-* stöd för ML-baserade rekommendationer
+* AUTO-läge → systemet räknar rekommenderat pris
 
-Arkitekturen är byggd så att regelbaserad och ML-baserad prissättning kan samexistera utan att ändra API eller frontend.
+* MANUAL-läge → användaren sätter pris själv
+
+* Effektivt pris beräknas dynamiskt:
+
+  ```
+  MANUAL → manualPrice
+  annars → recommendedPrice
+  annars → fallback price
+  ```
+
+* Medianbaserad rekommendation
+
+* Undercut-strategi (−2%)
+
+* Smart avrundning (.90 pricing)
+
+* Realtids-API för prissättning
+
+---
+
+### Pricing API
+
+```
+GET  /api/company/products/{id}/pricing
+PUT  /api/company/products/{id}/pricing/manual
+PUT  /api/company/products/{id}/pricing/mode
+POST /api/company/products/{id}/pricing/recompute
+```
+
+Alla write-endpoints kräver Basic Auth.
+
+---
+
+# 🔐 Säkerhet
+
+Backend skyddas med:
+
+* Spring Security
+* Basic Auth
+* CORS whitelist
+* Request filtering
 
 ---
 
 # 🎯 Syfte
 
-Målet är att automatisera manuella analyser inom e-handel.
-Istället för att manuellt kontrollera konkurrentpriser kan systemet:
+Målet är att ersätta manuella prisanalyser med automatiserad beslutslogik.
 
-* samla data
-* analysera marknaden
+Systemet kan:
+
+* analysera marknadspris
+* identifiera prisskillnader
 * föreslå optimala priser
-* visualisera beslutstöd
+* visualisera beslutsstöd
 
 ---
 
@@ -172,35 +207,49 @@ Istället för att manuellt kontrollera konkurrentpriser kan systemet:
 
 # 🧠 Arkitekturprincip
 
-Projektet är uppbyggt modulärt enligt principen:
+Projektet är byggt enligt principen:
 
-> **Nya funktioner ska kunna läggas till utan att ändra existerande systemlogik**
+> **Extensibility without modification**
 
-Det innebär att nya datakällor, analysmotorer eller prissättningsstrategier kan implementeras som separata moduler.
+Det innebär att nya datakällor, analysmotorer eller pricingstrategier kan läggas till utan att ändra existerande logik.
 
 ---
 
 # 🔮 Roadmap
 
-Planerade förbättringar:
+Nästa planerade steg:
 
-* direkt prisändring i dashboard
-* fler datakällor
-* ML-baserad prissimulering
-* databasstöd
+### Kort sikt
+
+* persistens av manuella priser
+* audit log
+* bulk-pricing actions
+* pricing rules config
+
+### Medellång sikt
+
+* ML-baserad pricing-modell
 * multi-tenant-stöd
-* notifieringar vid prisförändringar
+* databaslager
+* webhook-notifieringar
+
+### Lång sikt
+
+* SaaS-version
+* plugin-system
+* real-time competitor scraping
+* pricing automation engine
 
 ---
 
 # 🧩 Designfilosofi
 
-Projektet är byggt enligt riktlinjer inspirerade av enterprise-system:
+Arkitekturen följer enterprise-principer:
 
-* separerad logik
+* modulär struktur
+* separerad domänlogik
+* testbar service-layer
 * tydlig API-struktur
-* modulär arkitektur
-* skalbar datamodell
 * framtidssäker design
 
 ---
@@ -210,10 +259,11 @@ Projektet är byggt enligt riktlinjer inspirerade av enterprise-system:
 Systemet kan användas för:
 
 * e-handelsanalys
-* prisövervakning
-* marknadsjämförelser
+* pricing automation
+* konkurrensbevakning
 * beslutsstöd
-* intern BI-visualisering
+* intern BI
+* marknadsanalys
 
 ---
 

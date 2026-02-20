@@ -1,0 +1,67 @@
+[ {
+  "id" : "1",
+  "ean" : "0095205114126",
+  "priceMode" : "MANUAL",
+  "manualPricePresent" : true,
+  "manualPrice" : 8299.0,
+  "ourPricePresent" : true,
+  "ourPrice" : null,
+  "recommendedPricePresent" : true,
+  "recommendedPrice" : 7919.9,
+  "lastUpdated" : "2026-02-19T14:01:32.299263500Z"
+}, {
+  "id" : "219",
+  "ean" : "8721038000337",
+  "priceMode" : "AUTO",
+  "manualPricePresent" : true,
+  "manualPrice" : null,
+  "ourPricePresent" : true,
+  "ourPrice" : null,
+  "recommendedPricePresent" : true,
+  "recommendedPrice" : 5454.9,
+  "lastUpdated" : "2026-02-19T15:40:57.579727900Z"
+}, {
+  "id" : "867",
+  "ean" : "8712581769864",
+  "priceMode" : "AUTO",
+  "manualPricePresent" : true,
+  "manualPrice" : null,
+  "ourPricePresent" : true,
+  "ourPrice" : null,
+  "recommendedPricePresent" : true,
+  "recommendedPrice" : 22915.9,
+  "lastUpdated" : "2026-02-19T15:40:15.720839300Z"
+}, {
+  "id" : "2890",
+  "ean" : "0194735391479",
+  "priceMode" : "MANUAL",
+  "manualPricePresent" : true,
+  "manualPrice" : 36750.0,
+  "ourPricePresent" : true,
+  "ourPrice" : null,
+  "recommendedPricePresent" : true,
+  "recommendedPrice" : 43207.9,
+  "lastUpdated" : "2026-02-19T14:15:40.867697500Z"
+}, {
+  "id" : "3627",
+  "ean" : "8712581752859",
+  "priceMode" : "AUTO",
+  "manualPricePresent" : true,
+  "manualPrice" : null,
+  "ourPricePresent" : true,
+  "ourPrice" : null,
+  "recommendedPricePresent" : true,
+  "recommendedPrice" : 4719.9,
+  "lastUpdated" : "2026-02-19T15:34:55.396475800Z"
+}, {
+  "id" : "6742",
+  "ean" : "0198122955336",
+  "priceMode" : "MANUAL",
+  "manualPricePresent" : true,
+  "manualPrice" : 39999.0,
+  "ourPricePresent" : true,
+  "ourPrice" : null,
+  "recommendedPricePresent" : true,
+  "recommendedPrice" : null,
+  "lastUpdated" : "2026-02-19T13:14:01.371213Z"
+} ]
