@@ -187,6 +187,16 @@ class ApiClient {
             { method: "POST" }
         );
     }
+
+    /* =========================
+       BULK PRICING
+    ========================= */
+    recomputeAllPricing({ persist = true } = {}) {
+        return this.request(
+            `/api/company/products/pricing/recompute-all${toQuery({ persist })}`,
+            { method: "POST" }
+        );
+    }
 }
 
 export const api = new ApiClient();

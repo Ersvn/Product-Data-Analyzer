@@ -104,7 +104,7 @@ public class DataStoreService {
             String effectiveMarketPath = pickMarketPath(marketPath, enrichedMarketPath, useEnrichedMarket);
 
             // Enterprise: if companyPath is a file: path and missing, seed it from classpath mock
-            ensureCompanyFileIfMissing(companyPath);
+            ensureInventoryFileIfMissing(companyPath);
 
             List<Map<String, Object>> rawMarket = readJsonArrayOrWrapped(effectiveMarketPath);
             List<Map<String, Object>> rawCompany = readJsonArrayOrWrapped(companyPath);
@@ -400,6 +400,38 @@ public class DataStoreService {
        PRICING ENGINE (recommended price)
        ========================================================= */
 
+    // =========================================================
+    // NEW: Bulk recompute support (so you don't open every product)
+    // =========================================================
+    public record BulkRecomputeStats(int recomputed, int skipped, int errors) {}
+
+    /**
+     * Recompute recommended price for ALL company products.
+     * - Uses recomputeRecommendedPrice(productId) (same logic as per-item recompute)
+     * - Never throws (counts errors instead)
+     */
+    public BulkRecomputeStats recomputeAllCompanyPrices() {
+        int ok = 0, skipped = 0, errors = 0;
+
+        List<Product> list = companyProducts.get();
+        if (list == null || list.isEmpty()) return new BulkRecomputeStats(0, 0, 0);
+
+        for (Product p : list) {
+            try {
+                if (p == null || p.id <= 0) { skipped++; continue; }
+                recomputeRecommendedPrice(p.id);
+                ok++;
+            } catch (Exception e) {
+                errors++;
+            }
+        }
+
+        return new BulkRecomputeStats(ok, skipped, errors);
+    }
+    // =========================================================
+    // END NEW
+    // =========================================================
+
     public Product getCompanyById(long id) {
         for (Product p : companyProducts.get()) {
             if (p != null && p.id == id) return p;
@@ -519,7 +551,7 @@ public class DataStoreService {
        ENTERPRISE BOOT FIX: seed missing company file
        ========================================================= */
 
-    private void ensureCompanyFileIfMissing(String companyPath) {
+    private void ensureInventoryFileIfMissing(String companyPath) {
         try {
             if (companyPath == null || companyPath.isBlank()) return;
             if (!companyPath.startsWith("file:")) return;
@@ -527,7 +559,8 @@ public class DataStoreService {
             Resource r = resourceLoader.getResource(companyPath);
             if (r.exists()) return;
 
-            Resource seed = resourceLoader.getResource("classpath:data/company.mock.json");
+            // Seed should be "mine" (inventory), not market
+            Resource seed = resourceLoader.getResource("classpath:data/inventory.mock.json");
             if (!seed.exists()) return;
 
             File target = r.getFile();

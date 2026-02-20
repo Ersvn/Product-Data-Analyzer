@@ -38,32 +38,73 @@ public class CompanyProductWriteController {
         return (a == null) ? "unknown" : a.getName();
     }
 
+    private ResponseEntity<?> notFoundId(long id) {
+        return ResponseEntity.status(404).body(Map.of("ok", false, "error", "Company product not found: " + id));
+    }
+
+    private ResponseEntity<?> notFoundEan(String ean) {
+        return ResponseEntity.status(404).body(Map.of("ok", false, "error", "Company product not found for ean: " + ean));
+    }
+
+    /**
+     * Canonical pricing view model for the UI:
+     * - Always includes market snapshot (when market exists)
+     * - Uses same comparable price logic as dashboard/workqueue
+     * - Includes gapKr/gapPct computed server-side for consistency
+     */
     private Map<String, Object> pricingResponse(Product p, Map<String, Object> persisted) {
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("ok", true);
         res.put("productId", p.id);
         res.put("ean", p.ean);
+
         res.put("priceMode", p.getPriceMode().name());
         res.put("manualPrice", p.manualPrice);
         res.put("recommendedPrice", p.recommendedPrice);
-        res.put("effectivePrice", store.getEffectivePrice(p));
+
+        Double ourComparable = store.getOurComparablePrice(p);
+        res.put("effectivePrice", ourComparable);
         res.put("lastUpdated", p.lastUpdated);
+
+        // ----- Market snapshot (single source of truth) -----
+        Product m = store.getMarketProductByEan(p.ean);
+        res.put("marketFound", m != null);
+
+        if (m != null) {
+            res.put("marketPriceMin", m.priceMin);
+            res.put("marketPriceMax", m.priceMax);
+
+            Double bench = store.getMarketBenchmarkPrice(p);
+            // New canonical field
+            res.put("marketBenchmarkPrice", bench);
+            // Back-compat alias (frontend might still read marketPrice)
+            res.put("marketPrice", bench);
+
+            res.put("competitorCount", m.offersCount);
+            res.put("marketLastUpdated", m.lastUpdated);
+
+            if (bench != null && bench > 0 && ourComparable != null) {
+                double gapKr = ourComparable - bench;
+                res.put("gapKr", gapKr);
+                res.put("gapPct", gapKr / bench);
+            }
+        }
+
         if (persisted != null) res.put("persist", persisted);
         return res;
     }
 
-    private ResponseEntity<?> notFound(long id) {
-        return ResponseEntity.status(404).body(Map.of("ok", false, "error", "Company product not found: " + id));
-    }
+    // ======================================================
+    // ID-based endpoints (keep for back-compat)
+    // ======================================================
 
-    // ---------- READ pricing ----------
     @GetMapping("/{id}/pricing")
     public ResponseEntity<?> pricing(
             @PathVariable long id,
             @RequestParam(defaultValue = "true") boolean recompute
     ) {
         Product p = store.getCompanyById(id);
-        if (p == null) return notFound(id);
+        if (p == null) return notFoundId(id);
 
         if (recompute) {
             store.recomputeRecommendedPrice(id);
@@ -73,37 +114,34 @@ public class CompanyProductWriteController {
         return ResponseEntity.ok(pricingResponse(p, null));
     }
 
-    // ---------- WRITE manual ----------
     @PutMapping("/{id}/pricing/manual")
     public ResponseEntity<?> setManual(
             @PathVariable long id,
             @RequestBody ManualPriceRequest req,
             HttpServletRequest http
     ) {
-        if (req == null || req.manualPrice == null) {
-            return ResponseEntity.badRequest().body(Map.of("ok", false, "error", "manualPrice is required"));
+        if (req == null || req.manualPrice == null || req.manualPrice <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "error", "manualPrice must be > 0"));
         }
 
         Product before = store.getCompanyById(id);
-        if (before == null) return notFound(id);
+        if (before == null) return notFoundId(id);
 
         Product p = store.setManualPrice(id, req.manualPrice);
-        if (p == null) return notFound(id);
+        if (p == null) return notFoundId(id);
 
-        // Håll recommended up to date för UI (även om MANUAL vinner)
+        // Keep recommended up to date for UI (even if MANUAL wins)
         store.recomputeRecommendedPrice(id);
         p = store.getCompanyById(id);
 
         Map<String, Object> persisted = store.persistCompany();
 
-        // history + audit
         history.append("SET_MANUAL", before, p);
         audit.log(http, actor(), "SET_MANUAL", id, Map.of("manualPrice", req.manualPrice));
 
         return ResponseEntity.ok(pricingResponse(p, persisted));
     }
 
-    // ---------- WRITE mode ----------
     @PutMapping("/{id}/pricing/mode")
     public ResponseEntity<?> setMode(
             @PathVariable long id,
@@ -115,19 +153,17 @@ public class CompanyProductWriteController {
         }
 
         Product before = store.getCompanyById(id);
-        if (before == null) return notFound(id);
+        if (before == null) return notFoundId(id);
 
         PriceMode mode = req.priceMode;
 
         Product p = store.setPriceMode(id, mode);
-        if (p == null) return notFound(id);
+        if (p == null) return notFoundId(id);
 
         if (mode == PriceMode.AUTO) {
             store.recomputeRecommendedPrice(id);
-            p = store.getCompanyById(id);
-        } else {
-            p = store.getCompanyById(id);
         }
+        p = store.getCompanyById(id);
 
         Map<String, Object> persisted = store.persistCompany();
 
@@ -137,23 +173,120 @@ public class CompanyProductWriteController {
         return ResponseEntity.ok(pricingResponse(p, persisted));
     }
 
-    // ---------- WRITE recompute ----------
     @PostMapping("/{id}/pricing/recompute")
     public ResponseEntity<?> recompute(
             @PathVariable long id,
             HttpServletRequest http
     ) {
         Product before = store.getCompanyById(id);
-        if (before == null) return notFound(id);
+        if (before == null) return notFoundId(id);
 
         Product p = store.recomputeRecommendedPrice(id);
-        if (p == null) return notFound(id);
+        if (p == null) return notFoundId(id);
 
         Map<String, Object> persisted = store.persistCompany();
         p = store.getCompanyById(id);
 
         history.append("RECOMPUTE", before, p);
         audit.log(http, actor(), "RECOMPUTE", id, Map.of());
+
+        return ResponseEntity.ok(pricingResponse(p, persisted));
+    }
+
+    // ======================================================
+    // EAN-based endpoints (match frontend + stable key)
+    // ======================================================
+
+    @GetMapping("/by-ean/{ean}/pricing")
+    public ResponseEntity<?> pricingByEan(
+            @PathVariable String ean,
+            @RequestParam(defaultValue = "true") boolean recompute
+    ) {
+        Product p = store.getCompanyProductByEan(ean);
+        if (p == null) return notFoundEan(ean);
+
+        if (recompute) {
+            store.recomputeRecommendedPrice(p.id);
+            p = store.getCompanyById(p.id);
+        }
+
+        return ResponseEntity.ok(pricingResponse(p, null));
+    }
+
+    @PutMapping("/by-ean/{ean}/pricing/manual")
+    public ResponseEntity<?> setManualByEan(
+            @PathVariable String ean,
+            @RequestBody ManualPriceRequest req,
+            HttpServletRequest http
+    ) {
+        if (req == null || req.manualPrice == null || req.manualPrice <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "error", "manualPrice must be > 0"));
+        }
+
+        Product before = store.getCompanyProductByEan(ean);
+        if (before == null) return notFoundEan(ean);
+
+        Product p = store.setManualPrice(before.id, req.manualPrice);
+        if (p == null) return notFoundEan(ean);
+
+        store.recomputeRecommendedPrice(before.id);
+        p = store.getCompanyById(before.id);
+
+        Map<String, Object> persisted = store.persistCompany();
+
+        history.append("SET_MANUAL", before, p);
+        audit.log(http, actor(), "SET_MANUAL", before.id, Map.of("manualPrice", req.manualPrice));
+
+        return ResponseEntity.ok(pricingResponse(p, persisted));
+    }
+
+    @PutMapping("/by-ean/{ean}/pricing/mode")
+    public ResponseEntity<?> setModeByEan(
+            @PathVariable String ean,
+            @RequestBody PriceModeRequest req,
+            HttpServletRequest http
+    ) {
+        if (req == null || req.priceMode == null) {
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "error", "priceMode is required"));
+        }
+
+        Product before = store.getCompanyProductByEan(ean);
+        if (before == null) return notFoundEan(ean);
+
+        PriceMode mode = req.priceMode;
+
+        Product p = store.setPriceMode(before.id, mode);
+        if (p == null) return notFoundEan(ean);
+
+        if (mode == PriceMode.AUTO) {
+            store.recomputeRecommendedPrice(before.id);
+        }
+        p = store.getCompanyById(before.id);
+
+        Map<String, Object> persisted = store.persistCompany();
+
+        history.append("SET_MODE", before, p);
+        audit.log(http, actor(), "SET_MODE", before.id, Map.of("priceMode", mode.name()));
+
+        return ResponseEntity.ok(pricingResponse(p, persisted));
+    }
+
+    @PostMapping("/by-ean/{ean}/pricing/recompute")
+    public ResponseEntity<?> recomputeByEan(
+            @PathVariable String ean,
+            HttpServletRequest http
+    ) {
+        Product before = store.getCompanyProductByEan(ean);
+        if (before == null) return notFoundEan(ean);
+
+        Product p = store.recomputeRecommendedPrice(before.id);
+        if (p == null) return notFoundEan(ean);
+
+        Map<String, Object> persisted = store.persistCompany();
+        p = store.getCompanyById(before.id);
+
+        history.append("RECOMPUTE", before, p);
+        audit.log(http, actor(), "RECOMPUTE", before.id, Map.of());
 
         return ResponseEntity.ok(pricingResponse(p, persisted));
     }

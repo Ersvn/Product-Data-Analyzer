@@ -42,8 +42,8 @@ public class CompareController {
             if (!passesQ) continue;
 
             if (mp != null && cp != null) {
-                double marketPrice = pickMarketPrice(mp);
-                double companyPrice = pickCompanyPrice(cp);
+                double marketPrice = pickMarketBenchmark(cp, mp);
+                double companyPrice = pickCompanyComparable(cp);
 
                 double diff = companyPrice - marketPrice;
 
@@ -55,7 +55,7 @@ public class CompareController {
             }
         }
 
-        // Sortera “värst (dyrast)” högst först (mer logiskt i dashboard)
+        // Sortera “värst (dyrast)” högst först
         matched.sort((a, b) -> Double.compare(b.priceDiff, a.priceDiff));
 
         CompareResponse out = new CompareResponse();
@@ -74,24 +74,29 @@ public class CompareController {
         return out;
     }
 
-    private double pickMarketPrice(Product mp) {
-        // Om enriched har priceMin/priceMax, ta min som “bästa marknadspris”
-        if (mp.priceMin != null && mp.priceMin > 0) return mp.priceMin;
+    private double pickMarketBenchmark(Product cp, Product mp) {
+        // Primary: use the single source of truth benchmark logic (median/min/max/price)
+        Double bench = store.getMarketBenchmarkPrice(cp);
+        if (bench != null && bench > 0) return bench;
+
+        // Secondary fallback (should rarely happen if indices are correct)
+        if (mp == null) return 0.0;
+        Double min = mp.priceMin;
+        Double max = mp.priceMax;
+
+        if (min != null && max != null && min > 0 && max > 0) return (min + max) / 2.0;
+        if (min != null && min > 0) return min;
+        if (max != null && max > 0) return max;
         if (mp.price > 0) return mp.price;
+
         return 0.0;
     }
 
-    private double pickCompanyPrice(Product cp) {
-        // Pricing Engine effective price (MANUAL overrides)
-        Double eff = cp.getEffectivePrice();
-        if (eff != null && eff > 0) return eff;
-
-        // Existing behavior fallback
-        if (cp.ourPrice != null && cp.ourPrice > 0) return cp.ourPrice;
-        if (cp.price > 0) return cp.price;
+    private double pickCompanyComparable(Product cp) {
+        Double our = store.getOurComparablePrice(cp);
+        if (our != null && our > 0) return our;
         return 0.0;
     }
-
 
     private boolean anyContains(String needle, String... vals) {
         for (String v : vals) {

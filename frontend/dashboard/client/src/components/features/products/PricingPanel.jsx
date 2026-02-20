@@ -21,32 +21,29 @@ function parseMoneyInput(raw) {
 }
 
 /**
- * Marknadsvärden kan komma från:
- *  - serverState.marketPriceMin / marketPriceMax / marketPrice (rekommenderat)
- *  - eller legacy: product.priceMin / priceMax / price
+ * Marknadsvärden SKA komma från serverState:
+ * - marketBenchmarkPrice (canonical)
+ * - eller marketPrice (alias/back-compat)
+ * - samt marketPriceMin/marketPriceMax/competitorCount om du vill visa mer info
+ *
+ * Viktigt: vi gissar INTE marknad från product.priceMin/priceMax/price
+ * eftersom "product" i lager-vyn representerar dina egna inventory-fält.
  */
 function marketMedianFrom(merged) {
     if (!merged) return null;
 
-    // Prefer server-provided explicit market fields (stabilt oavsett vy)
+    const bench = toNumberOrNull(merged.marketBenchmarkPrice);
+    if (bench != null && bench > 0) return bench;
+
+    const mid = toNumberOrNull(merged.marketPrice); // back-compat alias
+    if (mid != null && mid > 0) return mid;
+
+    // Optional: om server bara skickar min/max utan benchmark, räkna median
     const minS = toNumberOrNull(merged.marketPriceMin);
     const maxS = toNumberOrNull(merged.marketPriceMax);
-    const midS = toNumberOrNull(merged.marketPrice);
-
     if (minS != null && maxS != null && minS > 0 && maxS > 0) return (minS + maxS) / 2;
-    if (midS != null && midS > 0) return midS;
     if (minS != null && minS > 0) return minS;
     if (maxS != null && maxS > 0) return maxS;
-
-    // Fallback legacy (kan vara “fel” i Marknad-vy, men bättre än null om server inte stödjer market fields ännu)
-    const min = toNumberOrNull(merged.priceMin);
-    const max = toNumberOrNull(merged.priceMax);
-    if (min != null && max != null && min > 0 && max > 0) return (min + max) / 2;
-    if (min != null && min > 0) return min;
-    if (max != null && max > 0) return max;
-
-    const p = toNumberOrNull(merged.price);
-    if (p != null && p > 0) return p;
 
     return null;
 }
@@ -104,8 +101,6 @@ export default function PricingPanel({ productKey, product, onProductPatched }) 
         (res) => {
             if (!res) return;
 
-            // server kan returnera:
-            // { priceMode, manualPrice, recommendedPrice, effectivePrice, lastUpdated, marketPriceMin, marketPriceMax, competitorCount, ... }
             onProductPatched?.({
                 priceMode: res.priceMode,
                 manualPrice: res.manualPrice ?? null,
@@ -113,11 +108,16 @@ export default function PricingPanel({ productKey, product, onProductPatched }) 
                 effectivePrice: res.effectivePrice ?? null,
                 lastUpdated: res.lastUpdated ?? "",
 
-                // valfritt: låt parent få marknadsfält om server skickar dem
+                // market snapshot (optional but useful)
                 marketPriceMin: res.marketPriceMin ?? undefined,
                 marketPriceMax: res.marketPriceMax ?? undefined,
-                marketPrice: res.marketPrice ?? undefined,
+                marketBenchmarkPrice: res.marketBenchmarkPrice ?? undefined,
+                marketPrice: res.marketPrice ?? undefined, // alias/back-compat
                 competitorCount: res.competitorCount ?? undefined,
+                marketLastUpdated: res.marketLastUpdated ?? undefined,
+
+                gapKr: res.gapKr ?? undefined,
+                gapPct: res.gapPct ?? undefined,
             });
         },
         [onProductPatched]
@@ -210,14 +210,27 @@ export default function PricingPanel({ productKey, product, onProductPatched }) 
         }
     }, [productKey, patchParent, addToast]);
 
-    // competitor count: prefer server explicit, fallback legacy offersCount
+    // competitor count: prefer server explicit
     const competitors = useMemo(() => {
         const cc = toNumberOrNull(merged.competitorCount);
         if (cc != null) return cc;
-        const oc = toNumberOrNull(merged.offersCount);
-        if (oc != null) return oc;
         return null;
     }, [merged]);
+
+    // Optional: gap from server if present (else compute)
+    const gapKr = useMemo(() => {
+        const g = toNumberOrNull(merged.gapKr);
+        if (g != null) return g;
+        if (delta != null) return delta;
+        return null;
+    }, [merged, delta]);
+
+    const gapPct = useMemo(() => {
+        const gp = toNumberOrNull(merged.gapPct);
+        if (gp != null) return gp;
+        if (gapKr == null || marketMedian == null || marketMedian <= 0) return null;
+        return gapKr / marketMedian;
+    }, [merged, gapKr, marketMedian]);
 
     return (
         <div className="pricing-panel">
@@ -230,63 +243,68 @@ export default function PricingPanel({ productKey, product, onProductPatched }) 
 
                         <Badge variant="default">Rekommenderat: {formatMoney(merged.recommendedPrice)}</Badge>
 
-                        {marketMedian != null && (
+                        {marketMedian != null ? (
                             <Badge variant="info">
                                 Marknad: {formatMoney(marketMedian)}
                                 {competitors != null ? <span className="delta"> · {competitors} offers</span> : null}
-                                {delta != null && (
+                                {gapKr != null ? (
                                     <span className="delta">
                     {" "}
-                                        ({delta >= 0 ? "+" : ""}
-                                        {formatMoney(delta).replace(" kr", "")} kr)
+                                        ({gapKr >= 0 ? "+" : ""}
+                                        {formatMoney(gapKr)}
+                                        {gapPct != null ? ` · ${(gapPct * 100).toFixed(1)}%` : ""})
                   </span>
-                                )}
+                                ) : null}
                             </Badge>
+                        ) : (
+                            <Badge variant="muted">Marknad: saknas</Badge>
                         )}
+
+                        {loading ? <Badge variant="muted">Laddar…</Badge> : null}
                     </div>
+
+                    {err ? <div className="pricing-panel__error">{err}</div> : null}
                 </div>
 
                 <div className="pricing-panel__actions">
-                    <Button onClick={onRecompute} loading={saving} variant="secondary" size="sm">
+                    <Button disabled={saving || loading} onClick={onRecompute} variant="secondary">
                         Räkna om
                     </Button>
 
-                    {!isManual ? (
-                        <Button onClick={() => onSwitchMode("MANUAL")} loading={saving} variant="ghost" size="sm">
-                            Växla till MANUAL
+                    {isManual ? (
+                        <Button disabled={saving || loading} onClick={() => onSwitchMode("AUTO")} variant="secondary">
+                            Byt till AUTO
                         </Button>
                     ) : (
-                        <Button onClick={() => onSwitchMode("AUTO")} loading={saving} variant="ghost" size="sm">
-                            Växla till AUTO
+                        <Button disabled={saving || loading} onClick={() => onSwitchMode("MANUAL")} variant="secondary">
+                            Byt till MANUAL
                         </Button>
                     )}
-
-                    <Button onClick={() => refresh({ recompute: false })} loading={saving} variant="ghost" size="sm">
-                        Uppdatera
-                    </Button>
                 </div>
             </div>
 
-            <div className="pricing-panel__manual">
-                <label className="pricing-panel__label">Sätt manuellt pris</label>
-                <div className="pricing-panel__input-group">
-                    <Input
-                        value={manualInput}
-                        onChange={(e) => setManualInput(e.target.value)}
-                        placeholder="t.ex. 199.90"
-                        disabled={saving}
-                        style={{ width: 160 }}
-                    />
-                    <Button onClick={onSaveManual} loading={saving} variant="primary" size="sm">
-                        Spara
-                    </Button>
+            <div className="pricing-panel__body">
+                <div className="pricing-panel__row">
+                    <div className="pricing-panel__label">Manuellt pris</div>
+                    <div className="pricing-panel__field">
+                        <Input
+                            value={manualInput}
+                            onChange={(e) => setManualInput(e.target.value)}
+                            placeholder="t.ex. 199"
+                            disabled={!isManual || saving || loading}
+                        />
+                        <Button onClick={onSaveManual} disabled={!isManual || saving || loading} variant="primary">
+                            Spara
+                        </Button>
+                    </div>
                 </div>
 
-                {merged?.lastUpdated ? <span className="pricing-panel__meta">Senast uppdaterad: {merged.lastUpdated}</span> : null}
+                <div className="pricing-panel__meta">
+                    <div>EAN: <strong>{productKey}</strong></div>
+                    {merged.lastUpdated ? <div>Last updated: {merged.lastUpdated}</div> : null}
+                    {merged.marketLastUpdated ? <div>Market updated: {merged.marketLastUpdated}</div> : null}
+                </div>
             </div>
-
-            {loading && <div className="pricing-panel__meta">Laddar prissättning…</div>}
-            {err && <div className="pricing-panel__error">{err}</div>}
         </div>
     );
 }

@@ -10,10 +10,10 @@ app:
 
   data:
     # MARKNAD
-    marketPath: "classpath:data/company.mock.json"
+    marketPath: "classpath:data/market.mock.json"
 
     # VÅRT LAGER (dina produkter)
-    companyPath: "classpath:data/products.mock.json"
+    companyPath: "classpath:data/inventory.mock.json"
     historyPath: "file:./data/price-history.jsonl"
     auditPath: "file:./data/audit-log.jsonl"
     useEnrichedMarket: false
