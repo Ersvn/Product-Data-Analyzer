@@ -27,14 +27,13 @@ async function requestJson(path, { method = "GET", body } = {}) {
         throw new Error(`HTTP ${res.status} for ${path}${text ? `: ${text}` : ""}`);
     }
 
-    // Some endpoints might return empty body
+    // Endpoints might return empty body
     const ct = res.headers.get("content-type") || "";
     if (!ct.includes("application/json")) return null;
     return res.json();
 }
 
 // Existing endpoints
-
 export function fetchMarketProducts({ q = "", sort = "" } = {}) {
     const params = new URLSearchParams();
     if (q.trim()) params.set("q", q.trim());
@@ -45,7 +44,7 @@ export function fetchMarketProducts({ q = "", sort = "" } = {}) {
 }
 
 export function fetchCompanyProducts({ q = "", sort = "" } = {}) {
-    // keep signature flexible (you can ignore q/sort now, but future-proof)
+    // keep signature flexible!
     const params = new URLSearchParams();
     if (q.trim()) params.set("q", q.trim());
     if (sort) params.set("sort", sort);

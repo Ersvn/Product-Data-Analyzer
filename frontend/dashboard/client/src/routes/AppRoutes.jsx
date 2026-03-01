@@ -5,6 +5,7 @@ import ProductsPage from "../pages/ProductsPage";
 import HistoryPage from "../pages/HistoryPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import LoginPage from "../pages/LoginPage";
+import DbExplorerPage from "../pages/DbExplorerPage.jsx";
 
 function Placeholder({ title }) {
     return (
@@ -12,7 +13,7 @@ function Placeholder({ title }) {
             <div className="card-pad" style={{ textAlign: 'center', padding: 60 }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>🚧</div>
                 <h2 style={{ marginBottom: 8 }}>{title}</h2>
-                <p style={{ color: 'var(--text-secondary)' }}>Denna funktion kommer snart.</p>
+                <p style={{ color: 'var(--text-secondary)' }}>This function is being developed as we speak..</p>
             </div>
         </div>
     );
@@ -25,9 +26,10 @@ export default function AppRoutes() {
             <Route path="/" element={<AppShell><OverviewPage /></AppShell>} />
             <Route path="/products" element={<AppShell><ProductsPage /></AppShell>} />
             <Route path="/history" element={<AppShell><HistoryPage /></AppShell>} />
-            <Route path="/orders" element={<AppShell><Placeholder title="Ordrar" /></AppShell>} />
-            <Route path="/users" element={<AppShell><Placeholder title="Användare" /></AppShell>} />
+            <Route path="/orders" element={<AppShell><Placeholder title="Orders" /></AppShell>} />
+            <Route path="/users" element={<AppShell><Placeholder title="Users" /></AppShell>} />
             <Route path="*" element={<NotFoundPage />} />
+            <Route path="/db" element={<DbExplorerPage />} />
         </Routes>
     );
 }

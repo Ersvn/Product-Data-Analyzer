@@ -25,9 +25,9 @@ export default function InlineSearchResults({
     }, [open, activeIndex]);
 
     const hint = useMemo(() => {
-        if (!query) return "Skriv för att söka…";
-        if (!items.length) return "Inga träffar.";
-        return `${items.length} träffar`;
+        if (!query) return "Type to search…";
+        if (!items.length) return "No hits.";
+        return `${items.length} hits`;
     }, [query, items.length]);
 
     if (!open) return null;

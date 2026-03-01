@@ -1,47 +1,58 @@
 server:
   port: 3001
 
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/price_engine
+    username: postgres
+    password: admin123
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 900000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
 app:
   dashUser: admin
   dashPass: change-me
-
+  storage: DB   # FILES|DB
   allowedOrigins:
     - "http://localhost:5173"
 
   data:
-    # MARKNAD
     marketPath: "classpath:data/market.mock.json"
-
-    # VÅRT LAGER (dina produkter)
     companyPath: "classpath:data/inventory.mock.json"
     historyPath: "file:./data/price-history.jsonl"
     auditPath: "file:./data/audit-log.jsonl"
     useEnrichedMarket: false
-
-    # finns kvar men används bara om du uttryckligen väljer det + enrichment använder det
     enrichedMarketPath: "file:./data/products.enriched.json"
 
     overridesPath: "file:C:/Users/eriks/eclipse-workspace/Product-Data-Analyzer/backend/price-comparer/data/overrides.json"
     autoPersistOverrides: true
 
-# =========================
-# Enrichment
-# =========================
 enrichment:
   enabled: true
-
   runOnStartup: false
-
   maxProductsPerRun: 20
   ourPriceFactor: 0.65
-
   scheduler:
     enabled: false
     cron: "0 0 2 * * *"
 
-# =========================
-# Relevansfilter
-# =========================
 relevance:
   enabled: true
   allowedCategoryKeywords:
@@ -71,6 +82,7 @@ relevance:
     - "gpu"
     - "graphics"
     - "server"
+
   blockedKeywords:
     - "warranty"
     - "support"
@@ -88,9 +100,11 @@ relevance:
     - "mounting"
     - "cover"
     - "case"
+
   blockedNameRegex:
     - ".*\\b(NBD|onsite|support|warranty)\\b.*"
     - ".*\\b(\\d+\\s*year|\\d+\\s*yr)\\b.*"
+
   minScore: 2
 
 cache:
@@ -98,26 +112,33 @@ cache:
     path: "./data/cache/pricesapi"
 
 icecat:
-  enabled: true
+  enabled: false
   path: "file:C:/Users/eriks/Desktop/Icecat/daily.index.xml"
   prefer: high
 
 pricing:
-  mode: FIRST_MATCH_WINS   # eller APPLY_ALL
-
+  mode: FIRST_MATCH_WINS
   rules:
     undercutIfCompetition:
       enabled: true
-      undercutPercent: 0.01        # 1% under marketMin
-      requireCompetitors: true     # bara om competitorCount > 0
-
+      undercutPercent: 0.01
+      requireCompetitors: true
     soloMarketPremium:
       enabled: true
-      premiumFactor: 0.98          # marketMax * 0.98 när ensam (competitorCount == 0)
-
+      premiumFactor: 0.98
     ignoreBelowCostMarket:
       enabled: true
-
   post:
     psychological90:
       enabled: true
+
+dashboard:
+  queues:
+    underpriced:
+      marketMovePercent: 0.01
+
+
+logging:
+  level:
+    org.springframework.jdbc.datasource: DEBUG
+    com.zaxxer.hikari: DEBUG

@@ -128,6 +128,9 @@ public class DataStoreService {
             loadOverridesIfPresent();
             applyOverridesToCompany(c);
 
+            // NEW: Seed baseline so UNDERPRICED doesn't spam for every product at startup
+            ensureUnderpricedBaseline(c);
+
             marketProducts.set(m);
             companyProducts.set(c);
 
@@ -153,8 +156,6 @@ public class DataStoreService {
      * - Else if priceMax exists (>0): return priceMax
      * - Else if price field exists (>0): return price
      * - Else null
-     *
-     * IMPORTANT: this fixes the previous bug where priceMin returned early (so median was never used).
      */
     public Double getMarketBenchmarkPrice(Product companyProduct) {
         if (companyProduct == null) return null;
@@ -190,16 +191,130 @@ public class DataStoreService {
         return null;
     }
 
-    /**
-     * Keep for backward compatibility: used by older endpoints.
-     * Uses strict effective price: MANUAL->manualPrice else recommendedPrice.
-     * (Dashboard should use getOurComparablePrice instead.)
-     */
+    /** Keep for backward compatibility: used by older endpoints. */
     public Double getEffectivePrice(Product p) {
         if (p == null) return null;
         PriceMode mode = (p.priceMode == null) ? PriceMode.AUTO : p.priceMode;
         if (mode == PriceMode.MANUAL && p.manualPrice != null) return p.manualPrice;
         return p.recommendedPrice;
+    }
+
+    /* =========================================================
+       UNDERPRICED BASELINE (NEW)
+       ========================================================= */
+
+    /** Fetch override by product id (string) if present. */
+    public OverrideEntry getOverrideById(long productId) {
+        return overridesById.get().get(String.valueOf(productId));
+    }
+
+    /** Fetch override by ean if present. */
+    public OverrideEntry getOverrideByEan(String ean) {
+        if (ean == null || ean.isBlank()) return null;
+        return overridesByEan.get().get(ean);
+    }
+
+    /**
+     * Seed baseline per product so UNDERPRICED becomes:
+     * "market moved up since last seen AND our price didn't change".
+     * Without this seeding, everything looks "underpriced" on first run.
+     */
+    private void ensureUnderpricedBaseline(List<Product> company) {
+        if (company == null || company.isEmpty()) return;
+
+        Map<String, OverrideEntry> byId = new LinkedHashMap<>(overridesById.get());
+        Map<String, OverrideEntry> byEan = new HashMap<>(overridesByEan.get());
+
+        boolean changed = false;
+        String now = Instant.now().toString();
+
+        for (Product p : company) {
+            if (p == null || p.id <= 0) continue;
+
+            String idKey = String.valueOf(p.id);
+            OverrideEntry ov = byId.get(idKey);
+
+            if (ov == null && p.ean != null && !p.ean.isBlank()) {
+                ov = byEan.get(p.ean);
+            }
+
+            if (ov == null) {
+                ov = new OverrideEntry();
+                ov.id = idKey;
+                ov.ean = (p.ean == null || p.ean.isBlank()) ? null : p.ean;
+            }
+
+            boolean hasMarket = ov.lastSeenMarketBenchmarkPresent && ov.lastSeenMarketBenchmark != null;
+            boolean hasOur = ov.lastSeenOurComparablePricePresent && ov.lastSeenOurComparablePrice != null;
+
+            if (!hasMarket || !hasOur) {
+                Double marketNow = getMarketBenchmarkPrice(p);
+                Double ourNow = getOurComparablePrice(p);
+
+                ov.lastSeenMarketBenchmarkPresent = true;
+                ov.lastSeenMarketBenchmark = (marketNow != null && marketNow > 0) ? marketNow : null;
+
+                ov.lastSeenOurComparablePricePresent = true;
+                ov.lastSeenOurComparablePrice = (ourNow != null && ourNow > 0) ? ourNow : null;
+
+                ov.lastSeenAtPresent = true;
+                ov.lastSeenAt = now;
+
+                byId.put(ov.id, ov);
+                if (ov.ean != null && !ov.ean.isBlank()) byEan.put(ov.ean, ov);
+
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            overridesById.set(byId);
+            overridesByEan.set(byEan);
+            if (autoPersistOverrides) persistOverrides();
+            System.out.printf("[OVERRIDES] seeded underpriced baseline for company=%d%n", company.size());
+        }
+    }
+
+    /**
+     * Acknowledge ("I checked this product"): update baseline to current values.
+     * Use this when user opens item from queue or presses "Ack" button.
+     */
+    public synchronized Product acknowledgeMarketBaseline(long productId) {
+        Product p = requireCompanyProduct(productId);
+
+        Double marketNow = getMarketBenchmarkPrice(p);
+        Double ourNow = getOurComparablePrice(p);
+        String now = Instant.now().toString();
+
+        Map<String, OverrideEntry> byId = new LinkedHashMap<>(overridesById.get());
+        Map<String, OverrideEntry> byEan = new HashMap<>(overridesByEan.get());
+
+        String idKey = String.valueOf(p.id);
+        OverrideEntry ov = byId.getOrDefault(idKey, new OverrideEntry());
+        ov.id = idKey;
+        ov.ean = (p.ean == null || p.ean.isBlank()) ? null : p.ean;
+
+        ov.lastSeenMarketBenchmarkPresent = true;
+        ov.lastSeenMarketBenchmark = (marketNow != null && marketNow > 0) ? marketNow : null;
+
+        ov.lastSeenOurComparablePricePresent = true;
+        ov.lastSeenOurComparablePrice = (ourNow != null && ourNow > 0) ? ourNow : null;
+
+        ov.lastSeenAtPresent = true;
+        ov.lastSeenAt = now;
+
+        byId.put(ov.id, ov);
+        if (ov.ean != null && !ov.ean.isBlank()) byEan.put(ov.ean, ov);
+
+        overridesById.set(byId);
+        overridesByEan.set(byEan);
+
+        if (autoPersistOverrides) persistOverrides();
+
+        System.out.printf("[ACK] baseline updated id=%d ean=%s market=%s our=%s at=%s%n",
+                p.id, p.ean, ov.lastSeenMarketBenchmark, ov.lastSeenOurComparablePrice, ov.lastSeenAt);
+
+        return p;
     }
 
     /* =========================================================
@@ -230,6 +345,10 @@ public class DataStoreService {
 
         // Persist a baseline override (so it survives reload even if company file is reseeded/changed)
         upsertOverrideFromProduct(p);
+
+        // NEW: immediately seed baseline for newly added product
+        acknowledgeMarketBaseline(p.id);
+
         if (autoPersistOverrides) persistOverrides();
 
         return p;
@@ -257,16 +376,13 @@ public class DataStoreService {
         // Rebuild index (ean could change)
         companyByEan.set(buildIndexMutable(companyProducts.get()));
 
-        // Update overrides (only write fields that matter)
+        // Update overrides
         upsertOverrideFromProduct(p);
         if (autoPersistOverrides) persistOverrides();
 
         return p;
     }
 
-    /**
-     * Manual price (MANUAL mode) – updates overrides + optional persist.
-     */
     public synchronized Product setManualPrice(long productId, double manualPrice) {
         if (manualPrice <= 0) throw new IllegalArgumentException("manualPrice must be > 0");
         Product p = requireCompanyProduct(productId);
@@ -280,10 +396,6 @@ public class DataStoreService {
         return p;
     }
 
-    /**
-     * Switch AUTO/MANUAL – updates overrides + optional persist.
-     * If switching to AUTO, clears manualPrice (UI "reset" behavior).
-     */
     public synchronized Product setPriceMode(long productId, PriceMode mode) {
         if (mode == null) mode = PriceMode.AUTO;
         Product p = requireCompanyProduct(productId);
@@ -300,9 +412,6 @@ public class DataStoreService {
         return p;
     }
 
-    /**
-     * Explicit reset: AUTO + clear manual price.
-     */
     public synchronized Product resetToAuto(long productId) {
         Product p = requireCompanyProduct(productId);
         p.priceMode = PriceMode.AUTO;
@@ -315,9 +424,6 @@ public class DataStoreService {
         return p;
     }
 
-    /**
-     * Persist overrides immediately (for a "Save" button endpoint).
-     */
     public synchronized Map<String, Object> persistOverrides() {
         try {
             if (overridesPath == null || overridesPath.isBlank()) {
@@ -400,16 +506,8 @@ public class DataStoreService {
        PRICING ENGINE (recommended price)
        ========================================================= */
 
-    // =========================================================
-    // NEW: Bulk recompute support (so you don't open every product)
-    // =========================================================
     public record BulkRecomputeStats(int recomputed, int skipped, int errors) {}
 
-    /**
-     * Recompute recommended price for ALL company products.
-     * - Uses recomputeRecommendedPrice(productId) (same logic as per-item recompute)
-     * - Never throws (counts errors instead)
-     */
     public BulkRecomputeStats recomputeAllCompanyPrices() {
         int ok = 0, skipped = 0, errors = 0;
 
@@ -428,9 +526,6 @@ public class DataStoreService {
 
         return new BulkRecomputeStats(ok, skipped, errors);
     }
-    // =========================================================
-    // END NEW
-    // =========================================================
 
     public Product getCompanyById(long id) {
         for (Product p : companyProducts.get()) {
@@ -439,9 +534,6 @@ public class DataStoreService {
         return null;
     }
 
-    /**
-     * Recomputes recommended price using PricingStrategyEngine.
-     */
     public synchronized Product recomputeRecommendedPrice(long productId) {
         Product p = requireCompanyProduct(productId);
 
@@ -480,7 +572,6 @@ public class DataStoreService {
 
         BigDecimal currentPrice = (p.price > 0) ? bd(p.price) : null;
 
-        // Cost comes later from supplier feed
         BigDecimal cost = null;
 
         BigDecimal basePrice = currentPrice != null ? currentPrice
@@ -526,11 +617,6 @@ public class DataStoreService {
         return p;
     }
 
-    /**
-     * MVP "median-ish":
-     * - Prefer market.priceMin/priceMax average when available
-     * - Else use market.price when present (>0)
-     */
     private Double estimateMarketMedianFor(Product companyProduct) {
         if (companyProduct == null || companyProduct.ean == null || companyProduct.ean.isBlank()) return null;
 
@@ -559,7 +645,6 @@ public class DataStoreService {
             Resource r = resourceLoader.getResource(companyPath);
             if (r.exists()) return;
 
-            // Seed should be "mine" (inventory), not market
             Resource seed = resourceLoader.getResource("classpath:data/inventory.mock.json");
             if (!seed.exists()) return;
 
@@ -694,6 +779,19 @@ public class DataStoreService {
         e.lastUpdated = (p.lastUpdated == null || p.lastUpdated.isBlank())
                 ? Instant.now().toString()
                 : p.lastUpdated;
+
+        // IMPORTANT: do NOT wipe baseline fields here. We keep lastSeen* unless explicitly ack'd.
+        OverrideEntry existing = overridesById.get().get(e.id);
+        if (existing != null) {
+            e.lastSeenMarketBenchmarkPresent = existing.lastSeenMarketBenchmarkPresent;
+            e.lastSeenMarketBenchmark = existing.lastSeenMarketBenchmark;
+
+            e.lastSeenOurComparablePricePresent = existing.lastSeenOurComparablePricePresent;
+            e.lastSeenOurComparablePrice = existing.lastSeenOurComparablePrice;
+
+            e.lastSeenAtPresent = existing.lastSeenAtPresent;
+            e.lastSeenAt = existing.lastSeenAt;
+        }
 
         Map<String, OverrideEntry> byId = new LinkedHashMap<>(overridesById.get());
         byId.put(e.id, e);
@@ -894,6 +992,16 @@ public class DataStoreService {
         public Double recommendedPrice;
 
         public String lastUpdated;
+
+        // NEW: baseline ("last seen") for UNDERPRICED stale detection
+        public boolean lastSeenMarketBenchmarkPresent;
+        public Double lastSeenMarketBenchmark;
+
+        public boolean lastSeenOurComparablePricePresent;
+        public Double lastSeenOurComparablePrice;
+
+        public boolean lastSeenAtPresent;
+        public String lastSeenAt;
 
         public OverrideEntry() {}
     }

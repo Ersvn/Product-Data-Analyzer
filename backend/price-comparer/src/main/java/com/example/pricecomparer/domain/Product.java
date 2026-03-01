@@ -1,5 +1,7 @@
 package com.example.pricecomparer.domain;
 
+import com.sun.jdi.LongValue;
+
 public class Product {
 
     public long id;
@@ -8,10 +10,16 @@ public class Product {
     public String category;
     public double price;
     public String store;
+    public String mpn;
+    public String companySku;
     public String url;
     public String ean;
+    public Double costPrice;
+    public Long matchedProductId;
     public Double priceMin;
     public Double priceMax;
+    public Double priceMedian;
+    public Double benchmarkPrice;
     public Double ourPrice;
     public Integer offersCount;
     public String lastUpdated;

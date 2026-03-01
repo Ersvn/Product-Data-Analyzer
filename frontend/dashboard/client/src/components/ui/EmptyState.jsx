@@ -1,6 +1,6 @@
 export function EmptyState({
-                               title = 'Inget hittades',
-                               description = 'Försök justera dina filter eller sökning.',
+                               title = 'Nothing found',
+                               description = 'Try adjusting your filters or search.',
                                icon = '📭',
                                action
                            }) {

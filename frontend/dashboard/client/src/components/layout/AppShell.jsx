@@ -163,18 +163,18 @@ export default function AppShell({ children }) {
     const navGroups = useMemo(
         () => [
             {
-                title: "Översikt",
+                title: "Overview",
                 items: [
                     { key: "overview", label: "Dashboard", path: "/" },
-                    { key: "products", label: "Produkter", path: "/products" },
-                    { key: "history", label: "Historik", path: "/history" },
+                    { key: "products", label: "Products", path: "/products" },
+                    { key: "history", label: "History", path: "/history" },
                 ],
             },
             {
                 title: "Administration",
                 items: [
-                    { key: "orders", label: "Ordrar", path: "/orders" },
-                    { key: "users", label: "Användare", path: "/users" },
+                    { key: "orders", label: "Orders", path: "/orders" },
+                    { key: "users", label: "Users", path: "/users" },
                 ],
             },
         ],
@@ -195,8 +195,8 @@ export default function AppShell({ children }) {
     const paletteActions = useMemo(
         () => [
             {
-                label: isDark ? "Ljust läge" : "Mörkt läge",
-                hint: "Tema",
+                label: isDark ? "Light mode" : "Dark mode",
+                hint: "Theme",
                 icon: isDark ? "☀️" : "🌙",
                 onRun: () => setTheme(isDark ? "light" : "dark"),
             },

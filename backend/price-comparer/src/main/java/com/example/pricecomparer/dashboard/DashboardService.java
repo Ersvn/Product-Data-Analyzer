@@ -1,19 +1,23 @@
 package com.example.pricecomparer.dashboard;
 
-import com.example.pricecomparer.domain.Product;
 import com.example.pricecomparer.service.DataStoreService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 @Service
 public class DashboardService {
 
-    private final DataStoreService store;
+    private final DataStoreService store; // keep for legacy mode
+    private final JdbcTemplate jdbc;
+
+    @Value("${app.storage:FILES}")
+    private String storage;
 
     @Value("${app.data.marketPath:}")
     private String marketPath;
@@ -27,136 +31,181 @@ public class DashboardService {
     // Same tolerance as you already use for "similar": ±0.5%
     private static final double SIMILAR_TOL_PCT = 0.005;
 
-    // "Outlier" threshold (enterprise-ish default). Adjust whenever you want.
+    // Outlier threshold
     private static final double OUTLIER_ABS_GAP_PCT = 0.50; // 50%
 
-    public DashboardService(DataStoreService store) {
+    public DashboardService(DataStoreService store, JdbcTemplate jdbc) {
         this.store = store;
+        this.jdbc = jdbc;
     }
 
     public DashboardOverview overview(int days) {
-        // “Current snapshot overview” (production-style).
-        // days används senare för trend/historik.
-
-        List<Product> company = safeList(store.getCompanyProducts());
-        List<Product> market = safeList(store.getMarketProducts());
-
-        long totalProducts = company.size();
-
-        long companyMissingEan = 0;
-        long companyMissingComparablePrice = 0;
-        long marketMissingPriceSignal = 0;
-
-        long matchedMarket = 0;
-        long matchedPriced = 0;
-
-        long cheaper = 0;
-        long similar = 0;
-        long moreExpensive = 0;
-
-        long overPriced = 0;
-        long underPriced = 0;
-        long outliers = 0;
-
-        double sumMarket = 0;
-        double sumOur = 0;
-
-        Instant freshness = null;
-
-        // Benchmark quality signals
-        long benchFromMinMaxOrOffers = 0; // "good" signal
-        long benchFallbackPriceOnly = 0;  // fallback = market.price
-        long benchHasOffersCount = 0;
-
-        for (Product p : company) {
-            if (p == null) continue;
-
-            if (p.ean == null || p.ean.isBlank()) {
-                companyMissingEan++;
-                continue;
-            }
-
-            // 1) Must exist in market by EAN to be "matched"
-            Product marketP = store.getMarketProductByEan(p.ean);
-            if (marketP == null) {
-                continue;
-            }
-            matchedMarket++;
-
-            // 2) Market benchmark must exist to be comparable
-            Double marketPrice = store.getMarketBenchmarkPrice(p);
-            if (marketPrice == null || marketPrice <= 0) {
-                marketMissingPriceSignal++;
-                continue;
-            }
-
-            // Track benchmark quality based on available signals in market product
-            boolean hasMin = marketP.priceMin != null && marketP.priceMin > 0;
-            boolean hasMax = marketP.priceMax != null && marketP.priceMax > 0;
-            boolean hasOffers = marketP.offersCount != null && marketP.offersCount > 0;
-
-            if (hasOffers) benchHasOffersCount++;
-
-            // If benchmark could have been derived from min/max, that's higher quality than fallback price.
-            // If neither min nor max exists, dashboard essentially relies on market.price fallback.
-            if (hasMin || hasMax || hasOffers) benchFromMinMaxOrOffers++;
-            else benchFallbackPriceOnly++;
-
-            // 3) Our comparable price must exist
-            Double ourComparable = store.getOurComparablePrice(p);
-            if (ourComparable == null || ourComparable <= 0) {
-                companyMissingComparablePrice++;
-                continue;
-            }
-
-            matchedPriced++;
-
-            double our = ourComparable;
-            double mkt = marketPrice;
-
-            sumMarket += mkt;
-            sumOur += our;
-
-            double gap = our - mkt;
-
-            // “similar” tolerance ±0.5%
-            double tol = SIMILAR_TOL_PCT * mkt;
-
-            if (gap < -tol) cheaper++;
-            else if (gap > tol) moreExpensive++;
-            else similar++;
-
-            if (gap > tol) overPriced++;
-            else if (gap < -tol) underPriced++;
-
-            double gapPct = (mkt == 0) ? 0 : (gap / mkt);
-            if (Math.abs(gapPct) >= OUTLIER_ABS_GAP_PCT) outliers++;
-
-            // Freshness = max(lastUpdated) across company products
-            Instant lu = safeInstant(p.lastUpdated);
-            if (lu != null && (freshness == null || lu.isAfter(freshness))) {
-                freshness = lu;
-            }
+        if ("DB".equalsIgnoreCase(String.valueOf(storage).trim())) {
+            return overviewFromDb(days);
         }
+        return legacyOverview(days);
+    }
 
-        double avgMarket = matchedPriced == 0 ? 0 : (sumMarket / matchedPriced);
-        double avgOur = matchedPriced == 0 ? 0 : (sumOur / matchedPriced);
+    /* =========================================================
+       DB implementation
+       ========================================================= */
 
-        double avgGapKr = matchedPriced == 0 ? 0 : (avgOur - avgMarket);
-        double avgGapPct = avgMarket == 0 ? 0 : ((avgOur - avgMarket) / avgMarket);
+    private DashboardOverview overviewFromDb(int days) {
 
-        double priceIndex = avgMarket == 0 ? 0 : (avgOur / avgMarket) * 100.0;
+        // TOTAL inventory = ALL company_listings
+        long totalProducts = qLong("select count(*) from company_listings");
+
+        long companyMissingEan = qLong("""
+            select count(*)
+            from company_listings
+            where ean is null or btrim(ean) = ''
+        """);
+
+        // "Matched products" = has matched_product_id (EAN match -> market product)
+        long matchedMarket = qLong("""
+            select count(*)
+            from company_listings
+            where matched_product_id is not null
+              and ean is not null and btrim(ean) <> ''
+        """);
+
+        // Market missing benchmark (or snapshot missing)
+        long marketMissingPriceSignal = qLong("""
+            select count(*)
+            from company_listings c
+            left join product_market_snapshot s on s.product_id = c.matched_product_id
+            where c.matched_product_id is not null
+              and c.ean is not null and btrim(c.ean) <> ''
+              and (s.benchmark_price is null or s.benchmark_price <= 0)
+        """);
+
+        // Company missing comparable price (independent of market snapshot!)
+        // FIX: parentheses so OR doesn't break the WHERE
+        long companyMissingComparable = qLong("""
+            select count(*)
+            from company_listings c
+            where c.ean is not null and btrim(c.ean) <> ''
+              and c.matched_product_id is not null
+              and (
+                (upper(coalesce(c.price_mode,'AUTO')) = 'MANUAL' and coalesce(c.manual_price,0) <= 0)
+                and (coalesce(c.our_price,0) <= 0)
+                or (upper(coalesce(c.price_mode,'AUTO')) <> 'MANUAL' and coalesce(c.our_price,0) <= 0)
+              )
+        """);
+
+        // Matched + priced = matchedMarket + benchmark ok + ourComparable ok
+        long matchedPriced = qLong("""
+            select count(*)
+            from company_listings c
+            join product_market_snapshot s on s.product_id = c.matched_product_id
+            where c.matched_product_id is not null
+              and c.ean is not null and btrim(c.ean) <> ''
+              and s.benchmark_price is not null and s.benchmark_price > 0
+              and (
+                  case
+                    when upper(coalesce(c.price_mode,'AUTO')) = 'MANUAL' and coalesce(c.manual_price,0) > 0
+                      then c.manual_price
+                    else coalesce(c.our_price,0)
+                  end
+              ) > 0
+        """);
+
+        // Aggs for KPI buckets (only on matchedPriced set)
+        Map<String, Object> agg = jdbc.queryForMap("""
+            with base as (
+              select
+                c.last_updated as last_updated,
+                s.benchmark_price as bench,
+                (case
+                   when upper(coalesce(c.price_mode,'AUTO')) = 'MANUAL' and coalesce(c.manual_price,0) > 0 then c.manual_price
+                   else coalesce(c.our_price,0)
+                 end) as our
+              from company_listings c
+              join product_market_snapshot s on s.product_id = c.matched_product_id
+              where c.matched_product_id is not null
+                and c.ean is not null and btrim(c.ean) <> ''
+                and s.benchmark_price is not null and s.benchmark_price > 0
+                and (case
+                      when upper(coalesce(c.price_mode,'AUTO')) = 'MANUAL' and coalesce(c.manual_price,0) > 0 then c.manual_price
+                      else coalesce(c.our_price,0)
+                    end) > 0
+                and c.last_updated >= (now() - (? || ' days')::interval)
+            ),
+            calc as (
+              select
+                last_updated,
+                bench,
+                our,
+                (our - bench) as gap_kr,
+                case when bench > 0 then (our - bench)/bench else null end as gap_pct,
+                (bench * ?) as tol_kr
+              from base
+            )
+            select
+              avg(bench) as avg_market,
+              avg(our) as avg_our,
+              avg(gap_kr) as avg_gap_kr,
+              avg(gap_pct) as avg_gap_pct,
+              sum(case when gap_kr < -tol_kr then 1 else 0 end)::bigint as cheaper,
+              sum(case when gap_kr >  tol_kr then 1 else 0 end)::bigint as more_expensive,
+              sum(case when gap_kr >= -tol_kr and gap_kr <= tol_kr then 1 else 0 end)::bigint as similar,
+              sum(case when gap_kr >  tol_kr then 1 else 0 end)::bigint as overpriced,
+              sum(case when gap_kr < -tol_kr then 1 else 0 end)::bigint as underpriced,
+              sum(case when abs(coalesce(gap_pct,0)) >= ? then 1 else 0 end)::bigint as outliers,
+              max(last_updated) as freshness
+            from calc
+        """, days, SIMILAR_TOL_PCT, OUTLIER_ABS_GAP_PCT);
+
+        double avgMarket = d(agg.get("avg_market"));
+        double avgOur = d(agg.get("avg_our"));
+        double avgGapKr = d(agg.get("avg_gap_kr"));
+        double avgGapPct = d(agg.get("avg_gap_pct"));
+
+        long cheaper = l(agg.get("cheaper"));
+        long similar = l(agg.get("similar"));
+        long moreExpensive = l(agg.get("more_expensive"));
+
+        long overPriced = l(agg.get("overpriced"));
+        long underPriced = l(agg.get("underpriced"));
+        long outliers = l(agg.get("outliers"));
+
+        Instant freshness = tsToInstant(agg.get("freshness"));
 
         double cheaperPct = matchedPriced == 0 ? 0 : (cheaper * 100.0 / matchedPriced);
         double similarPct = matchedPriced == 0 ? 0 : (similar * 100.0 / matchedPriced);
         double moreExpPct = matchedPriced == 0 ? 0 : (moreExpensive * 100.0 / matchedPriced);
 
-        double matchRatePct = totalProducts == 0 ? 0 : (matchedPriced * 100.0 / totalProducts);
+        // FIX: matchRatePct should describe match coverage, not priced coverage
+        double matchRatePct = totalProducts == 0 ? 0 : (matchedMarket * 100.0 / totalProducts);
 
-        // Coverage / quality (enterprise)
+        double priceIndex = avgMarket == 0 ? 0 : (avgOur / avgMarket) * 100.0;
+
+        // Quality in DB
+        long benchHasOffersCount = qLong("""
+            select count(*)
+            from company_listings c
+            join product_market_snapshot s on s.product_id = c.matched_product_id
+            where c.matched_product_id is not null
+              and s.offers_count is not null and s.offers_count > 0
+        """);
+
+        long benchFromMinMaxOrOffers = qLong("""
+            select count(*)
+            from company_listings c
+            join product_market_snapshot s on s.product_id = c.matched_product_id
+            where c.matched_product_id is not null
+              and (
+                (s.price_min is not null and s.price_min > 0)
+                or (s.price_max is not null and s.price_max > 0)
+                or (s.offers_count is not null and s.offers_count > 0)
+              )
+        """);
+
+        long benchFallbackPriceOnly = Math.max(0, matchedMarket - benchFromMinMaxOrOffers);
+
         double matchedMarketRate = totalProducts == 0 ? 0 : (matchedMarket * 100.0 / totalProducts);
-        double pricedRate = totalProducts == 0 ? 0 : (matchedPriced * 100.0 / totalProducts);
-
+        // FIX: priced coverage should be of matchedMarket
+        double pricedCoverageRate = matchedMarket == 0 ? 0 : (matchedPriced * 100.0 / matchedMarket);
         double qualityRate = matchedMarket == 0 ? 0 : (benchFromMinMaxOrOffers * 100.0 / matchedMarket);
 
         String benchmarkQuality =
@@ -173,7 +222,7 @@ public class DashboardService {
         actionCounts.put("MORE_EXPENSIVE", moreExpensive);
 
         actionCounts.put("MISSING_EAN", companyMissingEan);
-        actionCounts.put("MISSING_COMPARABLE", companyMissingComparablePrice);
+        actionCounts.put("MISSING_COMPARABLE", companyMissingComparable);
         actionCounts.put("MISSING_BENCHMARK", marketMissingPriceSignal);
 
         actionCounts.put("MATCHED_MARKET", matchedMarket);
@@ -183,8 +232,9 @@ public class DashboardService {
         coverage.put("totalProducts", totalProducts);
         coverage.put("matchedMarket", matchedMarket);
         coverage.put("matchedPriced", matchedPriced);
+        coverage.put("needsPricing", Math.max(0, matchedMarket - matchedPriced));
         coverage.put("matchedMarketRatePct", round2(matchedMarketRate));
-        coverage.put("pricedCoverageRatePct", round2(pricedRate));
+        coverage.put("pricedCoverageRatePct", round2(pricedCoverageRate));
 
         Map<String, Object> quality = new LinkedHashMap<>();
         quality.put("benchmarkQuality", benchmarkQuality);
@@ -195,93 +245,153 @@ public class DashboardService {
 
         Map<String, Object> meta = new LinkedHashMap<>();
         meta.put("days", days);
+        meta.put("storage", "DB");
+
         meta.put("marketPath", marketPath);
         meta.put("companyPath", companyPath);
         meta.put("useEnrichedMarket", useEnrichedMarket);
-        meta.put("companyCount", company.size());
-        meta.put("marketCount", market.size());
 
         meta.put("similarTolerancePct", 0.5);
         meta.put("outlierAbsGapPct", OUTLIER_ABS_GAP_PCT * 100.0);
 
-        // Explicit definitions (detta matchar det du vill visa i dashboarden)
         meta.put("benchmarkDefinition",
-                "market.priceMin/priceMax median if both exist; else priceMin; else priceMax; else price");
+                "benchmark = median(offers.price) from product_market_snapshot");
         meta.put("ourComparablePriceDefinition",
-                "MANUAL->manualPrice; else recommendedPrice; else ourPrice; else price");
+                "MANUAL->manual_price; else our_price");
         meta.put("gapDefinition",
-                "gapKr = ourComparablePrice - marketBenchmarkPrice");
+                "gapKr = ourComparablePrice - benchmark");
         meta.put("priceIndexDefinition",
                 "priceIndex = (avgOurPrice/avgMarketPrice)*100");
 
-        // Keep old fields you already used
-        meta.put("matchedMarket", matchedMarket);
-        meta.put("matchedPriced", matchedPriced);
-
-        // NEW: enterprise intelligence layer (without breaking DashboardOverview)
         meta.put("actionCounts", actionCounts);
         meta.put("coverage", coverage);
         meta.put("quality", quality);
 
-        // A very small "health" object (frontend can show this as chips)
         Map<String, Object> health = new LinkedHashMap<>();
         health.put("computedAt", Instant.now().toString());
         health.put("dataFreshness", freshness == null ? null : freshness.toString());
         health.put("ok", true);
         health.put("notes", switch (benchmarkQuality) {
             case "HIGH" -> "Benchmark quality HIGH: min/max/offers används ofta.";
-            case "MED" -> "Benchmark quality MED: blandat min/max/offers och fallback price.";
-            default -> "Benchmark quality LOW: benchmark bygger mest på market.price fallback.";
+            case "MED" -> "Benchmark quality MED: blandat min/max/offers och fallback.";
+            default -> "Benchmark quality LOW: benchmark bygger mest på fallback.";
         });
         meta.put("health", health);
 
+        // TOP-LEVEL: matchedProducts should represent "matchedMarket"
         return new DashboardOverview(
                 true,
                 totalProducts,
-                matchedPriced,
+                matchedMarket,
                 round2(matchRatePct),
 
                 cheaper,
                 similar,
                 moreExpensive,
+
                 round2(cheaperPct),
                 round2(similarPct),
                 round2(moreExpPct),
 
                 round2(avgMarket),
                 round2(avgOur),
+
                 round2(avgGapKr),
                 round4(avgGapPct),
+
                 round2(priceIndex),
 
                 freshness,
 
                 companyMissingEan,
-                companyMissingComparablePrice,
+                companyMissingComparable,
                 marketMissingPriceSignal,
 
                 meta
         );
     }
 
-    private List<Product> safeList(List<Product> list) {
-        return list == null ? List.of() : list;
+    /* =========================================================
+       Legacy placeholder (FILES/in-memory)
+       ========================================================= */
+
+    private DashboardOverview legacyOverview(int days) {
+        Map<String, Object> meta = new LinkedHashMap<>();
+        meta.put("days", days);
+        meta.put("storage", "FILES");
+        meta.put("marketPath", marketPath);
+        meta.put("companyPath", companyPath);
+        meta.put("useEnrichedMarket", useEnrichedMarket);
+        meta.put("health", Map.of(
+                "computedAt", Instant.now().toString(),
+                "ok", true,
+                "notes", "FILES-mode: dashboard använder DataStoreService."
+        ));
+
+        return new DashboardOverview(
+                true,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                Instant.now(),
+                0,
+                0,
+                0,
+                meta
+        );
     }
 
-    private double round2(double v) {
+    /* =========================================================
+       Helpers
+       ========================================================= */
+
+    private long qLong(String sql) {
+        try {
+            Long v = jdbc.queryForObject(sql, Long.class);
+            return v == null ? 0L : v;
+        } catch (Exception e) {
+            return 0L;
+        }
+    }
+
+    private static double d(Object o) {
+        if (o == null) return 0;
+        if (o instanceof Number n) return n.doubleValue();
+        try { return Double.parseDouble(String.valueOf(o)); } catch (Exception e) { return 0; }
+    }
+
+    private static long l(Object o) {
+        if (o == null) return 0;
+        if (o instanceof Number n) return n.longValue();
+        try { return Long.parseLong(String.valueOf(o)); } catch (Exception e) { return 0; }
+    }
+
+    private static Instant tsToInstant(Object o) {
+        if (o == null) return null;
+        if (o instanceof Timestamp ts) return ts.toInstant();
+        try {
+            return Instant.parse(String.valueOf(o));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static double round2(double v) {
         return Math.round(v * 100.0) / 100.0;
     }
 
-    private double round4(double v) {
+    private static double round4(double v) {
         return Math.round(v * 10000.0) / 10000.0;
-    }
-
-    private Instant safeInstant(String iso) {
-        if (iso == null || iso.isBlank()) return null;
-        try {
-            return Instant.parse(iso.trim());
-        } catch (Exception ignored) {
-            return null;
-        }
     }
 }

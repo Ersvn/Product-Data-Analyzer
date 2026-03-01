@@ -1,15 +1,13 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { formatMoney, formatNumber } from "../lib/utils";
-import PriceHistory from "../components/features/charts/PriceHistory";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
 import { ErrorState } from "../components/ui/ErrorState";
 import { useDebounce } from "../hooks/useDebounce";
-import ProductThumb from "../components/features/products/ProductThumb";
 
 // Sök-ikon SVG
 const SearchIcon = () => (
@@ -28,9 +26,23 @@ const SearchIcon = () => (
     </svg>
 );
 
-function BentoCard({ icon, label, value, change, changeType, large }) {
+function BentoCard({ icon, label, value, change, changeType, large, onClick, hint }) {
+    const clickable = typeof onClick === "function";
     return (
-        <div className={`bento-card ${large ? "bento-card--large" : ""}`}>
+        <div
+            className={`bento-card ${large ? "bento-card--large" : ""} ${
+                clickable ? "bento-card--clickable" : ""
+            }`}
+            onClick={onClick}
+            role={clickable ? "button" : undefined}
+            tabIndex={clickable ? 0 : undefined}
+            title={hint || (clickable ? "Öppna" : undefined)}
+            onKeyDown={(e) => {
+                if (!clickable) return;
+                if (e.key === "Enter" || e.key === " ") onClick?.();
+            }}
+            style={clickable ? { cursor: "pointer" } : undefined}
+        >
             <div className={`bento-card__icon bento-card__icon--${changeType}`}>{icon}</div>
             <div className="bento-card__label">{label}</div>
             <div className="bento-card__value">{value}</div>
@@ -43,26 +55,8 @@ function BentoCard({ icon, label, value, change, changeType, large }) {
     );
 }
 
-function StatusPill({ diffKr, diffPct }) {
-    const d = Number(diffKr || 0);
-    const p = Number(diffPct || 0);
-
-    let variant = "neutral";
-    let label = "I linje";
-
-    if (d > 0) {
-        variant = "danger";
-        label = `+${formatMoney(diffKr).replace(" kr", "")} kr (+${p.toFixed(1)}%)`;
-    } else if (d < 0) {
-        variant = "success";
-        label = `${formatMoney(diffKr).replace(" kr", "")} kr (${p.toFixed(1)}%)`;
-    }
-
-    return <span className={`statusPill statusPill--${variant}`}>{label}</span>;
-}
-
 /* =========================
-   Dashboard UI widgets (A)
+   Dashboard UI widgets
 ========================= */
 
 function fmtIsoShort(iso) {
@@ -113,9 +107,10 @@ function QueueTabs({ value, onChange, counts }) {
 export default function OverviewPage() {
     const nav = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
-    const focus = searchParams.get("focus");
 
-    // Compare search (din befintliga)
+    const queueRef = useRef(null);
+
+    // Compare search (för snabb navigering + overprice-summering)
     const [q, setQ] = useState("");
     const debouncedQ = useDebounce(q, 300);
 
@@ -123,7 +118,7 @@ export default function OverviewPage() {
     const [err, setErr] = useState("");
     const [loading, setLoading] = useState(true);
 
-    // Dashboard overview + queues (A)
+    // Dashboard overview + queues
     const [dash, setDash] = useState(null);
     const [dashErr, setDashErr] = useState("");
     const [dashLoading, setDashLoading] = useState(true);
@@ -133,7 +128,7 @@ export default function OverviewPage() {
     const [queueErr, setQueueErr] = useState("");
     const [queueLoading, setQueueLoading] = useState(true);
 
-    // Keep queue in URL (så du kan refresh:a och behålla tab)
+    // Keep queue in URL
     useEffect(() => {
         const sp = new URLSearchParams(searchParams);
         if (queueType) sp.set("queue", queueType);
@@ -141,7 +136,7 @@ export default function OverviewPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [queueType]);
 
-    // Fetch compare (befintligt)
+    // Fetch compare (behåll för "Total overprice" + navigation)
     useEffect(() => {
         setLoading(true);
         api
@@ -154,7 +149,7 @@ export default function OverviewPage() {
             .finally(() => setLoading(false));
     }, [debouncedQ]);
 
-    // Fetch dashboard overview (A1/A3)
+    // Fetch dashboard overview
     const loadDashboardOverview = useCallback(async () => {
         setDashLoading(true);
         setDashErr("");
@@ -172,97 +167,25 @@ export default function OverviewPage() {
         loadDashboardOverview();
     }, [loadDashboardOverview]);
 
-    // Fetch queue (A2)
-    const loadQueue = useCallback(
-        async (type) => {
-            setQueueLoading(true);
-            setQueueErr("");
-            try {
-                const qres = await api.request(
-                    `/api/dashboard/queue?type=${encodeURIComponent(String(type))}&limit=25`
-                );
-                setQueue(qres);
-            } catch (e) {
-                setQueueErr(String(e?.message || e));
-            } finally {
-                setQueueLoading(false);
-            }
-        },
-        []
-    );
+    // Fetch queue
+    const loadQueue = useCallback(async (type) => {
+        setQueueLoading(true);
+        setQueueErr("");
+        try {
+            const qres = await api.request(
+                `/api/dashboard/queue?type=${encodeURIComponent(String(type))}&limit=25`
+            );
+            setQueue(qres);
+        } catch (e) {
+            setQueueErr(String(e?.message || e));
+        } finally {
+            setQueueLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         loadQueue(queueType);
     }, [queueType, loadQueue]);
-
-    const rows = useMemo(() => {
-        if (!data?.matched) return [];
-        return data.matched.map((row) => {
-            const marketPrice = Number(row?.market?.price ?? 0);
-            const companyPrice = Number(row?.company?.price ?? 0);
-            const diffKr = Number(row?.priceDiff ?? 0);
-            const diffPct = marketPrice > 0 ? (diffKr / marketPrice) * 100 : 0;
-
-            return {
-                ean: String(row.ean),
-                name: row?.company?.name || row?.market?.name || "-",
-                brand: row?.company?.brand || row?.market?.brand || "-",
-                category: row?.company?.category || row?.market?.category || "-",
-                imageUrl: row?.company?.imageUrl || row?.market?.imageUrl || null,
-                marketPrice,
-                companyPrice,
-                diffKr,
-                diffPct,
-            };
-        });
-    }, [data]);
-
-    const stats = useMemo(() => {
-        const matched = rows.length;
-        const moreExpensive = rows.filter((r) => r.diffKr > 0);
-        const cheaper = rows.filter((r) => r.diffKr < 0);
-
-        const totalOverCost = moreExpensive.reduce((a, r) => a + r.diffKr, 0);
-        const avgDiffKr = matched ? rows.reduce((a, r) => a + r.diffKr, 0) / matched : 0;
-
-        const mPrices = rows.map((r) => r.marketPrice).filter((n) => n > 0);
-        const cPrices = rows.map((r) => r.companyPrice).filter((n) => n > 0);
-
-        const mAvg = mPrices.length ? mPrices.reduce((s, x) => s + x, 0) / mPrices.length : null;
-        const cAvg = cPrices.length ? cPrices.reduce((s, x) => s + x, 0) / cPrices.length : null;
-
-        const worst = [...rows].sort((a, b) => b.diffKr - a.diffKr)[0] || null;
-        const best = [...rows].sort((a, b) => a.diffKr - b.diffKr)[0] || null;
-
-        return {
-            matched,
-            expensiveCount: moreExpensive.length,
-            cheaperCount: cheaper.length,
-            totalOverCost,
-            avgDiffKr,
-            mAvg,
-            cAvg,
-            worst,
-            best,
-        };
-    }, [rows]);
-
-    const focusRow = useMemo(() => {
-        if (!focus) return null;
-        return rows.find((r) => String(r.ean) === String(focus)) || null;
-    }, [rows, focus]);
-
-    const pickFocus = (ean) => {
-        const sp = new URLSearchParams(searchParams);
-        sp.set("focus", String(ean));
-        setSearchParams(sp);
-    };
-
-    const clearFocus = () => {
-        const sp = new URLSearchParams(searchParams);
-        sp.delete("focus");
-        setSearchParams(sp);
-    };
 
     // Dashboard derived
     const actionCounts = dash?.meta?.actionCounts || {};
@@ -270,11 +193,52 @@ export default function OverviewPage() {
     const health = dash?.meta?.health || {};
     const coverage = dash?.meta?.coverage || {};
 
-    const openQueueTab = (t) => setQueueType(String(t).toUpperCase());
+    // ✅ KPI: use DASH coverage in DB-mode (fixar 1535 vs 2859)
+    const kpis = useMemo(() => {
+        const matchedMarket = Number(coverage?.matchedMarket ?? coverage?.matched_market ?? dash?.matchedProducts ?? 0);
+        const matchedPriced = Number(coverage?.matchedPriced ?? coverage?.matched_priced ?? 0);
 
-    const gotoProductsWithEan = (ean) => {
+        // If backend doesn't send needsPricing yet, compute it safely client-side.
+        const needsPricing = Number(
+            coverage?.needsPricing ?? coverage?.needs_pricing ?? Math.max(0, matchedMarket - matchedPriced)
+        );
+
+        // Compare-derived (optional): total overprice + avg gap
+        let totalOverCost = 0;
+        let avgDiffKr = 0;
+
+        const arr = Array.isArray(data?.matched) ? data.matched : [];
+        if (arr.length) {
+            const diffs = arr.map((r) => Number(r?.gapKr ?? r?.priceDiff ?? 0));
+            const sum = diffs.reduce((a, x) => a + x, 0);
+            avgDiffKr = sum / arr.length;
+            totalOverCost = diffs.filter((x) => x > 0).reduce((a, x) => a + x, 0);
+        }
+
+        return { matchedMarket, matchedPriced, needsPricing, totalOverCost, avgDiffKr };
+    }, [coverage, dash, data]);
+
+    const openQueueTab = (t) => {
+        setQueueType(String(t).toUpperCase());
+        requestAnimationFrame(() => {
+            queueRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+        });
+    };
+
+    // ack baseline before navigating from queue -> products
+    const gotoProductsWithEan = async (ean, id) => {
+        try {
+            if (id != null) {
+                await api.request(`/api/company/${encodeURIComponent(String(id))}/ack-market`, {
+                    method: "POST",
+                });
+            }
+        } catch {
+            // ignore; navigation should still work
+        }
+
         const sp = new URLSearchParams();
-        sp.set("source", "company");
+        sp.set("source", "db");
         sp.set("q", String(ean));
         nav(`/products?${sp.toString()}`);
     };
@@ -283,7 +247,7 @@ export default function OverviewPage() {
         return (
             <section className="apage">
                 <div className="bento-grid">
-                    {[...Array(6)].map((_, i) => (
+                    {[...Array(8)].map((_, i) => (
                         <Skeleton key={i} height={140} />
                     ))}
                 </div>
@@ -299,39 +263,108 @@ export default function OverviewPage() {
         );
     }
 
+    const overpricedN = Number(actionCounts.OVERPRICED ?? 0);
+    const underpricedN = Number(actionCounts.UNDERPRICED ?? 0);
+    const outliersN = Number(actionCounts.OUTLIERS ?? 0);
+
+    const matchedValue = dashLoading ? "…" : formatNumber(kpis.matchedMarket);
+    const matchedChange =
+        dashLoading
+            ? ""
+            : `Priced: ${formatNumber(kpis.matchedPriced)} · Needs: ${formatNumber(kpis.needsPricing)}`;
+
     return (
         <section className="apage">
             <header className="apage__header">
                 <div>
                     <div className="apage__kicker">Dashboard</div>
-                    <p className="apage__sub">Prisanalys och marknadsintelligens i realtid</p>
+                    <p className="apage__sub">Priceanalyzis and marketintelligense in realtime</p>
                 </div>
 
                 <div className="apage__actions">
                     <Input
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
-                        placeholder="Sök produkter..."
+                        placeholder="Search products..."
                         style={{ width: 320 }}
                         icon={<SearchIcon />}
                     />
-                    <Button disabled={!focusRow} onClick={() => nav(`/history?focus=${encodeURIComponent(String(focusRow?.ean))}`)}>
-                        Visa historik
+                    <Button
+                        variant="ghost"
+                        onClick={() => {
+                            const sp = new URLSearchParams();
+                            sp.set("source", "db");
+                            if (q) sp.set("q", q);
+                            nav(`/products?${sp.toString()}`);
+                        }}
+                    >
+                        Open Products →
                     </Button>
-                    {focus && (
-                        <Button variant="ghost" onClick={clearFocus}>
-                            Rensa
-                        </Button>
-                    )}
                 </div>
             </header>
 
-            {/* =========================
-          A) ACTION SUMMARY + HEALTH
-      ========================= */}
+            {/* HERO BENTO */}
+            <div className="bento-grid" style={{ marginBottom: 16 }}>
+                <BentoCard
+                    icon="📦"
+                    label="Matched products"
+                    value={matchedValue}
+                    change={matchedChange}
+                    changeType="neutral"
+                    hint="DB coverage: matchedMarket = inventory with market link. Priced = benchmark + our comparable. Needs = remaining."
+                />
+
+                <BentoCard
+                    icon="🔥"
+                    label="Overpriced"
+                    value={dashLoading ? "…" : formatNumber(overpricedN)}
+                    change="Fix in Work Queue"
+                    changeType="negative"
+                    onClick={() => openQueueTab("OVERPRICED")}
+                    hint="Öppna OVERPRICED-kön"
+                />
+
+                <BentoCard
+                    icon="🧊"
+                    label="Underpriced"
+                    value={dashLoading ? "…" : formatNumber(underpricedN)}
+                    change="Fix in Work Queue"
+                    changeType="positive"
+                    onClick={() => openQueueTab("UNDERPRICED")}
+                    hint="Öppna UNDERPRICED-kön"
+                />
+
+                <BentoCard
+                    icon="⚠️"
+                    label="Outliers"
+                    value={dashLoading ? "…" : formatNumber(outliersN)}
+                    change="Weird gap"
+                    changeType="negative"
+                    onClick={() => openQueueTab("OUTLIERS")}
+                    hint="Öppna OUTLIERS-kön"
+                />
+
+                <BentoCard
+                    icon="💰"
+                    label="Total overprice"
+                    value={formatMoney(Math.round(kpis.totalOverCost))}
+                    change={formatMoney(kpis.avgDiffKr) + " in avg"}
+                    changeType={kpis.avgDiffKr > 0 ? "negative" : "positive"}
+                />
+            </div>
+
+            {/* ACTION SUMMARY + HEALTH */}
             <div className="card" style={{ marginBottom: 16 }}>
                 <div className="card-pad">
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 12,
+                            flexWrap: "wrap",
+                        }}
+                    >
                         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                             <div style={{ fontSize: 14, fontWeight: 700 }}>Action queues</div>
                             {dashLoading ? (
@@ -355,9 +388,8 @@ export default function OverviewPage() {
 
                         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                             {!dashLoading && !dashErr && <QualityPill q={quality.benchmarkQuality} />}
-
                             <Button size="sm" variant="secondary" onClick={loadDashboardOverview}>
-                                Uppdatera dashboard
+                                Update dashboard
                             </Button>
                         </div>
                     </div>
@@ -372,15 +404,16 @@ export default function OverviewPage() {
                         ) : (
                             <>
                 <span style={{ color: "var(--text-secondary)", fontSize: 13 }}>
-                  Freshness: <span style={{ color: "var(--text-primary)" }}>{fmtIsoShort(dash?.dataFreshness)}</span>
+                  Date: <span style={{ color: "var(--text-primary)" }}>{fmtIsoShort(dash?.dataFreshness)}</span>
                 </span>
                                 <span style={{ color: "var(--text-secondary)", fontSize: 13 }}>
-                  Computed: <span style={{ color: "var(--text-primary)" }}>{fmtIsoShort(health?.computedAt)}</span>
+                  Computed:{" "}
+                                    <span style={{ color: "var(--text-primary)" }}>{fmtIsoShort(health?.computedAt)}</span>
                 </span>
                                 <span style={{ color: "var(--text-secondary)", fontSize: 13 }}>
                   Coverage:{" "}
                                     <span style={{ color: "var(--text-primary)" }}>
-                    {formatNumber(Number(coverage?.matchedPriced ?? dash?.matchedProducts ?? 0))} /
+                    {formatNumber(Number(coverage?.matchedPriced ?? dash?.matchedProducts ?? 0))} /{" "}
                                         {formatNumber(Number(coverage?.totalProducts ?? dash?.totalProducts ?? 0))} priced
                   </span>
                 </span>
@@ -396,16 +429,22 @@ export default function OverviewPage() {
                 </div>
             </div>
 
-            {/* =========================
-          A) QUEUE PANEL
-      ========================= */}
-            <div className="card" style={{ marginBottom: 16 }}>
+            {/* QUEUE PANEL */}
+            <div className="card" style={{ marginBottom: 16 }} ref={queueRef}>
                 <div className="card-pad">
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: 12,
+                            flexWrap: "wrap",
+                        }}
+                    >
                         <div>
                             <div style={{ fontSize: 16, fontWeight: 700 }}>Work queue</div>
                             <div style={{ color: "var(--text-secondary)", fontSize: 13, marginTop: 4 }}>
-                                Klicka en rad för att öppna i Produkter och göra åtgärd (AUTO/MANUAL).
+                                Click on a line to open in Products and make a change (AUTO/MANUAL).
                             </div>
                         </div>
 
@@ -423,8 +462,8 @@ export default function OverviewPage() {
                             <ErrorState error={{ message: queueErr }} retry={() => loadQueue(queueType)} />
                         ) : !queue?.items?.length ? (
                             <EmptyState
-                                title="Inga items i kön"
-                                description="Det betyder oftast att allt ligger inom toleransen (eller att outlier-tröskeln är hög)."
+                                title="No items i queue"
+                                description="It usually means everything is within acceptable parameters (or that outlier-threshold is too high)."
                                 icon="✅"
                             />
                         ) : (
@@ -432,10 +471,10 @@ export default function OverviewPage() {
                                 <table className="table">
                                     <thead>
                                     <tr>
-                                        <th className="th">Produkt</th>
+                                        <th className="th">Product</th>
                                         <th className="th">EAN</th>
-                                        <th className="th">Marknad</th>
-                                        <th className="th">Vårt</th>
+                                        <th className="th">Market</th>
+                                        <th className="th">Ours</th>
                                         <th className="th">Gap</th>
                                         <th className="th"></th>
                                     </tr>
@@ -450,7 +489,7 @@ export default function OverviewPage() {
                                             <tr
                                                 key={`${it.id}-${it.ean}`}
                                                 className="tr"
-                                                onClick={() => gotoProductsWithEan(it.ean)}
+                                                onClick={() => gotoProductsWithEan(it.ean, it.id)}
                                                 style={{ cursor: "pointer" }}
                                                 title="Öppna i Produkter"
                                             >
@@ -461,7 +500,10 @@ export default function OverviewPage() {
                                                     </div>
                                                 </td>
 
-                                                <td className="td" style={{ fontFamily: "monospace", fontSize: 13, color: "var(--text-secondary)" }}>
+                                                <td
+                                                    className="td"
+                                                    style={{ fontFamily: "monospace", fontSize: 13, color: "var(--text-secondary)" }}
+                                                >
                                                     {it.ean || "—"}
                                                 </td>
 
@@ -482,10 +524,10 @@ export default function OverviewPage() {
                                                         variant="ghost"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            gotoProductsWithEan(it.ean);
+                                                            gotoProductsWithEan(it.ean, it.id);
                                                         }}
                                                     >
-                                                        Öppna i produkter →
+                                                        Open in Products →
                                                     </Button>
                                                 </td>
                                             </tr>
@@ -502,133 +544,6 @@ export default function OverviewPage() {
                             Rule: {String(queue.meta.rules)}
                         </div>
                     )}
-                </div>
-            </div>
-
-            {/* =========================
-          DIN BEFINTLIGA BENTO GRID (compare-baserad)
-      ========================= */}
-            <div className="bento-grid">
-                <BentoCard
-                    icon="📦"
-                    label="Matchade produkter"
-                    value={formatNumber(stats.matched)}
-                    change={`${stats.expensiveCount} dyrare, ${stats.cheaperCount} billigare`}
-                    changeType="neutral"
-                />
-                <BentoCard
-                    icon="💰"
-                    label="Total överkostnad"
-                    value={formatMoney(Math.round(stats.totalOverCost))}
-                    change={formatMoney(stats.avgDiffKr) + " i snitt"}
-                    changeType={stats.avgDiffKr > 0 ? "negative" : "positive"}
-                />
-                <BentoCard icon="📈" label="Marknadspris (snitt)" value={formatMoney(stats.mAvg)} change="Genomsnitt" changeType="neutral" />
-                <BentoCard
-                    icon="🏷️"
-                    label="Vårt pris (snitt)"
-                    value={formatMoney(stats.cAvg)}
-                    change={stats.avgDiffKr > 0 ? `+${formatMoney(stats.avgDiffKr)}` : formatMoney(stats.avgDiffKr)}
-                    changeType={stats.avgDiffKr > 0 ? "negative" : "positive"}
-                />
-                <BentoCard
-                    icon="⚠️"
-                    label="Största avvikelse"
-                    value={stats.worst ? formatMoney(stats.worst.diffKr) : "—"}
-                    change={stats.worst?.name || "Ingen data"}
-                    changeType="negative"
-                />
-                <BentoCard
-                    icon="✓"
-                    label="Bästa pris"
-                    value={stats.best ? formatMoney(stats.best.diffKr) : "—"}
-                    change={stats.best?.name || "Ingen data"}
-                    changeType="positive"
-                />
-            </div>
-
-            {/* FOCUS PRODUCT */}
-            {focusRow ? (
-                <div className="card">
-                    <div className="card-pad">
-                        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-                            <ProductThumb src={focusRow.imageUrl} alt={focusRow.name} />
-                            <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: 18, fontWeight: 700 }}>{focusRow.name}</div>
-                                <div style={{ color: "var(--text-secondary)", fontSize: 14, marginTop: 4 }}>
-                                    {focusRow.brand} · {focusRow.category} · EAN: {focusRow.ean}
-                                </div>
-                            </div>
-                            <StatusPill diffKr={focusRow.diffKr} diffPct={focusRow.diffPct} />
-                        </div>
-
-                        <PriceHistory fetchJson={api.request.bind(api)} ean={focusRow.ean} title="Prishistorik" />
-                    </div>
-                </div>
-            ) : (
-                <div className="card">
-                    <div className="card-pad">
-                        <EmptyState
-                            title="Ingen produkt vald"
-                            description="Välj en produkt från listan nedan för att se detaljerad prishistorik."
-                            icon="📊"
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* PRODUCT LIST */}
-            <div className="card">
-                <div className="card-pad">
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                        <h3 style={{ fontSize: 16, fontWeight: 600 }}>Produkter med störst avvikelse</h3>
-                        <div style={{ display: "flex", gap: 8 }}>
-                            <Button variant="ghost" size="sm" disabled={!stats.worst} onClick={() => stats.worst && pickFocus(stats.worst.ean)}>
-                                Välj dyrast
-                            </Button>
-                            <Button variant="ghost" size="sm" disabled={!stats.best} onClick={() => stats.best && pickFocus(stats.best.ean)}>
-                                Välj billigast
-                            </Button>
-                        </div>
-                    </div>
-
-                    <div className="tableWrap">
-                        <table className="table">
-                            <thead>
-                            <tr>
-                                <th className="th"></th>
-                                <th className="th">Produkt</th>
-                                <th className="th">EAN</th>
-                                <th className="th">Marknad</th>
-                                <th className="th">Vårt pris</th>
-                                <th className="th">Status</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {rows.slice(0, 10).map((r) => (
-                                <tr key={r.ean} className="tr" onClick={() => pickFocus(r.ean)}>
-                                    <td className="td" style={{ width: 60 }}>
-                                        <ProductThumb src={r.imageUrl} alt={r.name} />
-                                    </td>
-                                    <td className="td">
-                                        <div style={{ fontWeight: 600 }}>{r.name}</div>
-                                        <div style={{ color: "var(--text-tertiary)", fontSize: 13 }}>
-                                            {r.brand} · {r.category}
-                                        </div>
-                                    </td>
-                                    <td className="td" style={{ fontFamily: "monospace", fontSize: 13, color: "var(--text-secondary)" }}>
-                                        {r.ean}
-                                    </td>
-                                    <td className="td">{formatMoney(r.marketPrice)}</td>
-                                    <td className="td">{formatMoney(r.companyPrice)}</td>
-                                    <td className="td">
-                                        <StatusPill diffKr={r.diffKr} diffPct={r.diffPct} />
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
             </div>
         </section>

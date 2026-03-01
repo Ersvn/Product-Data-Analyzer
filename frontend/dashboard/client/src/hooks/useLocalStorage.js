@@ -6,11 +6,11 @@ export function useLocalStorage(key, initialValue) {
             const item = window.localStorage.getItem(key);
             if (!item) return initialValue;
 
-            // Försök parsa som JSON först
+            // Försök parse:a som JSON först
             try {
                 return JSON.parse(item);
             } catch {
-                // Om det inte är JSON, använd värdet direkt (för bakåtkompatibilitet)
+                // Om det inte är JSON, använd värdet direkt
                 return item;
             }
         } catch (error) {

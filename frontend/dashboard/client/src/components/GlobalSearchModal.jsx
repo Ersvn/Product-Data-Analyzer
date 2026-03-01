@@ -88,11 +88,11 @@ export default function GlobalSearchModal({ open, onClose, fetchJson }) {
     }, [open, query, fetchJson]);
 
     const hint = useMemo(() => {
-        if (!query) return "Sök på EAN, namn, brand…";
-        if (loading) return "Söker…";
-        if (err) return "Kunde inte söka.";
-        if (!items.length) return "Inga träffar.";
-        return `${items.length} träffar`;
+        if (!query) return "Search for EAN, name, brand…";
+        if (loading) return "Searching…";
+        if (err) return "Could not search.";
+        if (!items.length) return "No hits.";
+        return `${items.length} hits`;
     }, [query, loading, err, items.length]);
 
     function openItem(it) {
@@ -134,7 +134,7 @@ export default function GlobalSearchModal({ open, onClose, fetchJson }) {
                         className="input gsInput"
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
-                        placeholder="Sök (EAN, namn, brand)…"
+                        placeholder="Search (EAN, namn, brand)…"
                         onKeyDown={onKeyDown}
                     />
                     <div className="gsHint">{hint}</div>
@@ -165,23 +165,23 @@ export default function GlobalSearchModal({ open, onClose, fetchJson }) {
 
                                 <div className="gsItem__right">
                                     <span className="gsBadge">{badge}</span>
-                                    <span className="gsItem__cta">Öppna</span>
+                                    <span className="gsItem__cta">Open</span>
                                 </div>
                             </button>
                         );
                     })}
 
                     {!loading && !err && query && items.length === 0 ? (
-                        <div className="gsEmpty">Inga produkter matchade din sökning.</div>
+                        <div className="gsEmpty">No products matched your search.</div>
                     ) : null}
 
-                    {err ? <div className="gsError">Fel: {err}</div> : null}
+                    {err ? <div className="gsError">Error: {err}</div> : null}
                 </div>
 
                 <div className="gsFooter">
-                    <span>Enter: öppna</span>
-                    <span>↑/↓: välj</span>
-                    <span>Esc: stäng</span>
+                    <span>Enter: Open</span>
+                    <span>↑/↓: Choose</span>
+                    <span>Esc: Close</span>
                 </div>
             </div>
         </div>

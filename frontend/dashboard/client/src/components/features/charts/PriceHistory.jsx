@@ -29,10 +29,10 @@ function toIsoDate(ts) {
 }
 
 const PERIODS = [
-    { label: "1 månad", value: 1, days: 30 },
-    { label: "3 månader", value: 3, days: 90 },
-    { label: "6 månader", value: 6, days: 180 },
-    { label: "12 månader", value: 12, days: 365 },
+    { label: "1 month", value: 1, days: 30 },
+    { label: "3 months", value: 3, days: 90 },
+    { label: "6 months", value: 6, days: 180 },
+    { label: "12 months", value: 12, days: 365 },
 ];
 
 export default function PriceHistory({ fetchJson, ean, title, showExport = true }) {
@@ -140,7 +140,7 @@ export default function PriceHistory({ fetchJson, ean, title, showExport = true 
             <div className="card-pad">
                 <div className="phHeader">
                     <div>
-                        <div className="phTitle">{title || "Prishistorik"}</div>
+                        <div className="phTitle">{title || "Pricehistory"}</div>
                         <div className="phSub">EAN: {ean}</div>
                     </div>
 
@@ -164,7 +164,7 @@ export default function PriceHistory({ fetchJson, ean, title, showExport = true 
                                 onClick={handleExport}
                                 disabled={!series.length}
                             >
-                                Exportera CSV
+                                Export CSV
                             </Button>
                         )}
                     </div>
@@ -175,11 +175,14 @@ export default function PriceHistory({ fetchJson, ean, title, showExport = true 
                 <div className="phLegend">
           <span className="phLegendPill">
             <span className="phDot phDot--market" />
-            Marknadspris
+            Market prices
           </span>
+                    <span className="phLegendSpacer" />
+                    |
+
                     <span className="phLegendPill">
             <span className="phDot phDot--company" />
-            Vårt pris
+            Our price
           </span>
                 </div>
 
@@ -193,9 +196,9 @@ export default function PriceHistory({ fetchJson, ean, title, showExport = true 
 
                 {!loading && !err && metrics && (
                     <div className="phStats">
-                        <Stat label="Senaste pris" value={formatMoney(metrics.last)} />
+                        <Stat label="Latest price" value={formatMoney(metrics.last)} />
                         <Stat
-                            label="Förändring (30 dagar)"
+                            label="Change (30 days)"
                             value={
                                 <span>
                   {metrics.d >= 0 ? "+" : ""}

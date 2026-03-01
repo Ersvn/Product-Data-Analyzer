@@ -1,4 +1,3 @@
-// src/lib/api.js
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 const DEFAULT_TIMEOUT_MS = 15000;
 
@@ -31,7 +30,7 @@ class ApiClient {
         const auth = buildBasicAuthHeader();
         if (auth) headers.Authorization = auth;
 
-        // Body handling
+        // Body handle
         let body = options.body;
         if (isPlainObject(body)) {
             headers["Content-Type"] = headers["Content-Type"] || "application/json";
@@ -89,14 +88,11 @@ class ApiClient {
 
         if (!isJson && typeof payload === "string") {
             const t2 = payload.trim();
-            if (
-                (t2.startsWith("{") && t2.endsWith("}")) ||
-                (t2.startsWith("[") && t2.endsWith("]"))
-            ) {
+            if ((t2.startsWith("{") && t2.endsWith("}")) || (t2.startsWith("[") && t2.endsWith("]"))) {
                 try {
                     return JSON.parse(t2);
                 } catch {
-                    /* ignore */
+                    // ignore
                 }
             }
         }
@@ -104,16 +100,16 @@ class ApiClient {
         return payload;
     }
 
-    /* =========================
-       PRODUCTS (market)
-    ========================= */
+    // -------------------------
+    // Products (Market) - legacy JSON/files
+    // -------------------------
     fetchProducts({ q = "", page = 1, limit = 200, sort = "" } = {}) {
         return this.request(`/api/products${toQuery({ q, page, limit, sort })}`);
     }
 
-    /* =========================
-       PRODUCTS (company)
-    ========================= */
+    // -------------------------
+    // Products (Company - legacy/files)
+    // -------------------------
     fetchCompanyProducts({ q = "", page = 1, limit = 200, sort = "" } = {}) {
         return this.request(`/api/company/products${toQuery({ q, page, limit, sort })}`);
     }
@@ -132,27 +128,19 @@ class ApiClient {
         });
     }
 
-    /* =========================
-       COMPARE
-    ========================= */
+    // Compare
     fetchCompare({ q = "" } = {}) {
         return this.request(`/api/compare${toQuery({ q })}`);
     }
 
-    /* =========================
-       HISTORY
-    ========================= */
+    // History
     fetchHistory(ean, { days = 90, limit = 500 } = {}) {
         return this.request(
             `/api/history/compare/${encodeURIComponent(String(ean))}${toQuery({ days, limit })}`
         );
     }
 
-    /* =========================
-       PRICING (company) — by EAN
-    ========================= */
-
-    // productKey = EAN (string)
+    // Pricing (legacy/files) productKey = EAN
     fetchPricing(productKey, { recompute = true } = {}) {
         return this.request(
             `/api/company/products/by-ean/${encodeURIComponent(String(productKey))}/pricing${toQuery({
@@ -188,14 +176,71 @@ class ApiClient {
         );
     }
 
-    /* =========================
-       BULK PRICING
-    ========================= */
     recomputeAllPricing({ persist = true } = {}) {
+        return this.request(`/api/company/products/pricing/recompute-all${toQuery({ persist })}`, {
+            method: "POST",
+        });
+    }
+
+    // -------------------------
+    // DB API (Postgres)
+    // -------------------------
+    fetchDbCompanyListings({ q = "", afterId = 0, limit = 200 } = {}) {
+        return this.request(`/api/db/company-listings${toQuery({ q, afterId, limit })}`);
+    }
+
+    fetchDbMarketList({ q = "", afterUid = "", limit = 200 } = {}) {
+        return this.request(`/api/db/market-list${toQuery({ q, afterUid, limit })}`);
+    }
+    // Product view (old model)
+    fetchDbProductViewByCompany(companyId) {
+        return this.request(`/api/db/product-view/company${toQuery({ companyId })}`);
+    }
+
+    fetchDbProductViewByEan(ean) {
+        return this.request(`/api/db/product-view${toQuery({ ean })}`);
+    }
+
+    patchDbCompanyListing(id, patch) {
+        return this.request(`/api/db/company-listings/${encodeURIComponent(String(id))}`, {
+            method: "PATCH",
+            body: patch,
+        });
+    }
+
+    // Apply AUTO price to stored our_price (backend endpoint)
+    applyDbAutoPrice(companyId) {
         return this.request(
-            `/api/company/products/pricing/recompute-all${toQuery({ persist })}`,
+            `/api/db/company-listings/${encodeURIComponent(String(companyId))}/apply-auto`,
             { method: "POST" }
         );
+    }
+
+    seedDbCompanyListings({ minMerchants = 3 } = {}) {
+        return this.request(`/api/db/seed/company-listings${toQuery({ minMerchants })}`, {
+            method: "POST",
+        });
+    }
+
+    addDbCompanyListingByEan(ean) {
+        return this.request(`/api/db/company-listings/add${toQuery({ ean })}`, {
+            method: "POST",
+        });
+    }
+
+    matchDbAll({ limit = 500 } = {}) {
+        return this.request(`/api/db/match/all${toQuery({ limit })}`, { method: "POST" });
+    }
+
+    // -------------------------
+    // Scraped Market (DB) - NEW
+    // -------------------------
+    fetchDbScrapedMarket({ q = "", afterUid = "", limit = 200 } = {}) {
+        return this.request(`/api/db/scraped-market${toQuery({ q, afterUid, limit })}`);
+    }
+
+    fetchDbScrapedProductView(uid) {
+        return this.request(`/api/db/scraped-product-view${toQuery({ uid })}`);
     }
 }
 

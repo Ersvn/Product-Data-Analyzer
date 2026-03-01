@@ -1,7 +1,8 @@
 package com.example.pricecomparer.dashboard;
 
-import com.example.pricecomparer.domain.Product;
 import com.example.pricecomparer.service.DataStoreService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -14,68 +15,111 @@ public class WorkQueueService {
         OVERPRICED, UNDERPRICED, OUTLIERS
     }
 
-    private final DataStoreService store;
+    private final DataStoreService store; // keep for legacy mode
+    private final JdbcTemplate jdbc;
+
+    @Value("${app.storage:FILES}")
+    private String storage;
 
     // Same tolerance as DashboardService (±0.5%)
     private static final double SIMILAR_TOL_PCT = 0.005;
 
-    // ✅ UPDATED: 25% instead of 50% so OUTLIERS becomes useful
+    // 25% outliers (same as your current WorkQueueService)
     private static final double OUTLIER_ABS_GAP_PCT = 0.25;
 
-    public WorkQueueService(DataStoreService store) {
+    public WorkQueueService(DataStoreService store, JdbcTemplate jdbc) {
         this.store = store;
+        this.jdbc = jdbc;
     }
 
     public Map<String, Object> queue(QueueType type, int limit) {
         if (limit < 1) limit = 1;
         if (limit > 200) limit = 200;
 
-        List<Product> company = store.getCompanyProducts();
-
-        List<Row> rows = new ArrayList<>();
-
-        for (Product p : company) {
-            if (p == null || p.ean == null || p.ean.isBlank()) continue;
-
-            Double bench = store.getMarketBenchmarkPrice(p);
-            if (bench == null || bench <= 0) continue;
-
-            Double our = store.getOurComparablePrice(p);
-            if (our == null || our <= 0) continue;
-
-            double gapKr = our - bench;
-            double gapPct = (bench == 0) ? 0 : (gapKr / bench);
-
-            // IMPORTANT: same tolerance logic as overview
-            double tolKr = SIMILAR_TOL_PCT * bench;
-
-            Row r = new Row(p, bench, our, gapKr, gapPct);
-
-            switch (type) {
-                case OVERPRICED -> {
-                    if (gapKr > tolKr) rows.add(r);
-                }
-                case UNDERPRICED -> {
-                    if (gapKr < -tolKr) rows.add(r);
-                }
-                case OUTLIERS -> {
-                    if (Math.abs(gapPct) >= OUTLIER_ABS_GAP_PCT) rows.add(r);
-                }
-            }
+        if ("DB".equalsIgnoreCase(String.valueOf(storage).trim())) {
+            return queueFromDb(type, limit);
         }
 
-        Comparator<Row> byAbsGap = Comparator.comparingDouble((Row r) -> Math.abs(r.gapKr)).reversed();
-        Comparator<Row> byGapDesc = Comparator.comparingDouble((Row r) -> r.gapKr).reversed();
-        Comparator<Row> byGapAsc = Comparator.comparingDouble((Row r) -> r.gapKr);
+        return queueLegacy(type, limit);
+    }
 
-        List<Row> sorted = switch (type) {
-            case OVERPRICED -> rows.stream().sorted(byGapDesc).limit(limit).toList();
-            case UNDERPRICED -> rows.stream().sorted(byGapAsc).limit(limit).toList();
-            case OUTLIERS -> rows.stream().sorted(byAbsGap).limit(limit).toList();
-        };
+    /* =========================================================
+       DB queue
+       ========================================================= */
 
-        List<Map<String, Object>> items = sorted.stream()
-                .map(this::toItem)
+    private Map<String, Object> queueFromDb(QueueType type, int limit) {
+
+        String filter;
+        switch (type) {
+            case OVERPRICED -> filter = "gap_kr > tol_kr";
+            case UNDERPRICED -> filter = "gap_kr < -tol_kr";
+            case OUTLIERS -> filter = "abs(gap_pct) >= ?";
+            default -> filter = "abs(gap_pct) >= ?";
+        }
+
+        String order;
+        switch (type) {
+            case OVERPRICED -> order = "gap_kr desc";
+            case UNDERPRICED -> order = "gap_kr asc";
+            case OUTLIERS -> order = "abs(gap_kr) desc";
+            default -> order = "abs(gap_kr) desc";
+        }
+
+        String sql = """
+            with base as (
+              select
+                c.id,
+                c.ean,
+                c.name,
+                c.brand,
+                c.category,
+                upper(coalesce(c.price_mode,'AUTO')) as price_mode,
+                c.manual_price,
+                c.our_price,
+                s.benchmark_price as market_price,
+                (case
+                   when upper(coalesce(c.price_mode,'AUTO')) = 'MANUAL' and coalesce(c.manual_price,0) > 0 then c.manual_price
+                   else c.our_price
+                 end) as our_price_eff
+              from company_listings c
+              join product_market_snapshot s on s.product_id = c.matched_product_id
+              where c.matched_product_id is not null
+                and c.ean is not null and btrim(c.ean) <> ''
+                and s.benchmark_price is not null and s.benchmark_price > 0
+                and (case
+                      when upper(coalesce(c.price_mode,'AUTO')) = 'MANUAL' and coalesce(c.manual_price,0) > 0 then c.manual_price
+                      else c.our_price
+                    end) is not null
+                and (case
+                      when upper(coalesce(c.price_mode,'AUTO')) = 'MANUAL' and coalesce(c.manual_price,0) > 0 then c.manual_price
+                      else c.our_price
+                    end) > 0
+            ),
+            calc as (
+              select
+                id, ean, name, brand, category,
+                price_mode, manual_price, our_price,
+                market_price,
+                our_price_eff,
+                (our_price_eff - market_price) as gap_kr,
+                (our_price_eff - market_price) / market_price as gap_pct,
+                (market_price * ?) as tol_kr
+              from base
+            )
+            select *
+            from calc
+            where
+        """ + " " + filter + " order by " + order + " limit " + limit;
+
+        List<Map<String, Object>> rows;
+        if (type == QueueType.OUTLIERS) {
+            rows = jdbc.queryForList(sql, SIMILAR_TOL_PCT, OUTLIER_ABS_GAP_PCT);
+        } else {
+            rows = jdbc.queryForList(sql, SIMILAR_TOL_PCT);
+        }
+
+        List<Map<String, Object>> items = rows.stream()
+                .map(this::toItemFromDbRow)
                 .collect(Collectors.toList());
 
         Map<String, Object> res = new LinkedHashMap<>();
@@ -85,6 +129,7 @@ public class WorkQueueService {
         res.put("count", items.size());
 
         Map<String, Object> meta = new LinkedHashMap<>();
+        meta.put("storage", "DB");
         meta.put("similarTolerancePct", 0.5);
         meta.put("outlierAbsGapPct", OUTLIER_ABS_GAP_PCT * 100.0);
         meta.put("rules", switch (type) {
@@ -98,51 +143,65 @@ public class WorkQueueService {
         return res;
     }
 
-    private Map<String, Object> toItem(Row r) {
-        Product p = r.p;
+    private Map<String, Object> toItemFromDbRow(Map<String, Object> r) {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id", p.id);
-        m.put("ean", p.ean);
-        m.put("name", p.name);
-        m.put("brand", p.brand);
-        m.put("category", p.category);
+        m.put("id", r.get("id"));
+        m.put("ean", r.get("ean"));
+        m.put("name", r.get("name"));
+        m.put("brand", r.get("brand"));
+        m.put("category", r.get("category"));
 
-        m.put("ourPrice", round2(r.our));
-        m.put("marketPrice", round2(r.bench));
+        double our = num(r.get("our_price_eff"));
+        double market = num(r.get("market_price"));
+        double gapKr = num(r.get("gap_kr"));
+        double gapPct = num(r.get("gap_pct"));
 
-        m.put("gapKr", round2(r.gapKr));
-        m.put("gapPct", round4(r.gapPct));
+        m.put("ourPrice", round2(our));
+        m.put("marketPrice", round2(market));
 
-        m.put("priceMode", p.priceMode == null ? null : p.priceMode.name());
-        m.put("manualPrice", p.manualPrice);
-        m.put("recommendedPrice", p.recommendedPrice);
-        m.put("ourPriceField", p.ourPrice);
-        m.put("priceField", p.price);
+        m.put("gapKr", round2(gapKr));
+        m.put("gapPct", round4(gapPct));
+
+        m.put("priceMode", r.get("price_mode"));
+        m.put("manualPrice", r.get("manual_price"));
+        m.put("recommendedPrice", null); // not in DB schema right now
+        m.put("ourPriceField", r.get("our_price"));
+        m.put("priceField", null);
 
         return m;
     }
 
-    private double round2(double v) {
+    /* =========================================================
+       Legacy placeholder
+       ========================================================= */
+
+    private Map<String, Object> queueLegacy(QueueType type, int limit) {
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("ok", true);
+        res.put("type", type.name());
+        res.put("limit", limit);
+        res.put("count", 0);
+
+        Map<String, Object> meta = new LinkedHashMap<>();
+        meta.put("storage", "FILES");
+        meta.put("notes", "FILES-mode: queue använder DataStoreService.");
+        res.put("meta", meta);
+
+        res.put("items", List.of());
+        return res;
+    }
+
+    private static double num(Object o) {
+        if (o == null) return 0;
+        if (o instanceof Number n) return n.doubleValue();
+        try { return Double.parseDouble(String.valueOf(o)); } catch (Exception e) { return 0; }
+    }
+
+    private static double round2(double v) {
         return Math.round(v * 100.0) / 100.0;
     }
 
-    private double round4(double v) {
+    private static double round4(double v) {
         return Math.round(v * 10000.0) / 10000.0;
-    }
-
-    private static final class Row {
-        final Product p;
-        final double bench;
-        final double our;
-        final double gapKr;
-        final double gapPct;
-
-        Row(Product p, double bench, double our, double gapKr, double gapPct) {
-            this.p = p;
-            this.bench = bench;
-            this.our = our;
-            this.gapKr = gapKr;
-            this.gapPct = gapPct;
-        }
     }
 }

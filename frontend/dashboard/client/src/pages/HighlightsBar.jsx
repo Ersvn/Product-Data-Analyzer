@@ -15,10 +15,10 @@ export default function HighlightsBar({ stats, focus, onClearFocus }) {
             <div className="hl__grid">
                 <div className="hlCard">
                     <div className="hlCard__top">
-                        <div className="hlCard__label">Dyra produkter</div>
+                        <div className="hlCard__label">Expensive products</div>
                         <div className="hlCard__value">{overpriced.toLocaleString("sv-SE")}</div>
                     </div>
-                    <div className="hlCard__sub">Störst potential att sänka överkostnad.</div>
+                    <div className="hlCard__sub">Biggest potential to lower overpricing.</div>
                     <div className="hlCard__actions">
                         <button className="btn btn--ghost" onClick={() => nav("/products?focus=overpriced")}>
                             Visa
@@ -32,10 +32,10 @@ export default function HighlightsBar({ stats, focus, onClearFocus }) {
 
                 <div className="hlCard">
                     <div className="hlCard__top">
-                        <div className="hlCard__label">Billiga produkter</div>
+                        <div className="hlCard__label">Cheap products</div>
                         <div className="hlCard__value">{underpriced.toLocaleString("sv-SE")}</div>
                     </div>
-                    <div className="hlCard__sub">Risk att du ligger under marknaden.</div>
+                    <div className="hlCard__sub">Risk of being below market.</div>
                     <div className="hlCard__actions">
                         <button className="btn btn--ghost" onClick={() => nav("/products?focus=underpriced")}>
                             Visa

@@ -85,8 +85,8 @@ export default function CommandPalette({ open, onClose, items = [], actions = []
                         className="cp__input"
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
-                        placeholder="Sök sidor, produkter, åtgärder..."
-                        aria-label="Sök"
+                        placeholder="Search pages, products, actions..."
+                        aria-label="Search"
                     />
                     <div className="cp__hint">
                         <span className="cp__kbd">↑</span>
@@ -99,8 +99,8 @@ export default function CommandPalette({ open, onClose, items = [], actions = []
                 <div className="cp__list" role="listbox">
                     {filtered.length === 0 ? (
                         <div className="cp__empty">
-                            <div className="cp__emptyTitle">Inga resultat</div>
-                            <div>Prova en annan sökning</div>
+                            <div className="cp__emptyTitle">No results</div>
+                            <div>Try a different search</div>
                         </div>
                     ) : (
                         filtered.map((item, idx) => (
@@ -119,15 +119,15 @@ export default function CommandPalette({ open, onClose, items = [], actions = []
                                     {item.hint && <span className="cp__rowHint">{item.hint}</span>}
                 </span>
 
-                                <span className="cp__rowMeta">{item.kind === "action" ? "Åtgärd" : "Sida"}</span>
+                                <span className="cp__rowMeta">{item.kind === "action" ? "Action" : "Page"}</span>
                             </button>
                         ))
                     )}
                 </div>
 
                 <div className="cp__footer">
-                    <div>{filtered.length} resultat</div>
-                    <div>PricingIQ Enterprise</div>
+                    <div>{filtered.length} Result</div>
+                    <div>Ipsum Lorem</div>
                 </div>
             </div>
         </div>

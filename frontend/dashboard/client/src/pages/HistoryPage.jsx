@@ -30,9 +30,9 @@ export default function HistoryPage() {
         <section className="apage">
             <header className="apage__header">
                 <div>
-                    <div className="apage__kicker">Analys</div>
-                    <h1 className="apage__title">Prishistorik</h1>
-                    <p className="apage__sub">Jämför marknadspris mot ert pris över tid</p>
+                    <div className="apage__kicker">Analyze</div>
+                    <h1 className="apage__title">Pricehistory</h1>
+                    <p className="apage__sub">Compare marketprices against our own over time</p>
                 </div>
             </header>
 
@@ -54,7 +54,7 @@ export default function HistoryPage() {
 
                         {recent.length > 0 && (
                             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                                <span style={{ color: "var(--muted2)", fontSize: 13 }}>Senaste:</span>
+                                <span style={{ color: "var(--muted2)", fontSize: 13 }}>Latest:</span>
                                 {recent.map((r) => (
                                     <Button
                                         key={r}
@@ -77,7 +77,7 @@ export default function HistoryPage() {
                     <PriceHistory
                         fetchJson={api.request.bind(api)}
                         ean={picked}
-                        title="Prishistorik"
+                        title="Price Graph"
                     />
                 )}
             </div>
