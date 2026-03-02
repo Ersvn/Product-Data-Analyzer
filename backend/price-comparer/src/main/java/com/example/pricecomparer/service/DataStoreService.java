@@ -33,9 +33,7 @@ public class DataStoreService {
     private final AtomicReference<String> lastLoadedAt = new AtomicReference<>(null);
     private final AtomicReference<String> lastCompanySource = new AtomicReference<>(null);
 
-    // Overrides (persisted) – key by productId as String (stable)
     private final AtomicReference<Map<String, OverrideEntry>> overridesById = new AtomicReference<>(new LinkedHashMap<>());
-    // Optional helper index (ean -> override) to apply even if ids differ
     private final AtomicReference<Map<String, OverrideEntry>> overridesByEan = new AtomicReference<>(new HashMap<>());
 
     @Value("${app.data.overridesPath:file:./data/overrides.json}")
@@ -59,31 +57,26 @@ public class DataStoreService {
     public Map<String, Product> marketIndex() { return marketByEan.get(); }
     public Map<String, Product> companyIndex() { return companyByEan.get(); }
 
-    /** Read-only snapshot copy for services that should not mutate internal lists. */
     public List<Product> getCompanyProducts() {
         List<Product> c = companyProducts.get();
         return (c == null || c.isEmpty()) ? List.of() : List.copyOf(c);
     }
 
-    /** Read-only snapshot copy for services that should not mutate internal lists. */
     public List<Product> getMarketProducts() {
         List<Product> m = marketProducts.get();
         return (m == null || m.isEmpty()) ? List.of() : List.copyOf(m);
     }
 
-    /** Convenience: return market product by EAN (null-safe). */
     public Product getMarketProductByEan(String ean) {
         if (ean == null || ean.isBlank()) return null;
         return marketByEan.get().get(ean);
     }
 
-    /** Convenience: return company product by EAN (null-safe). */
     public Product getCompanyProductByEan(String ean) {
         if (ean == null || ean.isBlank()) return null;
         return companyByEan.get().get(ean);
     }
 
-    /** Expose overrides (read-only view) */
     public Map<String, Object> overridesMeta() {
         return Map.of(
                 "path", overridesPath,
@@ -92,10 +85,7 @@ public class DataStoreService {
         );
     }
 
-    /**
-     * @param useEnrichedMarket true => använd enrichedMarketPath om filen finns
-     *                         false => använd alltid marketPath (mock)
-     */
+
     public synchronized void loadAll(String marketPath,
                                      String companyPath,
                                      String enrichedMarketPath,
@@ -103,7 +93,6 @@ public class DataStoreService {
         try {
             String effectiveMarketPath = pickMarketPath(marketPath, enrichedMarketPath, useEnrichedMarket);
 
-            // Enterprise: if companyPath is a file: path and missing, seed it from classpath mock
             ensureInventoryFileIfMissing(companyPath);
 
             List<Map<String, Object>> rawMarket = readJsonArrayOrWrapped(effectiveMarketPath);
@@ -112,23 +101,18 @@ public class DataStoreService {
             List<Product> m = normalizeAll(rawMarket);
             List<Product> c = normalizeAll(rawCompany);
 
-            // Filter + ensure MUTABLE lists (stream().toList() is unmodifiable)
             m = new ArrayList<>(m.stream().filter(p -> p.ean != null && !p.ean.isBlank()).toList());
             c = new ArrayList<>(c.stream().filter(p -> p.ean != null && !p.ean.isBlank()).toList());
 
-            // Remember where company data came from (needed for persist)
             lastCompanySource.set(companyPath);
 
-            // Defaults (backwards compatible)
+
             for (Product p : c) {
                 if (p.priceMode == null) p.priceMode = PriceMode.AUTO;
             }
 
-            // Load overrides (if any) and apply to company list before indexing
             loadOverridesIfPresent();
             applyOverridesToCompany(c);
-
-            // NEW: Seed baseline so UNDERPRICED doesn't spam for every product at startup
             ensureUnderpricedBaseline(c);
 
             marketProducts.set(m);
@@ -145,18 +129,6 @@ public class DataStoreService {
         }
     }
 
-    /* =========================================================
-       SINGLE SOURCE OF TRUTH for dashboard comparisons (NEW/FIX)
-       ========================================================= */
-
-    /**
-     * Market benchmark definition:
-     * - If BOTH priceMin and priceMax exist (>0): return median = (min+max)/2
-     * - Else if priceMin exists (>0): return priceMin
-     * - Else if priceMax exists (>0): return priceMax
-     * - Else if price field exists (>0): return price
-     * - Else null
-     */
     public Double getMarketBenchmarkPrice(Product companyProduct) {
         if (companyProduct == null) return null;
         if (companyProduct.ean == null || companyProduct.ean.isBlank()) return null;
@@ -191,7 +163,6 @@ public class DataStoreService {
         return null;
     }
 
-    /** Keep for backward compatibility: used by older endpoints. */
     public Double getEffectivePrice(Product p) {
         if (p == null) return null;
         PriceMode mode = (p.priceMode == null) ? PriceMode.AUTO : p.priceMode;
@@ -199,26 +170,15 @@ public class DataStoreService {
         return p.recommendedPrice;
     }
 
-    /* =========================================================
-       UNDERPRICED BASELINE (NEW)
-       ========================================================= */
-
-    /** Fetch override by product id (string) if present. */
     public OverrideEntry getOverrideById(long productId) {
         return overridesById.get().get(String.valueOf(productId));
     }
 
-    /** Fetch override by ean if present. */
     public OverrideEntry getOverrideByEan(String ean) {
         if (ean == null || ean.isBlank()) return null;
         return overridesByEan.get().get(ean);
     }
 
-    /**
-     * Seed baseline per product so UNDERPRICED becomes:
-     * "market moved up since last seen AND our price didn't change".
-     * Without this seeding, everything looks "underpriced" on first run.
-     */
     private void ensureUnderpricedBaseline(List<Product> company) {
         if (company == null || company.isEmpty()) return;
 
@@ -275,10 +235,6 @@ public class DataStoreService {
         }
     }
 
-    /**
-     * Acknowledge ("I checked this product"): update baseline to current values.
-     * Use this when user opens item from queue or presses "Ack" button.
-     */
     public synchronized Product acknowledgeMarketBaseline(long productId) {
         Product p = requireCompanyProduct(productId);
 
@@ -317,15 +273,9 @@ public class DataStoreService {
         return p;
     }
 
-    /* =========================================================
-       WRITE API SUPPORT (company products + overrides)
-       ========================================================= */
-
-    /** Create new company product (in-memory) + write override baseline */
     public synchronized Product addCompanyProduct(Product p) {
         if (p == null) throw new IllegalArgumentException("product is null");
 
-        // Ensure id
         if (p.id <= 0) {
             long next = nextCompanyId();
             p.id = next;
@@ -333,20 +283,16 @@ public class DataStoreService {
 
         if (p.priceMode == null) p.priceMode = PriceMode.AUTO;
 
-        // Ensure list is mutable
         List<Product> c = companyProducts.get();
         if (!(c instanceof ArrayList)) c = new ArrayList<>(c);
 
         c.add(p);
 
-        // Update atomics + index
         companyProducts.set(c);
         companyByEan.set(buildIndexMutable(c));
 
-        // Persist a baseline override (so it survives reload even if company file is reseeded/changed)
         upsertOverrideFromProduct(p);
 
-        // NEW: immediately seed baseline for newly added product
         acknowledgeMarketBaseline(p.id);
 
         if (autoPersistOverrides) persistOverrides();
@@ -354,10 +300,6 @@ public class DataStoreService {
         return p;
     }
 
-    /**
-     * Update a company product by id string (frontend uses string ids).
-     * Rebuilds index and persists overrides (if enabled).
-     */
     public synchronized Product updateCompanyProduct(String id, Consumer<Product> mutator) {
         if (id == null || id.isBlank()) throw new IllegalArgumentException("id is required");
         if (mutator == null) throw new IllegalArgumentException("mutator is required");
@@ -373,10 +315,8 @@ public class DataStoreService {
         if (p.priceMode == null) p.priceMode = PriceMode.AUTO;
         p.lastUpdated = Instant.now().toString();
 
-        // Rebuild index (ean could change)
         companyByEan.set(buildIndexMutable(companyProducts.get()));
 
-        // Update overrides
         upsertOverrideFromProduct(p);
         if (autoPersistOverrides) persistOverrides();
 
