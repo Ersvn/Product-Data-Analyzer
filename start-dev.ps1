@@ -23,7 +23,6 @@ function Get-GradleProjects([string]$repo) {
 
     Push-Location $repo
     try {
-        # --quiet för mindre brus, men projects skriver ändå ut listan
         $out = & $gradlew projects --quiet 2>&1
         return $out
     } finally {
@@ -69,19 +68,19 @@ function Stop-Port([int]$port) {
 $repo = Find-RepoRoot (Get-Location).Path
 Write-Host "[dev] Repo root: $repo"
 
-# ---- Resolve correct Gradle path for backend ----
+# Resolve correct Gradle path for backend
 $pcPath = Resolve-PriceComparerPath $repo
 Write-Host "[dev] price-comparer Gradle path: $pcPath"
 
-# (Rekommenderat) döda gamla servern så du slipper port 3001-konflikt
+# Döda gamla servern så du slipper port 3001-konflikt
 Stop-Port 3001
 
-# --- Backend ---
+# Backend
 $backendCmd = ".\gradlew $pcPath`:bootRun"
 Write-Host "[dev] Starting backend: $backendCmd"
 Start-Process powershell -WorkingDirectory $repo -ArgumentList "-NoExit", "-Command", $backendCmd
 
-# --- Frontend (låst path) ---
+# Frontend
 $frontendDir = Join-Path $repo "frontend\dashboard\client"
 
 if (-not (Test-Path (Join-Path $frontendDir "package.json"))) {
