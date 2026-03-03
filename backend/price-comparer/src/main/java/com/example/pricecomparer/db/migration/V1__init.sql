@@ -1,7 +1,3 @@
--- =========
--- Core tables
--- =========
-
 create table if not exists products (
                                         id bigserial primary key,
                                         ean varchar(32) unique,
@@ -19,7 +15,7 @@ create index if not exists idx_products_category on products(category);
 create table if not exists product_identifiers (
                                                    id bigserial primary key,
                                                    product_id bigint not null references products(id) on delete cascade,
-    type varchar(16) not null,              -- 'EAN','MPN','SKU'
+    type varchar(16) not null,
     value text not null,
     normalized_value text not null,
     source varchar(64),
@@ -27,7 +23,6 @@ create table if not exists product_identifiers (
     created_at timestamptz default now()
     );
 
--- du kör: on conflict (type, normalized_value) do nothing
 create unique index if not exists ux_ident_type_norm on product_identifiers(type, normalized_value);
 create index if not exists idx_ident_product on product_identifiers(product_id);
 
@@ -50,14 +45,13 @@ create table if not exists offers (
     fetched_at timestamptz default now()
     );
 
--- du kör: on conflict (product_id, merchant_id) do update
 create unique index if not exists ux_offers_product_merchant on offers(product_id, merchant_id);
 create index if not exists idx_offers_product on offers(product_id);
 create index if not exists idx_offers_fetched_at on offers(fetched_at desc);
 
 create table if not exists company_listings (
                                                 id bigserial primary key,
-                                                company_sku varchar(140) not null unique, -- 'EAN:..' / 'MPN:..' / 'SKU:..'
+                                                company_sku varchar(140) not null unique,
     ean varchar(32),
     mpn varchar(128),
     name text,
@@ -74,9 +68,6 @@ create table if not exists company_listings (
 create index if not exists idx_company_ean on company_listings(ean);
 create index if not exists idx_company_matched on company_listings(matched_product_id);
 
--- =========
--- View used by DbMarketController / DbProductViewController / DbPricingController
--- =========
 
 create or replace view product_market_snapshot as
 select

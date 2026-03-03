@@ -38,10 +38,6 @@ public class CompareController {
         return compareFromInMemory(q);
     }
 
-    /* =========================================================
-       DB compare (Postgres source of truth)
-       ========================================================= */
-
     private CompareResponse compareFromDb(String q) {
         boolean hasQ = q != null && !q.isBlank();
         String like = "%" + (hasQ ? q : "") + "%";

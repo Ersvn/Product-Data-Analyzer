@@ -21,17 +21,9 @@ public class IcecatImageService {
     @Value("${icecat.enabled:false}")
     private boolean enabled;
 
-    /**
-     * Ex:
-     *  - file:C:/Users/eriks/Desktop/Icecat/daily.index.xml
-     *  - classpath:data/icecat/daily.index.xml
-     */
     @Value("${icecat.path:}")
     private String path;
 
-    /**
-     * prefer: pic500x500 | high | low | thumb
-     */
     @Value("${icecat.prefer:high}")
     private String prefer;
 
@@ -62,7 +54,6 @@ public class IcecatImageService {
     private Map<String, String> ensureIndexLoaded() {
         if (!isEnabled()) return Map.of();
 
-        // If already cached and source unchanged, reuse.
         String currentPath = path;
         long mtime = getMtimeIfFile(currentPath);
 
@@ -119,7 +110,6 @@ public class IcecatImageService {
                 var dbf = DocumentBuilderFactory.newInstance();
                 dbf.setNamespaceAware(false);
 
-                // ✅ Allow DOCTYPE but block external entity resolution / DTD fetch (avoids XXE)
                 try { dbf.setFeature("http://xml.org/sax/features/external-general-entities", false); } catch (Exception ignored) {}
                 try { dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false); } catch (Exception ignored) {}
                 try { dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false); } catch (Exception ignored) {}
@@ -134,11 +124,9 @@ public class IcecatImageService {
                     Node n = files.item(i);
                     if (!(n instanceof Element fileEl)) continue;
 
-                    // 1) image URL from attributes
                     String img = pickImageAttr(fileEl);
                     if (img.isBlank()) continue;
 
-                    // 2) EAN/GTIN-13 inside <EAN_UPCS><EAN_UPC Value="..." Format="GTIN-13"/>
                     String ean13 = findFirstGtin13(fileEl);
                     if (ean13.isBlank()) continue;
 
@@ -172,7 +160,6 @@ public class IcecatImageService {
     private String findFirstGtin13(Element fileEl) {
         NodeList eans = fileEl.getElementsByTagName("EAN_UPC");
 
-        // prefer GTIN-13 explicitly
         for (int j = 0; j < eans.getLength(); j++) {
             Node n = eans.item(j);
             if (!(n instanceof Element e)) continue;
@@ -183,7 +170,6 @@ public class IcecatImageService {
             if ("GTIN-13".equals(format) && val.length() == 13) return val;
         }
 
-        // fallback: first 13-digit value
         for (int j = 0; j < eans.getLength(); j++) {
             Node n = eans.item(j);
             if (!(n instanceof Element e)) continue;

@@ -13,7 +13,7 @@ import java.util.Map;
 @Service
 public class DashboardService {
 
-    private final DataStoreService store; // keep for legacy mode
+    private final DataStoreService store;
     private final JdbcTemplate jdbc;
 
     @Value("${app.storage:FILES}")
@@ -28,10 +28,7 @@ public class DashboardService {
     @Value("${app.data.useEnrichedMarket:false}")
     private boolean useEnrichedMarket;
 
-    // Same tolerance as you already use for "similar": ±0.5%
     private static final double SIMILAR_TOL_PCT = 0.005;
-
-    // Outlier threshold
     private static final double OUTLIER_ABS_GAP_PCT = 0.50; // 50%
 
     public DashboardService(DataStoreService store, JdbcTemplate jdbc) {
@@ -46,13 +43,8 @@ public class DashboardService {
         return legacyOverview(days);
     }
 
-    /* =========================================================
-       DB implementation
-       ========================================================= */
-
     private DashboardOverview overviewFromDb(int days) {
 
-        // TOTAL inventory = ALL company_listings
         long totalProducts = qLong("select count(*) from company_listings");
 
         long companyMissingEan = qLong("""
@@ -61,7 +53,6 @@ public class DashboardService {
             where ean is null or btrim(ean) = ''
         """);
 
-        // "Matched products" = has matched_product_id (EAN match -> market product)
         long matchedMarket = qLong("""
             select count(*)
             from company_listings
@@ -69,7 +60,6 @@ public class DashboardService {
               and ean is not null and btrim(ean) <> ''
         """);
 
-        // Market missing benchmark (or snapshot missing)
         long marketMissingPriceSignal = qLong("""
             select count(*)
             from company_listings c
@@ -79,8 +69,6 @@ public class DashboardService {
               and (s.benchmark_price is null or s.benchmark_price <= 0)
         """);
 
-        // Company missing comparable price (independent of market snapshot!)
-        // FIX: parentheses so OR doesn't break the WHERE
         long companyMissingComparable = qLong("""
             select count(*)
             from company_listings c
@@ -93,7 +81,6 @@ public class DashboardService {
               )
         """);
 
-        // Matched + priced = matchedMarket + benchmark ok + ourComparable ok
         long matchedPriced = qLong("""
             select count(*)
             from company_listings c
@@ -110,7 +97,6 @@ public class DashboardService {
               ) > 0
         """);
 
-        // Aggs for KPI buckets (only on matchedPriced set)
         Map<String, Object> agg = jdbc.queryForMap("""
             with base as (
               select
@@ -174,13 +160,10 @@ public class DashboardService {
         double cheaperPct = matchedPriced == 0 ? 0 : (cheaper * 100.0 / matchedPriced);
         double similarPct = matchedPriced == 0 ? 0 : (similar * 100.0 / matchedPriced);
         double moreExpPct = matchedPriced == 0 ? 0 : (moreExpensive * 100.0 / matchedPriced);
-
-        // FIX: matchRatePct should describe match coverage, not priced coverage
         double matchRatePct = totalProducts == 0 ? 0 : (matchedMarket * 100.0 / totalProducts);
 
         double priceIndex = avgMarket == 0 ? 0 : (avgOur / avgMarket) * 100.0;
 
-        // Quality in DB
         long benchHasOffersCount = qLong("""
             select count(*)
             from company_listings c
@@ -204,7 +187,6 @@ public class DashboardService {
         long benchFallbackPriceOnly = Math.max(0, matchedMarket - benchFromMinMaxOrOffers);
 
         double matchedMarketRate = totalProducts == 0 ? 0 : (matchedMarket * 100.0 / totalProducts);
-        // FIX: priced coverage should be of matchedMarket
         double pricedCoverageRate = matchedMarket == 0 ? 0 : (matchedPriced * 100.0 / matchedMarket);
         double qualityRate = matchedMarket == 0 ? 0 : (benchFromMinMaxOrOffers * 100.0 / matchedMarket);
 
@@ -278,7 +260,6 @@ public class DashboardService {
         });
         meta.put("health", health);
 
-        // TOP-LEVEL: matchedProducts should represent "matchedMarket"
         return new DashboardOverview(
                 true,
                 totalProducts,
@@ -310,10 +291,6 @@ public class DashboardService {
                 meta
         );
     }
-
-    /* =========================================================
-       Legacy placeholder (FILES/in-memory)
-       ========================================================= */
 
     private DashboardOverview legacyOverview(int days) {
         Map<String, Object> meta = new LinkedHashMap<>();
@@ -351,10 +328,6 @@ public class DashboardService {
                 meta
         );
     }
-
-    /* =========================================================
-       Helpers
-       ========================================================= */
 
     private long qLong(String sql) {
         try {

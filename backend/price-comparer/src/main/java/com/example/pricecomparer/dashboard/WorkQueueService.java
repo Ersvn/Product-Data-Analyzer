@@ -21,10 +21,7 @@ public class WorkQueueService {
     @Value("${app.storage:FILES}")
     private String storage;
 
-    // Same tolerance as DashboardService (±0.5%)
     private static final double SIMILAR_TOL_PCT = 0.005;
-
-    // 25% outliers (same as your current WorkQueueService)
     private static final double OUTLIER_ABS_GAP_PCT = 0.25;
 
     public WorkQueueService(DataStoreService store, JdbcTemplate jdbc) {
@@ -42,10 +39,6 @@ public class WorkQueueService {
 
         return queueLegacy(type, limit);
     }
-
-    /* =========================================================
-       DB queue
-       ========================================================= */
 
     private Map<String, Object> queueFromDb(QueueType type, int limit) {
 
@@ -170,10 +163,6 @@ public class WorkQueueService {
 
         return m;
     }
-
-    /* =========================================================
-       Legacy placeholder
-       ========================================================= */
 
     private Map<String, Object> queueLegacy(QueueType type, int limit) {
         Map<String, Object> res = new LinkedHashMap<>();

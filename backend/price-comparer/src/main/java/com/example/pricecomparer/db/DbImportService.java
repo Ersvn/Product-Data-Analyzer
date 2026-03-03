@@ -37,9 +37,6 @@ public class DbImportService {
 
     @Transactional
     public Map<String, Object> importAll() throws Exception {
-        // DEV-option: nollställ för att få deterministiska resultat under iteration.
-        // Kommentera ut när du vill köra inkrementellt.
-        // jdbc.update("truncate table offers, product_identifiers, company_listings, merchants, products restart identity cascade");
 
         int marketRows = importMarket();
         int companyRows = importCompany();
@@ -60,11 +57,7 @@ public class DbImportService {
         );
     }
 
-    // ------------------------
-    // Import MARKET (market.mock.json)
-    // schema sample:
-    // { id, name, brand, category, price, store, url, ean, ... }
-    // ------------------------
+
     private int importMarket() throws Exception {
         List<Map<String, Object>> rows = readJsonArray(marketPath);
         int processed = 0;
@@ -100,14 +93,6 @@ public class DbImportService {
         return processed;
     }
 
-    // ------------------------
-    // Import COMPANY (inventory.mock.json)
-    // schema sample:
-    // { id, name, brand, category, ourPrice, costPrice, ean, mpn, companySku/sku ... }
-    //
-    // IMPORTANT:
-    // - Nu när du har UNIQUE(ean) i company_listings så kräver vi EAN.
-    // ------------------------
     private int importCompany() throws Exception {
         List<Map<String, Object>> rows = readJsonArray(companyPath);
         int processed = 0;
@@ -118,7 +103,7 @@ public class DbImportService {
             String category = str(r.get("category"));
 
             String ean = normEan(str(r.get("ean")));
-            if (ean == null) continue; // kan inte skriva in säkert utan ean längre
+            if (ean == null) continue;
 
             String mpnRaw = str(r.get("mpn"));
             String mpnNorm = (mpnRaw != null) ? normalize("MPN", mpnRaw) : null;
@@ -131,7 +116,6 @@ public class DbImportService {
             // company_sku: EAN > MPN > SKU > ID (men UNIQUE är på ean)
             String companySku = "EAN:" + ean;
             if (companySku.isBlank()) {
-                // borde aldrig hända pga ean != null, men safe:
                 if (mpnNorm != null && !mpnNorm.isBlank()) companySku = "MPN:" + mpnNorm;
                 else if (skuNorm != null && !skuNorm.isBlank()) companySku = "SKU:" + skuNorm;
                 else if (id != null && !id.isBlank()) companySku = "ID:" + id;
@@ -144,13 +128,9 @@ public class DbImportService {
             BigDecimal costPrice = toBigDecimal(r.get("costPrice"));
             if (costPrice == null) costPrice = toBigDecimal(r.get("cost"));
 
-            // ✅ Om vi inte har MPN -> spara null (inte name)
+            // Om vi inte har MPN -> spara null (inte name)
             String mpnToStore = (mpnNorm != null && !mpnNorm.isBlank()) ? mpnRaw : null;
 
-            // ----------------------------------------
-            // UPSERT company_listings by EAN
-            // Respektera MANUAL så att importen inte skriver över användarens val
-            // ----------------------------------------
             jdbc.update("""
                 insert into company_listings
                   (company_sku, name, brand, category, ean, mpn, cost_price, our_price, price_mode, manual_price, last_updated)
@@ -187,7 +167,7 @@ public class DbImportService {
                     null
             );
 
-            // Valfritt men bra: seeda master + identifiers
+            // Seeda master + identifiers
             Long productId = upsertProductByEan(ean, name, brand, category);
             upsertIdentifier(productId, "EAN", ean, "MOCK_COMPANY", 100);
 
@@ -203,10 +183,6 @@ public class DbImportService {
 
         return processed;
     }
-
-    // ------------------------
-    // Upserts
-    // ------------------------
 
     private Long upsertProductByEan(String ean, String name, String brand, String category) {
         jdbc.update("""
@@ -254,10 +230,6 @@ public class DbImportService {
             """, productId, merchantId, price, currency, inStock, url);
     }
 
-    // ------------------------
-    // JSON reading with BOM/UTF-16 support
-    // ------------------------
-
     private List<Map<String, Object>> readJsonArray(String path) throws Exception {
         Resource res = resourceLoader.getResource(path);
         try (InputStream in = res.getInputStream()) {
@@ -294,10 +266,6 @@ public class DbImportService {
         }
         return b;
     }
-
-    // ------------------------
-    // Helpers
-    // ------------------------
 
     private static String str(Object v) {
         if (v == null) return null;

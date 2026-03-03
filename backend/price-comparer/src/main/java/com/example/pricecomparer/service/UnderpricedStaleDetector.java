@@ -22,7 +22,6 @@ public class UnderpricedStaleDetector {
         this.dataStore = dataStore;
     }
 
-    /** UNDERPRICED = market benchmark went up since lastSeen AND our price hasn't changed */
     public boolean isUnderpricedStale(Product p) {
         if (p == null) return false;
         if (p.id <= 0) return false;
@@ -45,12 +44,10 @@ public class UnderpricedStaleDetector {
         double movePct = (marketNow - marketThen) / marketThen;
         if (movePct < marketMovePercent) return false;
 
-        // Our price must be unchanged since last seen (tolerance)
         Double ourThen = ov.lastSeenOurComparablePrice;
         if (ourThen != null && ourNow != null) {
             if (!approxEq(ourNow, ourThen, 0.5)) return false;
         } else {
-            // fallback: if our product updated after lastSeenAt -> user already acted
             if (ov.lastSeenAt != null && !ov.lastSeenAt.isBlank()
                     && p.lastUpdated != null && !p.lastUpdated.isBlank()) {
                 try {
@@ -64,15 +61,10 @@ public class UnderpricedStaleDetector {
         return true;
     }
 
-    /**
-     * Builds an UNDERPRICED queue using ONLY stale-market-move logic.
-     * This version is "raw-safe": it tolerates raw Lists where elements are Objects.
-     */
     public List<Product> buildUnderpricedQueue(int limit) {
         List<Product> out = new ArrayList<>();
 
-        // IMPORTANT: iterate raw-safe to avoid Object typing issues
-        List<?> company = dataStore.company(); // could be raw internally
+        List<?> company = dataStore.company();
         for (Object o : company) {
             if (!(o instanceof Product p)) continue;
             if (isUnderpricedStale(p)) out.add(p);

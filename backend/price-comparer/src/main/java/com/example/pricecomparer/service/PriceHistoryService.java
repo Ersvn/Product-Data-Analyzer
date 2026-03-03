@@ -23,7 +23,6 @@ public class PriceHistoryService {
     private final ResourceLoader resourceLoader;
     private final ObjectMapper om = new ObjectMapper();
 
-    // Valfri fil: src/main/resources/data/price-history.json
     @Value("${app.data.historyPath:classpath:data/price-history.json}")
     private String historyPath;
 
@@ -83,10 +82,6 @@ public class PriceHistoryService {
     }
 
     private List<PricePoint> generate(String ean, String source, double base, LocalDate from, LocalDate to) {
-        // Realistisk, enkel generator:
-        //  - datapunkt per dag
-        //  - veckovis drift +-1–2%
-        //  - ibland kampanj-drop
         Random rnd = new Random(Objects.hash(ean, source));
         List<PricePoint> out = new ArrayList<>();
 
@@ -96,17 +91,14 @@ public class PriceHistoryService {
         double price = base;
 
         for (LocalDate d = start; !d.isAfter(end); d = d.plusDays(1)) {
-            // mild daily noise
             double daily = 1.0 + (rnd.nextDouble() - 0.5) * 0.004; // +/-0.2%
             price *= daily;
 
-            // varje måndag: större justering
             if (d.getDayOfWeek().getValue() == 1) {
                 double weekly = 1.0 + (rnd.nextDouble() - 0.5) * 0.04; // +/-2%
                 price *= weekly;
             }
 
-            // ibland kampanj (ca 1% av dagar)
             if (rnd.nextDouble() < 0.01) {
                 price *= 0.92; // -8%
             }
@@ -115,13 +107,12 @@ public class PriceHistoryService {
             p.ean = ean;
             p.source = source.toLowerCase(Locale.ROOT);
             p.currency = "SEK";
-            p.price = Math.max(1, Math.round(price)); // avrunda kr
+            p.price = Math.max(1, Math.round(price));
             p.ts = d.atStartOfDay().toInstant(ZoneOffset.UTC).toString();
 
             out.add(p);
         }
 
-        // sortera stigande tid
         out.sort(Comparator.comparing(x -> Instant.parse(x.ts)));
         return out;
     }

@@ -46,12 +46,6 @@ public class CompanyProductWriteController {
         return ResponseEntity.status(404).body(Map.of("ok", false, "error", "Company product not found for ean: " + ean));
     }
 
-    /**
-     * Canonical pricing view model for the UI:
-     * - Always includes market snapshot (when market exists)
-     * - Uses same comparable price logic as dashboard/workqueue
-     * - Includes gapKr/gapPct computed server-side for consistency
-     */
     private Map<String, Object> pricingResponse(Product p, Map<String, Object> persisted) {
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("ok", true);
@@ -66,7 +60,7 @@ public class CompanyProductWriteController {
         res.put("effectivePrice", ourComparable);
         res.put("lastUpdated", p.lastUpdated);
 
-        // ----- Market snapshot (single source of truth) -----
+        // Market snapshot
         Product m = store.getMarketProductByEan(p.ean);
         res.put("marketFound", m != null);
 
@@ -75,9 +69,7 @@ public class CompanyProductWriteController {
             res.put("marketPriceMax", m.priceMax);
 
             Double bench = store.getMarketBenchmarkPrice(p);
-            // New canonical field
             res.put("marketBenchmarkPrice", bench);
-            // Back-compat alias (frontend might still read marketPrice)
             res.put("marketPrice", bench);
 
             res.put("competitorCount", m.offersCount);
@@ -94,9 +86,6 @@ public class CompanyProductWriteController {
         return res;
     }
 
-    // ======================================================
-    // ID-based endpoints (keep for back-compat)
-    // ======================================================
 
     @GetMapping("/{id}/pricing")
     public ResponseEntity<?> pricing(
@@ -192,10 +181,6 @@ public class CompanyProductWriteController {
 
         return ResponseEntity.ok(pricingResponse(p, persisted));
     }
-
-    // ======================================================
-    // EAN-based endpoints (match frontend + stable key)
-    // ======================================================
 
     @GetMapping("/by-ean/{ean}/pricing")
     public ResponseEntity<?> pricingByEan(

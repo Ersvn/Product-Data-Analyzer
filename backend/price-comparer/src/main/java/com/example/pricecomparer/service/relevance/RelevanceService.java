@@ -36,16 +36,12 @@ public class RelevanceService {
 
         int score = 0;
 
-        // Category whitelist keywords
         if (containsAny(cat, props.getAllowedCategoryKeywords())) score += 2;
 
-        // Name keywords (same list works ok)
         if (containsAny(name, props.getAllowedCategoryKeywords())) score += 1;
 
-        // Brand present is a weak positive signal
         if (!blank(p.brand)) score += 1;
 
-        // Penalize “pure part number” names (no spaces) unless category clearly IT
         if (!blank(p.name) && !p.name.contains(" ") && !containsAny(cat, props.getAllowedCategoryKeywords())) score -= 2;
 
         return score >= props.getMinScore();

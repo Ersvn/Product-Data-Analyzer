@@ -277,7 +277,6 @@ public class DbPricingService {
 
             return out;
         } catch (Exception e) {
-            // ✅ instead of 500 with empty message, return JSON error
             return Map.of(
                     "ok", false,
                     "error", "INTERNAL_ERROR",
@@ -287,9 +286,6 @@ public class DbPricingService {
         }
     }
 
-    // ------------------------
-    // Core-engine compute
-    // ------------------------
     private BigDecimal computeRecommended(Map<String, Object> company, Map<String, Object> snap) {
         BigDecimal cost = dec(company.get("cost_price"));
         BigDecimal current = dec(company.get("our_price"));
@@ -328,9 +324,6 @@ public class DbPricingService {
         return res.finalPrice();
     }
 
-    // ------------------------
-    // DB reads
-    // ------------------------
     private Map<String, Object> latestCompanyListingByEan(String ean) {
         var rows = jdbc.queryForList("""
             select *
@@ -370,9 +363,6 @@ public class DbPricingService {
         """, productId);
     }
 
-    // ------------------------
-    // Helpers
-    // ------------------------
     private static String normEan(String raw) {
         if (raw == null) return "";
         return raw.replaceAll("[^0-9]", "");
@@ -381,7 +371,7 @@ public class DbPricingService {
     private static String normUid(String raw) {
         if (raw == null) return "";
         String s = raw.trim();
-        // uid is ean_norm/mpn_norm => keep digits/letters only
+
         return s.replaceAll("[^0-9A-Za-z]", "");
     }
 

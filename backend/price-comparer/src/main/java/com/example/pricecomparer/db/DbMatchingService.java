@@ -47,7 +47,7 @@ public class DbMatchingService {
 
     @Transactional
     public Map<String, Object> matchAll(int limit) {
-        // Matcha bara de som inte är matchade än (vill du re-matcha kan vi lägga en flagga)
+        // Matcha bara de som inte är matchade
         List<Map<String, Object>> rows = jdbc.queryForList("""
             select id, company_sku, name, brand, ean, mpn
             from company_listings
@@ -85,33 +85,26 @@ public class DbMatchingService {
         );
     }
 
-    // ------------------------
-    // Core matching logic: EAN > MPN > SKU
-    // ------------------------
     private Long resolveProductId(Map<String, Object> c) {
         String ean = normEan(str(c.get("ean")));
         String mpn = normKey(str(c.get("mpn")));
         String brand = normBrand(str(c.get("brand")));
         String companySku = str(c.get("company_sku"));
-
-        // 1) EAN direct match on products.ean (högst prioritet)
+        // EAN direct match on products.ean
         if (ean != null) {
             List<Long> ids = jdbc.queryForList("select id from products where ean = ?", Long.class, ean);
             if (!ids.isEmpty()) return ids.get(0);
         }
 
-        // 2) MPN via identifiers — SAFE MODE:
-        //    - Om brand finns: KRÄV brand-match, annars returnera null (matcha inte).
-        //    - Om brand saknas: matcha bara om det är entydigt (1 kandidat).
+        // MPN via identifiers
         if (mpn != null) {
             Long id = resolveByIdentifierSafe("MPN", mpn, brand);
             if (id != null) return id;
         }
 
-        // 3) SKU via identifiers (brand tie-break om flera)
+        // SKU via identifiers
         String sku = null;
 
-        // if you later store an explicit sku column, read it here too
         if (companySku != null && companySku.toUpperCase(Locale.ROOT).startsWith("SKU:")) {
             sku = normKey(companySku.substring(4));
         }
@@ -130,15 +123,8 @@ public class DbMatchingService {
         return null;
     }
 
-    /**
-     * SAFE identifier match:
-     * - Om brand är känd: returnera bara match om kandidatens products.brand matchar.
-     * - Om brand är okänd: returnera bara match om exakt 1 kandidat finns.
-     *
-     * Detta minimerar false positives när MPN kolliderar eller datakvaliteten är blandad.
-     */
     private Long resolveByIdentifierSafe(String type, String normalizedValue, String brandNorm) {
-        // Hämta kandidater + deras brand i en query (snabbare än per-id query)
+        // Hämta kandidater + deras brand i en query
         List<Map<String, Object>> rows = jdbc.queryForList("""
             select pi.product_id as id, p.brand as brand
             from product_identifiers pi
@@ -148,7 +134,6 @@ public class DbMatchingService {
 
         if (rows.isEmpty()) return null;
 
-        // Om vi har brand på company listing: KRÄV brand match
         if (brandNorm != null) {
             for (Map<String, Object> r : rows) {
                 String b = normBrand(str(r.get("brand")));
@@ -156,7 +141,6 @@ public class DbMatchingService {
                     return ((Number) r.get("id")).longValue();
                 }
             }
-            // Brand mismatch => ingen MPN-match (hellre "inte matchad" än fel match)
             return null;
         }
 
@@ -165,7 +149,7 @@ public class DbMatchingService {
             return ((Number) rows.get(0).get("id")).longValue();
         }
 
-        // Brand saknas och flera kandidater => för riskabelt
+        // Brand saknas och flera kandidater
         return null;
     }
 

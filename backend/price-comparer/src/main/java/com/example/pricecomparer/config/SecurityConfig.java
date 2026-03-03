@@ -39,20 +39,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/health", "/robots.txt", "/sitemap.xml").permitAll()
-
-                        // Om du vill att quote ska vara publik:
                         .requestMatchers(HttpMethod.POST, "/api/pricing/quote").permitAll()
-
-                        // Debug namespaces (stöd både /api/debug och /api/_debug)
                         .requestMatchers("/api/debug/**").authenticated()
                         .requestMatchers("/api/_debug/**").authenticated()
-
-                        // Allt annat API kräver auth
                         .requestMatchers("/api/**").authenticated()
 
                         .anyRequest().permitAll()
                 );
-
         return http.build();
     }
 }

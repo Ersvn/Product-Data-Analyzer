@@ -52,17 +52,17 @@ public class EnrichmentRunner implements ApplicationRunner {
             return;
         }
 
-        // 1) Ladda base (utan enriched)
+        // Ladda base (utan enriched)
         store.loadAll(marketPath, companyPath, "", false);
 
-        // 2) Berika market
+        // Berika market
         List<Product> base = store.market();
         List<Product> enriched = enricher.enrich(base);
 
-        // 3) Skriv enriched till disk
+        // Skriv enriched till disk
         writeToFileLocation(enrichedMarketPath, enriched);
 
-        // 4) Ladda om och använd enriched som market source
+        // Ladda om och använd enriched som market source
         store.loadAll(marketPath, companyPath, enrichedMarketPath, true);
 
         System.out.println("[ENRICH] enriched market written to " + enrichedMarketPath);

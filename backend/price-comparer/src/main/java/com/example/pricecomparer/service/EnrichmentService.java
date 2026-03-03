@@ -58,16 +58,13 @@ public class EnrichmentService {
                 continue;
             }
 
-            // ✅ ALWAYS try to attach Icecat imageUrl (even if we skip PricesAPI)
             attachIcecatImage(p);
 
-            // 🔒 Relevansfilter: bara IT-produkter (för PricesAPI-delen)
             if (!relevance.isRelevant(p)) {
                 out.add(p);
                 continue;
             }
 
-            // Stop after maxProductsPerRun for PricesAPI calls
             if (processed >= maxProductsPerRun) {
                 out.add(p);
                 continue;
@@ -97,7 +94,6 @@ public class EnrichmentService {
         String ean = normalizeDigits(p.ean);
         if (ean.isBlank()) return p;
 
-        // --- SEARCH (EAN) ---
         JsonNode search = readCacheIfFresh(ean);
         if (search == null) {
             try {
@@ -112,7 +108,6 @@ public class EnrichmentService {
         int total = search.path("data").path("total").asInt(0);
         System.out.printf("[ENRICH] ean=%s total=%d%n", ean, total);
 
-        // Om EAN inte finns i PricesAPI → hoppa över (men behåll imageUrl vi redan satte)
         if (!results.isArray() || results.size() == 0) {
             return p;
         }
@@ -122,7 +117,6 @@ public class EnrichmentService {
         String title = best.path("title").asText("");
         if (productId.isBlank()) return p;
 
-        // --- OFFERS ---
         JsonNode offersRoot;
         try {
             offersRoot = api.offers(productId, api.country());
@@ -137,10 +131,8 @@ public class EnrichmentService {
                 productId, title, stats.count, stats.minPrice, stats.maxPrice
         );
 
-        // Uppdatera titel om PricesAPI har en bättre
         if (!title.isBlank()) p.name = title;
 
-        // Endast om vi har riktiga offers
         if (stats.count > 0 && stats.minPrice > 0) {
             p.price = stats.minPrice;
             p.store = stats.minStore;
@@ -194,9 +186,6 @@ public class EnrichmentService {
         }
     }
 
-    // =========================
-    // Cache helpers
-    // =========================
     private void ensureDir(String p) {
         try { Files.createDirectories(Path.of(p)); } catch (Exception ignored) {}
     }

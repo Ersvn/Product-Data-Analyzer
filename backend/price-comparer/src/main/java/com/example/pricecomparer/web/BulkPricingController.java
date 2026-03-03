@@ -17,13 +17,6 @@ public class BulkPricingController {
         this.store = store;
     }
 
-    /**
-     * Recompute recommended prices for ALL inventory/company products.
-     *
-     * POST /api/company/products/pricing/recompute-all?persist=true
-     *
-     * persist=true will try to persist company file (only works if companyPath is file:...)
-     */
     @PostMapping("/recompute-all")
     public ResponseEntity<?> recomputeAll(
             @RequestParam(defaultValue = "true") boolean persist

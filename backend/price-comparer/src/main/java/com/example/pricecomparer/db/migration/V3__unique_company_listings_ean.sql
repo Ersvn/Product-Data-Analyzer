@@ -1,4 +1,3 @@
--- ersätt V3 med detta (eller gör V4):
 ALTER TABLE company_listings DROP CONSTRAINT IF EXISTS uq_company_listings_ean;
 
 CREATE UNIQUE INDEX IF NOT EXISTS ux_company_listings_ean_not_blank
