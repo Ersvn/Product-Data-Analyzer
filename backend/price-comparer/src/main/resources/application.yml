@@ -36,19 +36,19 @@ app:
   data:
     marketPath: "classpath:data/market.mock.json"
     companyPath: "classpath:data/inventory.mock.json"
-    historyPath: "file:./data/price-history.jsonl"
+
     auditPath: "file:./data/audit-log.jsonl"
     useEnrichedMarket: false
-    enrichedMarketPath: "file:./data/products.enriched.json"
 
-    overridesPath: "file:C:/Users/eriks/eclipse-workspace/Product-Data-Analyzer/backend/price-comparer/data/overrides.json"
-    autoPersistOverrides: true
+
+
+
 
 enrichment:
   enabled: true
-  runOnStartup: false
-  maxProductsPerRun: 20
-  ourPriceFactor: 0.65
+
+
+
   scheduler:
     enabled: false
     cron: "0 0 2 * * *"
@@ -114,7 +114,7 @@ cache:
 icecat:
   enabled: false
   path: "file:C:/Users/eriks/Desktop/Icecat/daily.index.xml"
-  prefer: high
+
 
 pricing:
   mode: FIRST_MATCH_WINS
@@ -135,7 +135,7 @@ pricing:
 dashboard:
   queues:
     underpriced:
-      marketMovePercent: 0.01
+
 
 
 logging:

@@ -33,7 +33,7 @@ function normalizeInventoryRow(r) {
     const out = {
         id,
         __companyId: id,
-        __source: "db", // ProductDrawer/PricingPanel för inventory är byggda för db-source
+        __source: "db",
         __dbCompanyId: id,
 
         name: r?.name ?? "",
@@ -55,19 +55,17 @@ function normalizeInventoryRow(r) {
 }
 
 function normalizeMarketRow(r) {
-    // scraped_market_rollup: uid, display_name, ean, mpn, offers_count, price_min, price_max, price_median, last_scraped
     const uid = String(r?.uid ?? "").trim();
 
     const out = {
         uid,
         __uid: uid,
-        __source: "dbMarket", // ProductDrawer för scraped market använder dbMarket och uid
+        __source: "dbMarket",
 
         name: r?.display_name ?? r?.name ?? uid ?? "",
         ean: r?.ean ?? null,
         mpn: r?.mpn ?? null,
 
-        // “recommended” = median
         recommendedPrice: r?.price_median ?? r?.priceMedian ?? null,
         effectivePrice: r?.price_median ?? r?.priceMedian ?? null,
 
@@ -85,8 +83,9 @@ function normalizeMarketRow(r) {
 export default function ProductsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
 
-    // inventory | market
-    const [source, setSource] = useState(searchParams.get("source") || "inventory");
+    const initialSource = searchParams.get("source") === "market" ? "market" : "inventory";
+
+    const [source, setSource] = useState(initialSource);
     const [q, setQ] = useState(searchParams.get("q") || "");
     const debouncedQ = useDebounce(q, 300);
 
@@ -94,23 +93,20 @@ export default function ProductsPage() {
     const [loading, setLoading] = useState(false);
     const [err, setErr] = useState("");
     const [selected, setSelected] = useState(null);
+    const [bulkBusy, setBulkBusy] = useState(false);
 
-    // keyset paging
     const afterIdRef = useRef(0);
     const afterUidRef = useRef("");
     const hasMoreRef = useRef(true);
-
-    // prevent overlapping requests
     const inFlightRef = useRef(false);
 
-    // overrides keyed by __rowKey
     const [overrides, setOverrides] = useState(new Map());
 
     const listRef = useRef(null);
 
     useEffect(() => {
         const params = new URLSearchParams();
-        if (source !== "market") params.set("source", source);
+        if (source !== "inventory") params.set("source", source);
         if (q) params.set("q", q);
         setSearchParams(params, { replace: true });
     }, [source, q, setSearchParams]);
@@ -225,6 +221,23 @@ export default function ProductsPage() {
         }
     }, [source, debouncedQ, loading]);
 
+    const handleRecomputeAll = useCallback(async () => {
+        if (source !== "inventory") return;
+
+        setBulkBusy(true);
+        setErr("");
+
+        try {
+            const res = await api.recomputeAllDbAuto();
+            await fetchFirstPage();
+            alert(`Recompute klart. Updated: ${res?.updated ?? 0} / ${res?.candidates ?? 0}`);
+        } catch (e) {
+            setErr(String(e?.message || e));
+        } finally {
+            setBulkBusy(false);
+        }
+    }, [source, fetchFirstPage]);
+
     useEffect(() => {
         reset();
         fetchFirstPage();
@@ -316,6 +329,12 @@ export default function ProductsPage() {
                 </div>
 
                 <div className="apage__actions">
+                    {source === "inventory" ? (
+                        <Button onClick={handleRecomputeAll} disabled={bulkBusy}>
+                            {bulkBusy ? "Recomputing..." : "Recompute all AUTO"}
+                        </Button>
+                    ) : null}
+
                     <Button variant="ghost" onClick={handleExport} disabled={!rows.length}>
                         Exportera CSV
                     </Button>

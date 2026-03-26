@@ -176,11 +176,6 @@ class ApiClient {
         );
     }
 
-    recomputeAllPricing({ persist = true } = {}) {
-        return this.request(`/api/company/products/pricing/recompute-all${toQuery({ persist })}`, {
-            method: "POST",
-        });
-    }
 
     // -------------------------
     // DB API (Postgres)
@@ -205,6 +200,12 @@ class ApiClient {
         return this.request(`/api/db/company-listings/${encodeURIComponent(String(id))}`, {
             method: "PATCH",
             body: patch,
+        });
+    }
+
+    recomputeAllDbAuto() {
+        return this.request(`/api/db/company-listings/recompute-all-auto`, {
+            method: "POST",
         });
     }
 

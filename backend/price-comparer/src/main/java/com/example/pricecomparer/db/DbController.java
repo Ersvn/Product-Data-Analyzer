@@ -198,6 +198,11 @@ public class DbController {
         return pricingSvc.productViewByEan(ean);
     }
 
+    @PostMapping("/api/db/company-listings/recompute-all-auto")
+    public Map<String, Object> recomputeAllAuto() {
+        return pricingSvc.recomputeAllAuto();
+    }
+
     @GetMapping("/api/db/product-view/company")
     public Map<String, Object> productViewByCompany(@RequestParam long companyId) {
         return pricingSvc.productViewByCompanyId(companyId);

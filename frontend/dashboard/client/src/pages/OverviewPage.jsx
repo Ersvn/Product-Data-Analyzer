@@ -238,7 +238,7 @@ export default function OverviewPage() {
         }
 
         const sp = new URLSearchParams();
-        sp.set("source", "db");
+        sp.set("source", "inventory");
         sp.set("q", String(ean));
         nav(`/products?${sp.toString()}`);
     };
@@ -293,7 +293,7 @@ export default function OverviewPage() {
                         variant="ghost"
                         onClick={() => {
                             const sp = new URLSearchParams();
-                            sp.set("source", "db");
+                            sp.set("source", "inventory");
                             if (q) sp.set("q", q);
                             nav(`/products?${sp.toString()}`);
                         }}

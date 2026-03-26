@@ -399,4 +399,63 @@ public class DbPricingService {
             return null;
         }
     }
+
+    @Transactional
+    public Map<String, Object> recomputeAllAuto() {
+        List<Long> ids = jdbc.queryForList("""
+        select c.id
+        from company_listings c
+        where upper(coalesce(c.price_mode, 'AUTO')) = 'AUTO'
+        order by c.id asc
+    """, Long.class);
+
+        int candidates = ids.size();
+        int updated = 0;
+        int noMarket = 0;
+        int noRecommended = 0;
+        int notFound = 0;
+        int otherErrors = 0;
+
+        List<Map<String, Object>> sampleFailures = new ArrayList<>();
+
+        for (Long id : ids) {
+            Map<String, Object> res = applyAutoByCompanyListingId(id);
+
+            boolean ok = Boolean.TRUE.equals(res.get("ok"));
+            if (ok) {
+                Object upd = res.get("updated");
+                if (upd instanceof Number n && n.intValue() > 0) {
+                    updated++;
+                }
+                continue;
+            }
+
+            String error = String.valueOf(res.getOrDefault("error", "UNKNOWN"));
+            switch (error) {
+                case "NO_MARKET" -> noMarket++;
+                case "NO_RECOMMENDED" -> noRecommended++;
+                case "NOT_FOUND" -> notFound++;
+                default -> otherErrors++;
+            }
+
+            if (sampleFailures.size() < 25) {
+                sampleFailures.add(Map.of(
+                        "id", id,
+                        "error", error,
+                        "message", String.valueOf(res.getOrDefault("message", ""))
+                ));
+            }
+        }
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("candidates", candidates);
+        out.put("updated", updated);
+        out.put("noMarket", noMarket);
+        out.put("noRecommended", noRecommended);
+        out.put("notFound", notFound);
+        out.put("otherErrors", otherErrors);
+        out.put("sampleFailures", sampleFailures);
+        return out;
+    }
 }

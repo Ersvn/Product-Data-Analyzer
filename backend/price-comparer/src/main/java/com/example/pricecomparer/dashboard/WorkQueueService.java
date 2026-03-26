@@ -1,6 +1,5 @@
 package com.example.pricecomparer.dashboard;
 
-import com.example.pricecomparer.service.DataStoreService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -15,17 +14,15 @@ public class WorkQueueService {
         OVERPRICED, UNDERPRICED, OUTLIERS
     }
 
-    private final DataStoreService store; // keep for legacy mode
-    private final JdbcTemplate jdbc;
 
     @Value("${app.storage:FILES}")
     private String storage;
 
     private static final double SIMILAR_TOL_PCT = 0.005;
     private static final double OUTLIER_ABS_GAP_PCT = 0.25;
+    private final JdbcTemplate jdbc;
 
-    public WorkQueueService(DataStoreService store, JdbcTemplate jdbc) {
-        this.store = store;
+    public WorkQueueService(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
