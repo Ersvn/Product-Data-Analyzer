@@ -31,70 +31,67 @@ public class CompareController {
         boolean hasQ = q != null && !q.isBlank();
         String like = "%" + (hasQ ? q : "") + "%";
 
-        String baseSql = """
-            select
-              c.id                 as company_id,
-              c.company_sku        as company_sku,
-              c.ean                as ean,
-              c.mpn                as company_mpn,
-              c.name               as company_name,
-              c.brand              as company_brand,
-              c.category           as company_category,
-              c.our_price          as our_price,
-              c.cost_price         as cost_price,
-              c.price_mode         as price_mode,
-              c.manual_price       as manual_price,
-              c.last_updated       as last_updated,
-              c.matched_product_id as matched_product_id,
+        String sql = """
+            with market as (
+              select *
+              from scraped_market_rollup
+            ),
+            joined as (
+              select
+                c.id as company_id,
+                c.company_sku,
+                c.ean,
+                c.mpn as company_mpn,
+                c.name as company_name,
+                c.brand as company_brand,
+                c.category as company_category,
+                c.our_price,
+                c.cost_price,
+                c.price_mode,
+                c.manual_price,
+                c.last_updated,
 
-              p.id                 as product_id,
-              p.mpn                as market_mpn,
-              p.name               as market_name,
-              p.brand              as market_brand,
-              p.category           as market_category,
-
-              s.offers_count       as offers_count,
-              s.price_min          as price_min,
-              s.price_max          as price_max,
-              s.price_median       as price_median,
-              s.benchmark_price    as benchmark_price
-            from company_listings c
-            join products p on p.id = c.matched_product_id
-            join product_market_snapshot s on s.product_id = p.id
-            where c.matched_product_id is not null
-        """;
-
-        String filterSql = """
-            and (
-              lower(coalesce(c.ean,'')) like ?
-              or lower(coalesce(c.company_sku,'')) like ?
-              or lower(coalesce(c.mpn,'')) like ?
-              or lower(coalesce(c.name,'')) like ?
-              or lower(coalesce(c.brand,'')) like ?
-              or lower(coalesce(c.category,'')) like ?
-              or lower(coalesce(p.name,'')) like ?
-              or lower(coalesce(p.brand,'')) like ?
-              or lower(coalesce(p.category,'')) like ?
+                m.uid as market_uid,
+                m.mpn as market_mpn,
+                m.display_name as market_name,
+                m.brand as market_brand,
+                m.offers_count,
+                m.price_min,
+                m.price_max,
+                m.price_median
+              from company_listings c
+              left join market m
+                on m.uid = nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '')
+                or m.uid = nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '')
             )
+            select *
+            from joined
+            where market_uid is not null
         """;
-
-        String orderSql = " order by c.id asc";
 
         List<Map<String, Object>> rows = hasQ
-                ? jdbc.queryForList(
-                baseSql + filterSql + orderSql,
-                like, like, like, like, like, like, like, like, like
-        )
-                : jdbc.queryForList(baseSql + orderSql);
+                ? jdbc.queryForList(sql + """
+                    and (
+                      lower(coalesce(ean,'')) like ?
+                      or lower(coalesce(company_sku,'')) like ?
+                      or lower(coalesce(company_mpn,'')) like ?
+                      or lower(coalesce(company_name,'')) like ?
+                      or lower(coalesce(company_brand,'')) like ?
+                      or lower(coalesce(company_category,'')) like ?
+                      or lower(coalesce(market_name,'')) like ?
+                      or lower(coalesce(market_brand,'')) like ?
+                      or lower(coalesce(market_uid,'')) like ?
+                    )
+                    order by company_id asc
+                """, like, like, like, like, like, like, like, like, like)
+                : jdbc.queryForList(sql + " order by company_id asc");
 
-        List<CompareResponse.Matched> matched = new ArrayList<>(rows.size());
+        List<CompareResponse.Matched> matched = new ArrayList<>();
 
         for (Map<String, Object> r : rows) {
-            String ean = str(r.get("ean"));
-
             Product cp = new Product();
             cp.id = longVal(r.get("company_id"));
-            cp.ean = ean;
+            cp.ean = str(r.get("ean"));
             cp.mpn = str(r.get("company_mpn"));
             cp.name = str(r.get("company_name"));
             cp.brand = str(r.get("company_brand"));
@@ -104,27 +101,24 @@ public class CompareController {
             cp.costPrice = dbl(r.get("cost_price"));
             cp.manualPrice = dbl(r.get("manual_price"));
             cp.priceMode = safePriceMode(str(r.get("price_mode")));
-            cp.matchedProductId = longVal(r.get("matched_product_id"));
             cp.lastUpdated = tsToIso(r.get("last_updated"));
 
             Product mp = new Product();
-            mp.id = longVal(r.get("product_id"));
-            mp.ean = ean;
+            mp.ean = str(r.get("ean"));
             mp.mpn = str(r.get("market_mpn"));
             mp.name = str(r.get("market_name"));
             mp.brand = str(r.get("market_brand"));
-            mp.category = str(r.get("market_category"));
             mp.offersCount = intVal(r.get("offers_count"));
             mp.priceMin = dbl(r.get("price_min"));
             mp.priceMax = dbl(r.get("price_max"));
             mp.priceMedian = dbl(r.get("price_median"));
-            mp.benchmarkPrice = dbl(r.get("benchmark_price"));
+            mp.benchmarkPrice = pickBenchmark(mp);
 
-            double marketPrice = pickMarketBenchmark(mp);
+            double marketPrice = pickBenchmark(mp);
             double companyPrice = pickCompanyComparable(cp);
             double diff = companyPrice - marketPrice;
 
-            matched.add(new CompareResponse.Matched(ean, mp, cp, diff));
+            matched.add(new CompareResponse.Matched(cp.ean, mp, cp, diff));
         }
 
         matched.sort((a, b) -> Double.compare(b.priceDiff, a.priceDiff));
@@ -136,17 +130,18 @@ public class CompareController {
 
         Map<String, Object> meta = new LinkedHashMap<>();
         meta.put("lastLoadedAt", Instant.now().toString());
-        meta.put("marketTotal", safeCount("select count(*) from products"));
+        meta.put("marketTotal", safeCount("select count(*) from scraped_market_rollup"));
         meta.put("companyTotal", safeCount("select count(*) from company_listings"));
         meta.put("matched", matched.size());
-        meta.put("onlyInMarket", safeCount("""
+        meta.put("onlyInMarket", 0);
+        meta.put("onlyInCompany", safeCount("""
             select count(*)
-            from products p
-            join product_market_snapshot s on s.product_id = p.id
-            left join company_listings c on c.ean = p.ean
-            where c.id is null
+            from company_listings c
+            left join scraped_market_rollup r
+              on r.uid = nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '')
+              or r.uid = nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '')
+            where r.uid is null
         """));
-        meta.put("onlyInCompany", safeCount("select count(*) from company_listings where matched_product_id is null"));
         out.meta = meta;
 
         return out;
@@ -161,41 +156,22 @@ public class CompareController {
         }
     }
 
-    private double pickMarketBenchmark(Product mp) {
+    private double pickBenchmark(Product mp) {
         if (mp == null) return 0.0;
-
-        Double bench = mp.benchmarkPrice;
-        if (bench != null && bench > 0) return bench;
-
-        Double median = mp.priceMedian;
-        if (median != null && median > 0) return median;
-
-        Double min = mp.priceMin;
-        Double max = mp.priceMax;
-
-        if (min != null && max != null && min > 0 && max > 0) return (min + max) / 2.0;
-        if (min != null && min > 0) return min;
-        if (max != null && max > 0) return max;
-        if (mp.price > 0) return mp.price;
-
+        if (mp.priceMedian != null && mp.priceMedian > 0) return mp.priceMedian;
+        if (mp.priceMin != null && mp.priceMax != null && mp.priceMin > 0 && mp.priceMax > 0) {
+            return (mp.priceMin + mp.priceMax) / 2.0;
+        }
+        if (mp.priceMin != null && mp.priceMin > 0) return mp.priceMin;
+        if (mp.priceMax != null && mp.priceMax > 0) return mp.priceMax;
         return 0.0;
     }
 
     private double pickCompanyComparable(Product cp) {
         if (cp == null) return 0.0;
-
-        if (cp.priceMode == PriceMode.MANUAL && cp.manualPrice != null && cp.manualPrice > 0) {
-            return cp.manualPrice;
-        }
-
-        if (cp.ourPrice != null && cp.ourPrice > 0) {
-            return cp.ourPrice;
-        }
-
-        if (cp.manualPrice != null && cp.manualPrice > 0) {
-            return cp.manualPrice;
-        }
-
+        if (cp.priceMode == PriceMode.MANUAL && cp.manualPrice != null && cp.manualPrice > 0) return cp.manualPrice;
+        if (cp.ourPrice != null && cp.ourPrice > 0) return cp.ourPrice;
+        if (cp.manualPrice != null && cp.manualPrice > 0) return cp.manualPrice;
         return 0.0;
     }
 
@@ -206,49 +182,30 @@ public class CompareController {
     private static Long longVal(Object o) {
         if (o == null) return null;
         if (o instanceof Number n) return n.longValue();
-        try {
-            return Long.parseLong(String.valueOf(o));
-        } catch (Exception e) {
-            return null;
-        }
+        try { return Long.parseLong(String.valueOf(o)); } catch (Exception e) { return null; }
     }
 
     private static Integer intVal(Object o) {
         if (o == null) return null;
         if (o instanceof Number n) return n.intValue();
-        try {
-            return Integer.parseInt(String.valueOf(o));
-        } catch (Exception e) {
-            return null;
-        }
+        try { return Integer.parseInt(String.valueOf(o)); } catch (Exception e) { return null; }
     }
 
     private static Double dbl(Object o) {
         if (o == null) return null;
         if (o instanceof Number n) return n.doubleValue();
-        try {
-            return Double.parseDouble(String.valueOf(o));
-        } catch (Exception e) {
-            return null;
-        }
+        try { return Double.parseDouble(String.valueOf(o)); } catch (Exception e) { return null; }
     }
 
     private static String tsToIso(Object o) {
         if (o == null) return null;
         if (o instanceof Timestamp ts) return ts.toInstant().toString();
-        try {
-            return String.valueOf(o);
-        } catch (Exception e) {
-            return null;
-        }
+        return String.valueOf(o);
     }
 
     private static PriceMode safePriceMode(String s) {
         if (s == null || s.isBlank()) return null;
-        try {
-            return PriceMode.valueOf(s.trim().toUpperCase(Locale.ROOT));
-        } catch (Exception e) {
-            return null;
-        }
+        try { return PriceMode.valueOf(s.trim().toUpperCase(Locale.ROOT)); }
+        catch (Exception e) { return null; }
     }
 }

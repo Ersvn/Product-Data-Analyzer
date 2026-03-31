@@ -1,182 +1,122 @@
-// DbImportService.java
 package com.example.pricecomparer.db;
 
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.InputStream;
 import java.math.BigDecimal;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static com.example.pricecomparer.db.DbImportUtils.chooseCompanySku;
+import static com.example.pricecomparer.db.DbImportUtils.firstNonBlank;
+import static com.example.pricecomparer.db.DbImportUtils.normEan;
+import static com.example.pricecomparer.db.DbImportUtils.normalizeIdentifier;
+import static com.example.pricecomparer.db.DbImportUtils.str;
+import static com.example.pricecomparer.db.DbImportUtils.toBigDecimal;
 
 @Service
 public class DbImportService {
 
     private final JdbcTemplate jdbc;
-    private final ObjectMapper om;
-    private final ResourceLoader resourceLoader;
+    private final DbJsonImportReader jsonReader;
 
-    @Value("${app.data.marketPath}")
+    @Value("${app.data.marketPath:}")
     private String marketPath;
 
-    @Value("${app.data.companyPath}")
+    @Value("${app.data.companyPath:}")
     private String companyPath;
 
-    public DbImportService(JdbcTemplate jdbc, ObjectMapper om, ResourceLoader resourceLoader) {
+    public DbImportService(JdbcTemplate jdbc, DbJsonImportReader jsonReader) {
         this.jdbc = jdbc;
-        this.om = om;
-        this.resourceLoader = resourceLoader;
+        this.jsonReader = jsonReader;
     }
 
     @Transactional
     public Map<String, Object> importAll() throws Exception {
+        int marketRows = hasText(marketPath) ? importMarket() : 0;
+        int companyRows = hasText(companyPath) ? importCompany() : 0;
 
-        int marketRows = importMarket();
-        int companyRows = importCompany();
-
-        Integer products = jdbc.queryForObject("select count(*) from products", Integer.class);
-        Integer merchants = jdbc.queryForObject("select count(*) from merchants", Integer.class);
-        Integer offers = jdbc.queryForObject("select count(*) from offers", Integer.class);
         Integer company = jdbc.queryForObject("select count(*) from company_listings", Integer.class);
+        Integer scraped = jdbc.queryForObject("select count(*) from scraped_products", Integer.class);
 
-        return Map.of(
-                "ok", true,
-                "market_rows_processed", marketRows,
-                "company_rows_processed", companyRows,
-                "products_total", products,
-                "merchants_total", merchants,
-                "offers_total", offers,
-                "company_listings_total", company
-        );
-    }
-
-
-    private int importMarket() throws Exception {
-        List<Map<String, Object>> rows = readJsonArray(marketPath);
-        int processed = 0;
-
-        for (Map<String, Object> r : rows) {
-            String ean = normEan(str(r.get("ean")));
-            if (ean == null) continue; // vi kräver EAN för master i denna fas
-
-            String name = str(r.get("name"));
-            String brand = str(r.get("brand"));
-            String category = str(r.get("category"));
-
-            String store = str(r.get("store"));
-            String url = str(r.get("url"));
-
-            BigDecimal price = toBigDecimal(r.get("price"));
-            if (price == null) price = toBigDecimal(r.get("priceMin"));
-            if (price == null) price = toBigDecimal(r.get("priceMax"));
-
-            Long productId = upsertProductByEan(ean, name, brand, category);
-
-            // Identifier "låses" första gången den sätts
-            upsertIdentifier(productId, "EAN", ean, "MOCK_MARKET", 100);
-
-            if (store != null && price != null) {
-                Long merchantId = upsertMerchant(store);
-                upsertOffer(productId, merchantId, price, "SEK", true, url);
-            }
-
-            processed++;
-        }
-
-        return processed;
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("company_rows_processed", companyRows);
+        out.put("market_rows_processed", marketRows);
+        out.put("company_listings_total", company == null ? 0 : company);
+        out.put("scraped_products_total", scraped == null ? 0 : scraped);
+        return out;
     }
 
     private int importCompany() throws Exception {
-        List<Map<String, Object>> rows = readJsonArray(companyPath);
+        List<Map<String, Object>> rows = jsonReader.readJsonArray(companyPath);
         int processed = 0;
 
-        for (Map<String, Object> r : rows) {
-            String name = str(r.get("name"));
-            String brand = str(r.get("brand"));
-            String category = str(r.get("category"));
+        for (Map<String, Object> row : rows) {
+            String name = str(row.get("name"));
+            String brand = str(row.get("brand"));
+            String category = str(row.get("category"));
 
-            String ean = normEan(str(r.get("ean")));
-            if (ean == null) continue;
+            String ean = normEan(str(row.get("ean")));
+            String mpnRaw = str(row.get("mpn"));
+            String mpnNorm = mpnRaw == null ? null : normalizeIdentifier("MPN", mpnRaw);
 
-            String mpnRaw = str(r.get("mpn"));
-            String mpnNorm = (mpnRaw != null) ? normalize("MPN", mpnRaw) : null;
+            String skuRaw = firstNonBlank(row, "companySku", "sku");
+            String skuNorm = skuRaw == null ? null : normalizeIdentifier("SKU", skuRaw);
 
-            String skuRaw = firstNonBlank(r, "companySku", "sku");
-            String skuNorm = (skuRaw != null) ? normalize("SKU", skuRaw) : null;
+            String rawId = str(row.get("id"));
+            String companySku = chooseCompanySku(
+                    (ean == null || ean.isBlank()) ? null : ean,
+                    mpnNorm,
+                    skuNorm,
+                    rawId
+            );
 
-            String id = str(r.get("id"));
-
-            // company_sku: EAN > MPN > SKU > ID (men UNIQUE är på ean)
-            String companySku = "EAN:" + ean;
-            if (companySku.isBlank()) {
-                if (mpnNorm != null && !mpnNorm.isBlank()) companySku = "MPN:" + mpnNorm;
-                else if (skuNorm != null && !skuNorm.isBlank()) companySku = "SKU:" + skuNorm;
-                else if (id != null && !id.isBlank()) companySku = "ID:" + id;
-                else companySku = "ID:" + UUID.randomUUID();
+            if (companySku == null || companySku.isBlank()) {
+                companySku = "ID:" + UUID.randomUUID();
             }
 
-            BigDecimal ourPrice = toBigDecimal(r.get("ourPrice"));
-            if (ourPrice == null) ourPrice = toBigDecimal(r.get("price"));
+            BigDecimal ourPrice = toBigDecimal(row.get("ourPrice"));
+            if (ourPrice == null) ourPrice = toBigDecimal(row.get("price"));
 
-            BigDecimal costPrice = toBigDecimal(r.get("costPrice"));
-            if (costPrice == null) costPrice = toBigDecimal(r.get("cost"));
+            BigDecimal costPrice = toBigDecimal(row.get("costPrice"));
+            if (costPrice == null) costPrice = toBigDecimal(row.get("cost"));
 
-            // Om vi inte har MPN -> spara null (inte name)
-            String mpnToStore = (mpnNorm != null && !mpnNorm.isBlank()) ? mpnRaw : null;
+            String eanToStore = (ean == null || ean.isBlank()) ? null : ean;
+            String mpnToStore = (mpnNorm == null || mpnNorm.isBlank()) ? null : mpnRaw;
 
             jdbc.update("""
                 insert into company_listings
-                  (company_sku, name, brand, category, ean, mpn, cost_price, our_price, price_mode, manual_price, last_updated)
+                  (company_sku, ean, mpn, name, brand, category, cost_price, our_price, price_mode, manual_price, last_updated)
                 values
-                  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())
-                on conflict (ean) do update set
-                  company_sku = excluded.company_sku,
-                  name        = excluded.name,
-                  brand       = excluded.brand,
-                  category    = excluded.category,
-                  mpn         = excluded.mpn,
-                  cost_price  = excluded.cost_price,
-                  our_price   = excluded.our_price,
-                  last_updated = now(),
-
-                  price_mode = case
-                                when company_listings.price_mode = 'MANUAL' then company_listings.price_mode
-                                else excluded.price_mode
-                              end,
-                  manual_price = case
-                                  when company_listings.price_mode = 'MANUAL' then company_listings.manual_price
-                                  else excluded.manual_price
-                                end
-                """,
+                  (?, ?, ?, ?, ?, ?, ?, ?, 'AUTO', null, now())
+                on conflict (company_sku) do update set
+                  ean          = excluded.ean,
+                  mpn          = excluded.mpn,
+                  name         = excluded.name,
+                  brand        = excluded.brand,
+                  category     = excluded.category,
+                  cost_price   = excluded.cost_price,
+                  our_price    = case
+                                   when upper(coalesce(company_listings.price_mode, 'AUTO')) = 'MANUAL'
+                                     then company_listings.our_price
+                                   else excluded.our_price
+                                 end,
+                  last_updated = now()
+            """,
                     companySku,
+                    eanToStore,
+                    mpnToStore,
                     name,
                     brand,
                     category,
-                    ean,
-                    mpnToStore,
                     costPrice,
-                    ourPrice,
-                    "AUTO",
-                    null
+                    ourPrice
             );
-
-            // Seeda master + identifiers
-            Long productId = upsertProductByEan(ean, name, brand, category);
-            upsertIdentifier(productId, "EAN", ean, "MOCK_COMPANY", 100);
-
-            if (mpnNorm != null && !mpnNorm.isBlank()) {
-                upsertIdentifier(productId, "MPN", mpnRaw, "MOCK_COMPANY", 70);
-            }
-            if (skuNorm != null && !skuNorm.isBlank()) {
-                upsertIdentifier(productId, "SKU", skuRaw, "MOCK_COMPANY", 60);
-            }
 
             processed++;
         }
@@ -184,130 +124,75 @@ public class DbImportService {
         return processed;
     }
 
-    private Long upsertProductByEan(String ean, String name, String brand, String category) {
-        jdbc.update("""
-            insert into products (name, brand, category, ean, mpn, created_at, updated_at)
-            values (?, ?, ?, ?, null, now(), now())
-            on conflict (ean) do update set
-              name=coalesce(excluded.name, products.name),
-              brand=coalesce(excluded.brand, products.brand),
-              category=coalesce(excluded.category, products.category),
-              updated_at=now()
-            """, name, brand, category, ean);
+    private int importMarket() throws Exception {
+        List<Map<String, Object>> rows = jsonReader.readJsonArray(marketPath);
+        int processed = 0;
 
-        return jdbc.queryForObject("select id from products where ean = ?", Long.class, ean);
-    }
-
-    private void upsertIdentifier(Long productId, String type, String value, String source, int confidence) {
-        String norm = normalize(type, value);
-        jdbc.update("""
-            insert into product_identifiers (product_id, type, value, normalized_value, source, confidence)
-            values (?, ?, ?, ?, ?, ?)
-            on conflict (type, normalized_value) do nothing
-            """, productId, type, value, norm, source, confidence);
-    }
-
-    private Long upsertMerchant(String name) {
-        jdbc.update("""
-            insert into merchants (name, country, active)
-            values (?, 'SE', true)
-            on conflict (name) do nothing
-            """, name);
-
-        return jdbc.queryForObject("select id from merchants where name = ?", Long.class, name);
-    }
-
-    private void upsertOffer(Long productId, Long merchantId, BigDecimal price, String currency, boolean inStock, String url) {
-        jdbc.update("""
-            insert into offers (product_id, merchant_id, price, currency, in_stock, url, fetched_at)
-            values (?, ?, ?, ?, ?, ?, now())
-            on conflict (product_id, merchant_id) do update set
-              price=excluded.price,
-              currency=excluded.currency,
-              in_stock=excluded.in_stock,
-              url=excluded.url,
-              fetched_at=now()
-            """, productId, merchantId, price, currency, inStock, url);
-    }
-
-    private List<Map<String, Object>> readJsonArray(String path) throws Exception {
-        Resource res = resourceLoader.getResource(path);
-        try (InputStream in = res.getInputStream()) {
-            byte[] bytes = in.readAllBytes();
-            Charset cs = detectCharsetFromBom(bytes);
-            String json = new String(stripBom(bytes), cs);
-            return om.readValue(json, new TypeReference<>() {});
-        }
-    }
-
-    private static Charset detectCharsetFromBom(byte[] b) {
-        if (b.length >= 2) {
-            int b0 = b[0] & 0xFF;
-            int b1 = b[1] & 0xFF;
-
-            if (b0 == 0xFF && b1 == 0xFE) return StandardCharsets.UTF_16LE;
-            if (b0 == 0xFE && b1 == 0xFF) return StandardCharsets.UTF_16BE;
-        }
-        return StandardCharsets.UTF_8;
-    }
-
-    private static byte[] stripBom(byte[] b) {
-        if (b.length >= 3) {
-            int b0 = b[0] & 0xFF, b1 = b[1] & 0xFF, b2 = b[2] & 0xFF;
-            if (b0 == 0xEF && b1 == 0xBB && b2 == 0xBF) {
-                return Arrays.copyOfRange(b, 3, b.length);
+        for (Map<String, Object> row : rows) {
+            String url = str(row.get("url"));
+            if (url == null || url.isBlank()) {
+                continue;
             }
+
+            String siteName = firstNonBlank(row, "site_name", "siteName", "store");
+            String name = str(row.get("name"));
+            String brand = str(row.get("brand"));
+
+            String ean = normEan(str(row.get("ean")));
+            String mpnRaw = str(row.get("mpn"));
+            String skuRaw = firstNonBlank(row, "sku", "articleNumber");
+
+            String eanNorm = (ean == null || ean.isBlank()) ? null : ean;
+            String mpnNorm = mpnRaw == null ? null : normalizeIdentifier("MPN", mpnRaw);
+            String uidNorm = eanNorm != null ? eanNorm : mpnNorm;
+
+            BigDecimal price = toBigDecimal(row.get("price"));
+            if (price == null) price = toBigDecimal(row.get("latest_price"));
+            if (price == null) price = toBigDecimal(row.get("priceMin"));
+            if (price == null) price = toBigDecimal(row.get("priceMax"));
+
+            jdbc.update("""
+                insert into scraped_products
+                  (url, site_name, name, brand, ean, mpn, sku, price, currency, in_stock,
+                   last_scraped, last_scanned, ean_norm, mpn_norm, uid_norm, created_at, updated_at)
+                values
+                  (?, ?, ?, ?, ?, ?, ?, ?, 'SEK', true,
+                   now(), now(), ?, ?, ?, now(), now())
+                on conflict (url) do update set
+                  site_name    = excluded.site_name,
+                  name         = excluded.name,
+                  brand        = excluded.brand,
+                  ean          = excluded.ean,
+                  mpn          = excluded.mpn,
+                  sku          = excluded.sku,
+                  price        = excluded.price,
+                  last_scraped = now(),
+                  last_scanned = now(),
+                  ean_norm     = excluded.ean_norm,
+                  mpn_norm     = excluded.mpn_norm,
+                  uid_norm     = excluded.uid_norm,
+                  updated_at   = now()
+            """,
+                    url,
+                    siteName,
+                    name,
+                    brand,
+                    eanNorm,
+                    mpnRaw,
+                    skuRaw,
+                    price,
+                    eanNorm,
+                    mpnNorm,
+                    uidNorm
+            );
+
+            processed++;
         }
-        if (b.length >= 2) {
-            int b0 = b[0] & 0xFF, b1 = b[1] & 0xFF;
-            if ((b0 == 0xFF && b1 == 0xFE) || (b0 == 0xFE && b1 == 0xFF)) {
-                return Arrays.copyOfRange(b, 2, b.length);
-            }
-        }
-        return b;
+
+        return processed;
     }
 
-    private static String str(Object v) {
-        if (v == null) return null;
-        String s = String.valueOf(v).trim();
-        if (s.isBlank() || "null".equalsIgnoreCase(s)) return null;
-        return s;
-    }
-
-    private static String firstNonBlank(Map<String, Object> m, String... keys) {
-        for (String k : keys) {
-            Object v = m.get(k);
-            if (v == null) continue;
-            String s = String.valueOf(v).trim();
-            if (!s.isBlank() && !"null".equalsIgnoreCase(s)) return s;
-        }
-        return null;
-    }
-
-    private static BigDecimal toBigDecimal(Object v) {
-        if (v == null) return null;
-        try {
-            if (v instanceof Number n) return BigDecimal.valueOf(n.doubleValue());
-            String s = String.valueOf(v).trim();
-            if (s.isBlank() || "null".equalsIgnoreCase(s)) return null;
-            return new BigDecimal(s.replace(",", "."));
-        } catch (Exception ignored) {
-            return null;
-        }
-    }
-
-    private static String normEan(String ean) {
-        if (ean == null) return null;
-        String n = ean.replaceAll("[^0-9]", "");
-        return n.isBlank() ? null : n;
-    }
-
-    private static String normalize(String type, String value) {
-        String v = value == null ? "" : value.trim();
-        return switch (type.toUpperCase(Locale.ROOT)) {
-            case "EAN", "GTIN", "UPC" -> v.replaceAll("[^0-9]", "");
-            case "MPN", "SKU" -> v.replaceAll("\\s+", "").toUpperCase(Locale.ROOT);
-            default -> v.toUpperCase(Locale.ROOT);
-        };
+    private boolean hasText(String s) {
+        return s != null && !s.isBlank();
     }
 }

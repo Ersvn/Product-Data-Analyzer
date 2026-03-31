@@ -1,5 +1,5 @@
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
-const DEFAULT_TIMEOUT_MS = 15000;
+const DEFAULT_TIMEOUT_MS = 85000;
 
 function buildBasicAuthHeader() {
     const user = import.meta.env.VITE_DASH_USER;
@@ -26,11 +26,9 @@ class ApiClient {
     async request(path, options = {}) {
         const headers = { ...(options.headers || {}) };
 
-        // Auth
         const auth = buildBasicAuthHeader();
         if (auth) headers.Authorization = auth;
 
-        // Body handle
         let body = options.body;
         if (isPlainObject(body)) {
             headers["Content-Type"] = headers["Content-Type"] || "application/json";
@@ -57,7 +55,6 @@ class ApiClient {
                 err?.name === "AbortError"
                     ? `TIMEOUT after ${timeoutMs}ms`
                     : `NETWORK_ERROR: ${String(err?.message || err)}`;
-            console.error("Request failed:", msg, { url });
             throw new Error(msg);
         } finally {
             clearTimeout(t);
@@ -87,10 +84,10 @@ class ApiClient {
         }
 
         if (!isJson && typeof payload === "string") {
-            const t2 = payload.trim();
-            if ((t2.startsWith("{") && t2.endsWith("}")) || (t2.startsWith("[") && t2.endsWith("]"))) {
+            const text = payload.trim();
+            if ((text.startsWith("{") && text.endsWith("}")) || (text.startsWith("[") && text.endsWith("]"))) {
                 try {
-                    return JSON.parse(t2);
+                    return JSON.parse(text);
                 } catch {
                     // ignore
                 }
@@ -100,94 +97,14 @@ class ApiClient {
         return payload;
     }
 
-    // -------------------------
-    // Products (Market) - legacy JSON/files
-    // -------------------------
-    fetchProducts({ q = "", page = 1, limit = 200, sort = "" } = {}) {
-        return this.request(`/api/products${toQuery({ q, page, limit, sort })}`);
-    }
-
-    // -------------------------
-    // Products (Company - legacy/files)
-    // -------------------------
-    fetchCompanyProducts({ q = "", page = 1, limit = 200, sort = "" } = {}) {
-        return this.request(`/api/company/products${toQuery({ q, page, limit, sort })}`);
-    }
-
-    createCompanyProduct(product) {
-        return this.request(`/api/company/products`, {
-            method: "POST",
-            body: product,
-        });
-    }
-
-    updateCompanyProduct(productId, patch) {
-        return this.request(`/api/company/products/${encodeURIComponent(String(productId))}`, {
-            method: "PATCH",
-            body: patch,
-        });
-    }
-
-    // Compare
     fetchCompare({ q = "" } = {}) {
         return this.request(`/api/compare${toQuery({ q })}`);
     }
 
-    // History
-    fetchHistory(ean, { days = 90, limit = 500 } = {}) {
-        return this.request(
-            `/api/history/compare/${encodeURIComponent(String(ean))}${toQuery({ days, limit })}`
-        );
-    }
-
-    // Pricing (legacy/files) productKey = EAN
-    fetchPricing(productKey, { recompute = true } = {}) {
-        return this.request(
-            `/api/company/products/by-ean/${encodeURIComponent(String(productKey))}/pricing${toQuery({
-                recompute,
-            })}`
-        );
-    }
-
-    updateManualPrice(productKey, manualPrice) {
-        return this.request(
-            `/api/company/products/by-ean/${encodeURIComponent(String(productKey))}/pricing/manual`,
-            {
-                method: "PUT",
-                body: { manualPrice },
-            }
-        );
-    }
-
-    updatePricingMode(productKey, priceMode) {
-        return this.request(
-            `/api/company/products/by-ean/${encodeURIComponent(String(productKey))}/pricing/mode`,
-            {
-                method: "PUT",
-                body: { priceMode },
-            }
-        );
-    }
-
-    recomputePricing(productKey) {
-        return this.request(
-            `/api/company/products/by-ean/${encodeURIComponent(String(productKey))}/pricing/recompute`,
-            { method: "POST" }
-        );
-    }
-
-
-    // -------------------------
-    // DB API (Postgres)
-    // -------------------------
     fetchDbCompanyListings({ q = "", afterId = 0, limit = 200 } = {}) {
         return this.request(`/api/db/company-listings${toQuery({ q, afterId, limit })}`);
     }
 
-    fetchDbMarketList({ q = "", afterUid = "", limit = 200 } = {}) {
-        return this.request(`/api/db/market-list${toQuery({ q, afterUid, limit })}`);
-    }
-    // Product view (old model)
     fetchDbProductViewByCompany(companyId) {
         return this.request(`/api/db/product-view/company${toQuery({ companyId })}`);
     }
@@ -209,7 +126,6 @@ class ApiClient {
         });
     }
 
-    // Apply AUTO price to stored our_price (backend endpoint)
     applyDbAutoPrice(companyId) {
         return this.request(
             `/api/db/company-listings/${encodeURIComponent(String(companyId))}/apply-auto`,
@@ -217,31 +133,38 @@ class ApiClient {
         );
     }
 
-    seedDbCompanyListings({ minMerchants = 3 } = {}) {
-        return this.request(`/api/db/seed/company-listings${toQuery({ minMerchants })}`, {
-            method: "POST",
-        });
-    }
 
-    addDbCompanyListingByEan(ean) {
-        return this.request(`/api/db/company-listings/add${toQuery({ ean })}`, {
-            method: "POST",
-        });
-    }
-
-    matchDbAll({ limit = 500 } = {}) {
-        return this.request(`/api/db/match/all${toQuery({ limit })}`, { method: "POST" });
-    }
-
-    // -------------------------
-    // Scraped Market (DB) - NEW
-    // -------------------------
     fetchDbScrapedMarket({ q = "", afterUid = "", limit = 200 } = {}) {
         return this.request(`/api/db/scraped-market${toQuery({ q, afterUid, limit })}`);
     }
 
     fetchDbScrapedProductView(uid) {
         return this.request(`/api/db/scraped-product-view${toQuery({ uid })}`);
+    }
+
+    fetchScraperStatus() {
+        return this.request(`/api/scraper/status`);
+    }
+
+    fetchScraperLogs({ limit = 200 } = {}) {
+        return this.request(`/api/scraper/logs${toQuery({ limit })}`);
+    }
+
+    fetchScraperRuns({ limit = 20 } = {}) {
+        return this.request(`/api/scraper/runs${toQuery({ limit })}`);
+    }
+
+    startScraper() {
+        return this.request(`/api/scraper/start`, {
+            method: "POST",
+            timeoutMs: 120000,
+        });
+    }
+
+    stopScraper() {
+        return this.request(`/api/scraper/stop`, {
+            method: "POST",
+        });
     }
 }
 

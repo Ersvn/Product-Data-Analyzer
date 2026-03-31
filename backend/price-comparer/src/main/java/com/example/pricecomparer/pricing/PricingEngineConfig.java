@@ -8,6 +8,7 @@ import com.example.pricing.rules.SoloMarketPremiumRule;
 import com.example.pricing.rules.UndercutIfCompetitionRule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import com.example.pricing.post.NeverBelowCostProcessor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,9 +39,12 @@ public class PricingEngineConfig {
         }
 
         var post = new ArrayList<PricingStrategyEngine.PricePostProcessor>();
+
         if (props.getPost().getPsychological90().isEnabled()) {
             post.add(new Psychological90Processor());
         }
+
+        post.add(new NeverBelowCostProcessor());
 
         PricingStrategyEngine.Mode mode = (props.getMode() == PricingProperties.Mode.APPLY_ALL)
                 ? PricingStrategyEngine.Mode.APPLY_ALL

@@ -1,71 +1,63 @@
 :root {
-    /* === PREMIUM ENTERPRISE COLOR SYSTEM === */
+    --bg: #0b1020;
+    --bg-gradient-start: #0b1020;
+    --bg-gradient-end: #141b2f;
 
-    /* Base */
-    --bg: #fafafa;
-    --bg-gradient-start: #f0f4f8;
-    --bg-gradient-end: #fafbfc;
+    --panel: rgba(15, 23, 42, 0.72);
+    --panel-border: rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(148, 163, 184, 0.14);
+    --glass-shadow: 0 18px 48px rgba(2, 6, 23, 0.34);
 
-    /* Glassmorphism Panels */
-    --panel: rgba(255, 255, 255, 0.82);
-    --panel-border: rgba(255, 255, 255, 0.5);
-    --glass-border: rgba(226, 232, 240, 0.6);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+    --surface: #111827;
+    --surface-elevated: #172036;
+    --surface-hover: #1d2840;
 
-    /* Surfaces */
-    --surface: #ffffff;
-    --surface-elevated: #f8fafc;
-    --surface-hover: rgba(241, 245, 249, 0.85);
+    --text: #eef2ff;
+    --text-primary: #eef2ff;
+    --text-secondary: #aab6cf;
+    --text-tertiary: #71809e;
 
-    /* Text */
-    --text: #0f172a;
-    --text-secondary: #475569;
-    --text-tertiary: #94a3b8;
+    --accent: #60a5fa;
+    --accent-light: #93c5fd;
+    --accent-glow: rgba(96, 165, 250, 0.18);
+    --accent-bg: rgba(96, 165, 250, 0.12);
 
-    /* Brand */
-    --accent: #3b82f6;
-    --accent-light: #60a5fa;
-    --accent-glow: rgba(59, 130, 246, 0.15);
-    --accent-bg: rgba(59, 130, 246, 0.08);
+    --success: #34d399;
+    --success-light: #6ee7b7;
+    --success-bg: rgba(52, 211, 153, 0.14);
 
-    /* Status */
-    --success: #10b981;
-    --success-light: #34d399;
-    --success-bg: rgba(16, 185, 129, 0.1);
-    --warning: #f59e0b;
-    --warning-light: #fbbf24;
-    --warning-bg: rgba(245, 158, 11, 0.12);
-    --danger: #ef4444;
-    --danger-light: #f87171;
-    --danger-bg: rgba(239, 68, 68, 0.1);
+    --warning: #fbbf24;
+    --warning-light: #fde68a;
+    --warning-bg: rgba(251, 191, 36, 0.14);
 
-    /* Charts (original tokens) */
-    --marketStroke: #6366f1;
-    --companyStroke: #10b981;
-    --chart-grid: rgba(148, 163, 184, 0.15);
+    --danger: #f87171;
+    --danger-light: #fca5a5;
+    --danger-bg: rgba(248, 113, 113, 0.14);
 
-    /* Shadows */
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.02);
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05);
-    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.08);
-    --shadow-xl: 0 24px 60px rgba(0, 0, 0, 0.12);
-    --shadow-glow: 0 0 40px var(--accent-glow);
+    --marketStroke: #60a5fa;
+    --companyStroke: #34d399;
+    --chart-grid: rgba(255, 255, 255, 0.07);
+    --chartGrid: var(--chart-grid);
+    --chartTick: rgba(226, 232, 240, 0.78);
 
-    /* Radius */
+    --shadow-xs: 0 1px 2px rgba(2, 6, 23, 0.16);
+    --shadow-sm: 0 4px 10px rgba(2, 6, 23, 0.18);
+    --shadow-md: 0 10px 24px rgba(2, 6, 23, 0.22);
+    --shadow-lg: 0 18px 42px rgba(2, 6, 23, 0.3);
+    --shadow-xl: 0 28px 70px rgba(2, 6, 23, 0.36);
+    --shadow-glow: 0 0 28px var(--accent-glow);
+
     --radius-sm: 8px;
     --radius-md: 12px;
-    --radius-lg: 16px;
+    --radius-lg: 18px;
     --radius-xl: 24px;
 
-    /* Animation */
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     --duration-fast: 150ms;
     --duration-normal: 250ms;
     --duration-slow: 400ms;
 
-    /* === UI DEPTH SYSTEM === */
     --layer-1: var(--surface);
     --layer-2: var(--panel);
     --layer-3: var(--surface-elevated);
@@ -76,54 +68,7 @@
     --elev-3: var(--shadow-lg);
 
     --focus-ring: 0 0 0 3px var(--accent-glow);
-
     --tracking-tight: -0.02em;
     --tracking-num: -0.01em;
-
-    /* === CHART TOKENS (aliases + readability) ===
-       Fixar att PriceHistory.jsx använder var(--chartGrid), var(--chartTick), var(--stroke)
-       och att dessa funkar i både light & dark.
-    */
-    --chartGrid: var(--chart-grid);
-    --chartTick: color-mix(in srgb, var(--text-secondary) 82%, var(--text) 18%);
     --stroke: var(--glass-border);
-}
-
-html[data-theme="dark"] {
-    --bg: #0a0a0f;
-    --bg-gradient-start: #0f172a;
-    --bg-gradient-end: #1e1b2e;
-
-    --panel: rgba(30, 41, 59, 0.72);
-    --panel-border: rgba(255, 255, 255, 0.08);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-
-    --surface: #1e293b;
-    --surface-elevated: #334155;
-    --surface-hover: rgba(51, 65, 85, 0.85);
-
-    --text: #f8fafc;
-    --text-secondary: #cbd5e1;
-    --text-tertiary: #64748b;
-
-    --accent: #60a5fa;
-    --accent-light: #93c5fd;
-    --accent-glow: rgba(96, 165, 250, 0.2);
-    --accent-bg: rgba(96, 165, 250, 0.12);
-
-    --marketStroke: #818cf8;
-    --companyStroke: #34d399;
-    --chart-grid: rgba(255, 255, 255, 0.08);
-
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5);
-    --shadow-xl: 0 24px 60px rgba(0, 0, 0, 0.6);
-
-    /* === CHART TOKENS (dark readability) === */
-    --chartGrid: rgba(255, 255, 255, 0.10);
-    --chartTick: rgba(248, 250, 252, 0.82);
-    --stroke: rgba(255, 255, 255, 0.14);
 }

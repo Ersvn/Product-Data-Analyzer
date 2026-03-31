@@ -1,5 +1,6 @@
 package com.example.pricing.core;
 
+import com.example.pricing.post.NeverBelowCostProcessor;
 import com.example.pricing.post.Psychological90Processor;
 import com.example.pricing.rules.IgnoreBelowCostMarketRule;
 import com.example.pricing.rules.SoloMarketPremiumRule;
@@ -7,6 +8,7 @@ import com.example.pricing.rules.UndercutIfCompetitionRule;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +37,7 @@ class PricingStrategyEngineTest {
         );
 
         var r = engine.price(ctx, new BigDecimal("120.00"));
+
         assertNotNull(r.finalPrice());
         assertTrue(r.finalPrice().compareTo(new BigDecimal("99.00")) <= 0); // 100*0.99 => 99.00 then psych => 98.90
         assertFalse(r.ruleHits().isEmpty());
@@ -60,18 +63,19 @@ class PricingStrategyEngineTest {
         );
 
         var r = engine.price(ctx, new BigDecimal("120.00"));
+
         assertEquals(new BigDecimal("196.00"), r.finalPrice().setScale(2));
         assertEquals("solo_market_premium", r.ruleHits().get(0).ruleId());
     }
 
     @Test
-    void ignores_market_min_below_cost() {
+    void never_goes_below_cost_even_when_market_is_below_cost() {
         var engine = new PricingStrategyEngine(
                 List.of(
                         new IgnoreBelowCostMarketRule(),
                         new UndercutIfCompetitionRule(new BigDecimal("0.05"))
                 ),
-                List.of(),
+                List.of(new NeverBelowCostProcessor()),
                 PricingStrategyEngine.Mode.APPLY_ALL
         );
 
@@ -83,10 +87,11 @@ class PricingStrategyEngineTest {
                 Map.of()
         );
 
-        var r = engine.price(ctx, new BigDecimal("120.00"));
-        // IgnoreBelowCostMarketRule returns workingPrice unchanged; APPLY_ALL then undercut would still run.
-        // This test verifies rule hit exists; next step in phase 1b is to add "marketMinEligible" flag to context/attrs.
+        var r = engine.price(ctx, new BigDecimal("85.00"));
+
+        assertEquals(new BigDecimal("100.00"), r.finalPrice().setScale(2));
         assertTrue(r.ruleHits().stream().anyMatch(h -> h.ruleId().equals("ignore_market_below_cost")));
+        assertTrue(r.ruleHits().stream().anyMatch(h -> h.action().equals("floor_to_cost")));
     }
 
     @Test
@@ -94,8 +99,8 @@ class PricingStrategyEngineTest {
         var pp = new Psychological90Processor();
         var ctx = new PricingContext("SKU4", null, null, null, Map.of());
 
-        assertEquals(new BigDecimal("9.90"), pp.apply(ctx, new BigDecimal("10.10"), List.of()).setScale(2));
-        assertEquals(new BigDecimal("10.90"), pp.apply(ctx, new BigDecimal("10.99"), List.of()).setScale(2));
-        assertEquals(new BigDecimal("0.00"), pp.apply(ctx, new BigDecimal("0.10"), List.of()).setScale(2));
+        assertEquals(new BigDecimal("9.90"), pp.apply(ctx, new BigDecimal("10.10"), new ArrayList<>()).setScale(2));
+        assertEquals(new BigDecimal("10.90"), pp.apply(ctx, new BigDecimal("10.99"), new ArrayList<>()).setScale(2));
+        assertEquals(new BigDecimal("0.00"), pp.apply(ctx, new BigDecimal("0.10"), new ArrayList<>()).setScale(2));
     }
 }

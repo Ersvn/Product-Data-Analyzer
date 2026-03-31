@@ -11,6 +11,15 @@ import ProductDrawer from "../components/features/products/ProductDrawer";
 import ProductThumb from "../components/features/products/ProductThumb";
 import PriceModeBadge from "../components/features/products/PriceModeBadge";
 import { formatMoney, cn, downloadCSV } from "../lib/utils";
+import {
+    rowKeyFor,
+    normalizeInventoryRow,
+    normalizeMarketRow,
+    isMatchedInventoryProduct,
+    isMatchedMarketRow,
+    getEffectivePrice,
+    filterAndSortRows,
+} from "./products/productsPageAdapters";
 
 const PAGE_SIZE = 200;
 
@@ -20,65 +29,6 @@ const SearchIcon = () => (
         <path d="m21 21-4.35-4.35" />
     </svg>
 );
-
-function rowKeyFor(source, p) {
-    if (!p) return "unknown";
-    if (source === "inventory") return `inv:${p.__companyId ?? p.id ?? p.ean ?? "unknown"}`;
-    return `mkt:${p.uid ?? p.__uid ?? p.ean ?? p.mpn ?? "unknown"}`;
-}
-
-function normalizeInventoryRow(r) {
-    const id = r?.id ?? null;
-
-    const out = {
-        id,
-        __companyId: id,
-        __source: "db",
-        __dbCompanyId: id,
-
-        name: r?.name ?? "",
-        brand: r?.brand ?? "",
-        category: r?.category ?? "",
-        ean: r?.ean ?? null,
-        mpn: r?.mpn ?? null,
-
-        ourPrice: r?.our_price ?? r?.ourPrice ?? null,
-        costPrice: r?.cost_price ?? r?.costPrice ?? null,
-        priceMode: (r?.price_mode ?? r?.priceMode ?? "AUTO")?.toUpperCase?.() ?? "AUTO",
-        manualPrice: r?.manual_price ?? r?.manualPrice ?? null,
-
-        imageUrl: r?.image_url ?? r?.imageUrl ?? null,
-        url: r?.url ?? null,
-    };
-
-    return { ...out, __rowKey: rowKeyFor("inventory", out) };
-}
-
-function normalizeMarketRow(r) {
-    const uid = String(r?.uid ?? "").trim();
-
-    const out = {
-        uid,
-        __uid: uid,
-        __source: "dbMarket",
-
-        name: r?.display_name ?? r?.name ?? uid ?? "",
-        ean: r?.ean ?? null,
-        mpn: r?.mpn ?? null,
-
-        recommendedPrice: r?.price_median ?? r?.priceMedian ?? null,
-        effectivePrice: r?.price_median ?? r?.priceMedian ?? null,
-
-        marketPriceMin: r?.price_min ?? r?.priceMin ?? null,
-        marketPriceMax: r?.price_max ?? r?.priceMax ?? null,
-        marketBenchmarkPrice: r?.price_median ?? r?.priceMedian ?? null,
-        competitorCount: r?.offers_count ?? r?.offersCount ?? null,
-
-        lastScraped: r?.last_scraped ?? r?.lastScraped ?? null,
-    };
-
-    return { ...out, __rowKey: rowKeyFor("market", out) };
-}
 
 export default function ProductsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -95,14 +45,11 @@ export default function ProductsPage() {
     const [selected, setSelected] = useState(null);
     const [bulkBusy, setBulkBusy] = useState(false);
 
+    const listRef = useRef(null);
+    const inFlightRef = useRef(false);
+    const hasMoreRef = useRef(true);
     const afterIdRef = useRef(0);
     const afterUidRef = useRef("");
-    const hasMoreRef = useRef(true);
-    const inFlightRef = useRef(false);
-
-    const [overrides, setOverrides] = useState(new Map());
-
-    const listRef = useRef(null);
 
     useEffect(() => {
         const params = new URLSearchParams();
@@ -111,115 +58,90 @@ export default function ProductsPage() {
         setSearchParams(params, { replace: true });
     }, [source, q, setSearchParams]);
 
-    const reset = useCallback(() => {
+    const resetListState = useCallback(() => {
         setRows([]);
         setErr("");
         setSelected(null);
-        setOverrides(new Map());
         afterIdRef.current = 0;
         afterUidRef.current = "";
         hasMoreRef.current = true;
     }, []);
 
-    const fetchFirstPage = useCallback(async () => {
-        if (inFlightRef.current) return;
-        inFlightRef.current = true;
+    const fetchInventoryPage = useCallback(
+        async (append) => {
+            const afterId = append ? afterIdRef.current : 0;
 
-        setLoading(true);
-        setErr("");
+            const res = await api.fetchDbCompanyListings({
+                q: debouncedQ,
+                afterId,
+                limit: PAGE_SIZE,
+            });
 
-        try {
-            afterIdRef.current = 0;
-            afterUidRef.current = "";
-            hasMoreRef.current = true;
+            const items = Array.isArray(res?.items) ? res.items.map(normalizeInventoryRow) : [];
+            const nextAfterId = Number(res?.nextAfterId ?? 0);
 
-            if (source === "inventory") {
-                const res = await api.fetchDbCompanyListings({
-                    q: debouncedQ,
-                    afterId: 0,
-                    limit: PAGE_SIZE,
-                });
+            setRows((prev) => (append ? [...prev, ...items] : items));
+            afterIdRef.current = nextAfterId;
+            hasMoreRef.current = items.length === PAGE_SIZE && nextAfterId > 0;
+        },
+        [debouncedQ]
+    );
 
-                const items = Array.isArray(res?.items) ? res.items : [];
-                const normalized = items.map(normalizeInventoryRow);
+    const fetchMarketPage = useCallback(
+        async (append) => {
+            const afterUid = append ? afterUidRef.current : "";
 
-                setRows(normalized);
+            const res = await api.fetchDbScrapedMarket({
+                q: debouncedQ,
+                afterUid,
+                limit: PAGE_SIZE,
+            });
 
-                const nextAfterId = Number(res?.nextAfterId ?? 0);
-                afterIdRef.current = nextAfterId;
-                hasMoreRef.current = items.length === PAGE_SIZE && nextAfterId > 0;
-            } else {
-                const res = await api.fetchDbScrapedMarket({
-                    q: debouncedQ,
-                    afterUid: "",
-                    limit: PAGE_SIZE,
-                });
+            const items = Array.isArray(res?.items) ? res.items.map(normalizeMarketRow) : [];
+            const nextAfterUid = String(res?.nextAfterUid ?? "");
 
-                const items = Array.isArray(res?.items) ? res.items : [];
-                const normalized = items.map(normalizeMarketRow);
+            setRows((prev) => (append ? [...prev, ...items] : items));
+            afterUidRef.current = nextAfterUid;
+            hasMoreRef.current = items.length === PAGE_SIZE && nextAfterUid !== "";
+        },
+        [debouncedQ]
+    );
 
-                setRows(normalized);
+    const fetchPage = useCallback(
+        async ({ append }) => {
+            if (inFlightRef.current) return;
 
-                const next = String(res?.nextAfterUid ?? "");
-                afterUidRef.current = next;
-                hasMoreRef.current = items.length === PAGE_SIZE && next !== "";
+            inFlightRef.current = true;
+            setLoading(true);
+            setErr("");
+
+            try {
+                if (source === "inventory") {
+                    await fetchInventoryPage(append);
+                } else {
+                    await fetchMarketPage(append);
+                }
+            } catch (e) {
+                setErr(String(e?.message || e));
+            } finally {
+                setLoading(false);
+                inFlightRef.current = false;
             }
-        } catch (e) {
-            setErr(String(e?.message || e));
-        } finally {
-            setLoading(false);
-            inFlightRef.current = false;
-        }
-    }, [source, debouncedQ]);
+        },
+        [source, fetchInventoryPage, fetchMarketPage]
+    );
+
+    const fetchFirstPage = useCallback(async () => {
+        afterIdRef.current = 0;
+        afterUidRef.current = "";
+        hasMoreRef.current = true;
+        await fetchPage({ append: false });
+    }, [fetchPage]);
 
     const fetchMore = useCallback(async () => {
-        if (loading) return;
-        if (inFlightRef.current) return;
-        if (!hasMoreRef.current) return;
-
-        inFlightRef.current = true;
-        setLoading(true);
-        setErr("");
-
-        try {
-            if (source === "inventory") {
-                const res = await api.fetchDbCompanyListings({
-                    q: debouncedQ,
-                    afterId: afterIdRef.current,
-                    limit: PAGE_SIZE,
-                });
-
-                const items = Array.isArray(res?.items) ? res.items : [];
-                const normalized = items.map(normalizeInventoryRow);
-
-                setRows((prev) => [...prev, ...normalized]);
-
-                const nextAfterId = Number(res?.nextAfterId ?? afterIdRef.current);
-                hasMoreRef.current = items.length === PAGE_SIZE && nextAfterId > afterIdRef.current;
-                afterIdRef.current = nextAfterId;
-            } else {
-                const res = await api.fetchDbScrapedMarket({
-                    q: debouncedQ,
-                    afterUid: afterUidRef.current,
-                    limit: PAGE_SIZE,
-                });
-
-                const items = Array.isArray(res?.items) ? res.items : [];
-                const normalized = items.map(normalizeMarketRow);
-
-                setRows((prev) => [...prev, ...normalized]);
-
-                const next = String(res?.nextAfterUid ?? afterUidRef.current);
-                hasMoreRef.current = items.length === PAGE_SIZE && next !== "" && next !== afterUidRef.current;
-                afterUidRef.current = next;
-            }
-        } catch (e) {
-            setErr(String(e?.message || e));
-        } finally {
-            setLoading(false);
-            inFlightRef.current = false;
-        }
-    }, [source, debouncedQ, loading]);
+        if (loading || inFlightRef.current || !hasMoreRef.current) return;
+        await fetchPage({ append: true });
+    }, [fetchPage, loading]);
 
     const handleRecomputeAll = useCallback(async () => {
         if (source !== "inventory") return;
@@ -239,9 +161,9 @@ export default function ProductsPage() {
     }, [source, fetchFirstPage]);
 
     useEffect(() => {
-        reset();
+        resetListState();
         fetchFirstPage();
-    }, [source, debouncedQ, reset, fetchFirstPage]);
+    }, [source, debouncedQ, resetListState, fetchFirstPage]);
 
     useEffect(() => {
         const el = listRef.current;
@@ -257,67 +179,62 @@ export default function ProductsPage() {
         return () => el.removeEventListener("scroll", onScroll);
     }, [fetchMore]);
 
-    const applyOverride = (updated) => {
-        if (!updated) return;
+    const applyUpdateToRows = useCallback(
+        (updated) => {
+            if (!updated) return;
 
-        const key = updated.__rowKey || selected?.__rowKey || rowKeyFor(source, updated);
-        if (!key) return;
+            const key = updated.__rowKey || selected?.__rowKey || rowKeyFor(source, updated);
 
-        setOverrides((prev) => {
-            const next = new Map(prev);
-            next.set(String(key), updated);
-            return next;
-        });
+            setSelected((prev) => (prev ? { ...prev, ...updated, __rowKey: key } : null));
 
-        setSelected((prev) => (prev ? { ...prev, ...updated, __rowKey: key } : null));
+            setRows((prev) =>
+                prev.map((row) =>
+                    String(row.__rowKey) === String(key)
+                        ? { ...row, ...updated, __rowKey: key }
+                        : row
+                )
+            );
+        },
+        [selected, source]
+    );
 
-        setRows((prev) =>
-            prev.map((r) => (String(r.__rowKey) === String(key) ? { ...r, ...updated, __rowKey: key } : r))
-        );
-    };
+    const displayRows = useMemo(() => {
+        return filterAndSortRows(rows, source, debouncedQ);
+    }, [rows, source, debouncedQ]);
 
-    const getEffectivePrice = (p) => {
-        const key = p.__rowKey || rowKeyFor(source, p);
-        const override = overrides.get(String(key));
-        const product = override ? { ...p, ...override } : p;
-
-        const eff = Number(product.effectivePrice);
-        if (Number.isFinite(eff) && eff > 0) return eff;
-
-        const mode = String(product.priceMode ?? "AUTO").toUpperCase();
-        if (mode === "MANUAL" && product.manualPrice != null) return product.manualPrice;
-
-        const rec = Number(product.recommendedPrice);
-        if (Number.isFinite(rec) && rec > 0) return rec;
-
-        const our = Number(product.ourPrice);
-        if (Number.isFinite(our) && our > 0) return our;
-
-        const price = Number(product.price);
-        if (Number.isFinite(price) && price > 0) return price;
-
-        return null;
-    };
-
-    const handleExport = () => {
-        const data = rows.map((r) => ({
-            Namn: r.name,
-            EAN: r.ean ?? "",
-            MPN: r.mpn ?? "",
-            Pris: getEffectivePrice(r) ?? "",
-            Offers: r.competitorCount ?? "",
-            Läge: r.priceMode ?? "AUTO",
+    const handleExport = useCallback(() => {
+        const data = displayRows.map((row) => ({
+            Namn: row.name,
+            EAN: row.ean ?? "",
+            MPN: row.mpn ?? "",
+            Pris: getEffectivePrice(row) ?? "",
+            Offers: row.competitorCount ?? "",
+            Läge: row.priceMode ?? "AUTO",
             Källa: source,
-            UID: r.uid ?? "",
+            UID: row.uid ?? "",
+            Status:
+                source === "inventory"
+                    ? isMatchedInventoryProduct(row)
+                        ? "Matched"
+                        : "Inventory only"
+                    : isMatchedMarketRow(row)
+                        ? "Matched to inventory"
+                        : "Unmatched market row",
+            InventoryMatches: row.inventoryMatchCount ?? "",
         }));
+
         downloadCSV(data, `produkter-${source}-${new Date().toISOString().split("T")[0]}.csv`);
-    };
+    }, [displayRows, source]);
 
-    const loadedBadge = useMemo(() => {
-        return `Loaded: ${rows.length.toLocaleString("sv-SE")}${hasMoreRef.current ? "+" : ""}`;
-    }, [rows.length]);
+    const loadedBadge = useMemo(
+        () => `Loaded: ${displayRows.length.toLocaleString("sv-SE")}${hasMoreRef.current ? "+" : ""}`,
+        [displayRows.length]
+    );
 
-    const showModeBadge = source === "inventory";
+    const matchedCount = useMemo(() => {
+        if (source === "inventory") return displayRows.filter(isMatchedInventoryProduct).length;
+        return displayRows.filter(isMatchedMarketRow).length;
+    }, [displayRows, source]);
 
     return (
         <section className="apage">
@@ -325,7 +242,9 @@ export default function ProductsPage() {
                 <div>
                     <div className="apage__kicker">Catalog</div>
                     <h1 className="apage__title">Products</h1>
-                    <p className="apage__sub">Search, compare and adjust prices</p>
+                    <p className="apage__sub">
+                        Browse your inventory and compare it with raw scraped market data.
+                    </p>
                 </div>
 
                 <div className="apage__actions">
@@ -335,7 +254,7 @@ export default function ProductsPage() {
                         </Button>
                     ) : null}
 
-                    <Button variant="ghost" onClick={handleExport} disabled={!rows.length}>
+                    <Button variant="ghost" onClick={handleExport} disabled={!displayRows.length}>
                         Exportera CSV
                     </Button>
                 </div>
@@ -360,69 +279,113 @@ export default function ProductsPage() {
 
                 <div className="apage__tools">
                     <Badge>{loadedBadge}</Badge>
+                    <Badge>{matchedCount} matched</Badge>
 
                     <Input
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
-                        placeholder="Sök EAN / MPN / namn…"
+                        placeholder={
+                            source === "inventory"
+                                ? 'Sök EAN / MPN / namn… eller skriv "matched"'
+                                : 'Sök UID / EAN / MPN / namn… eller skriv "matched" / "unmatched"'
+                        }
                         icon={<SearchIcon />}
                     />
                 </div>
             </div>
 
-            {err && <ErrorState error={{ message: err }} retry={fetchFirstPage} />}
+            {err ? <ErrorState error={{ message: err }} retry={fetchFirstPage} /> : null}
 
             <div ref={listRef} className={cn("virtualWrap", selected && "virtualWrap--with-drawer")}>
-                {rows.map((p) => {
-                    const price = getEffectivePrice(p);
-                    const offers = p.competitorCount ?? null;
+                {displayRows.map((product) => {
+                    const price = getEffectivePrice(product);
+                    const offers = product.competitorCount ?? null;
+                    const isMatched =
+                        source === "inventory"
+                            ? isMatchedInventoryProduct(product)
+                            : isMatchedMarketRow(product);
 
                     return (
-                        <div key={p.__rowKey || p.id || p.uid || p.ean} className="virtualRow" onClick={() => setSelected(p)}>
+                        <div
+                            key={product.__rowKey || product.id || product.uid || product.ean}
+                            className="virtualRow"
+                            onClick={() => setSelected(product)}
+                        >
                             <div className="virtualLeft">
-                                <ProductThumb src={p.imageUrl} alt={p.name} />
+                                <ProductThumb src={product.imageUrl} alt={product.name} />
+
                                 <div className="virtualTexts">
-                                    <div className="virtualTitle">{p.name}</div>
+                                    <div
+                                        className="virtualTitle"
+                                        style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
+                                    >
+                                        <span>{product.name}</span>
+
+                                        {source === "inventory" ? (
+                                            isMatched ? (
+                                                <Badge variant="success">Matched</Badge>
+                                            ) : (
+                                                <Badge variant="muted">Inventory only</Badge>
+                                            )
+                                        ) : isMatched ? (
+                                            <Badge variant="success">
+                                                Matched{product.inventoryMatchCount > 1 ? ` (${product.inventoryMatchCount})` : ""}
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="muted">Unmatched</Badge>
+                                        )}
+                                    </div>
 
                                     {source === "market" ? (
                                         <div className="virtualMeta">
-                                            {p.ean ? `EAN: ${p.ean}` : p.mpn ? `MPN: ${p.mpn}` : `UID: ${p.uid ?? "—"}`}
-                                            {p.mpn && p.ean ? ` · MPN: ${p.mpn}` : null}
+                                            {product.ean
+                                                ? `EAN: ${product.ean}`
+                                                : product.mpn
+                                                    ? `MPN: ${product.mpn}`
+                                                    : `UID: ${product.uid ?? "—"}`}
+                                            {product.mpn && product.ean ? ` · MPN: ${product.mpn}` : null}
                                         </div>
                                     ) : (
                                         <div className="virtualMeta">
-                                            {p.brand} · {p.category} · {p.ean}
+                                            {product.brand || "—"} · {product.category || "—"} · {product.ean || "—"}
                                         </div>
                                     )}
                                 </div>
                             </div>
 
                             <div className="virtualRight">
-                                {showModeBadge ? <PriceModeBadge priceMode={p.priceMode} manualPrice={p.manualPrice} /> : null}
-                                {source === "market" && offers != null ? <span className="badge">{offers} offers</span> : null}
-                                <span className="virtualPrice">{price != null ? formatMoney(price) : "—"}</span>
+                                {source === "inventory" ? (
+                                    <PriceModeBadge priceMode={product.priceMode} manualPrice={product.manualPrice} />
+                                ) : offers != null ? (
+                                    <span className="badge">{offers} offers</span>
+                                ) : null}
+
+                                <span className="virtualPrice">
+                  {price != null ? formatMoney(price) : "—"}
+                </span>
                             </div>
                         </div>
                     );
                 })}
 
-                {loading && (
+                {loading ? (
                     <div style={{ padding: 20 }}>
                         <Skeleton height={60} />
                         <Skeleton height={60} style={{ marginTop: 8 }} />
                         <Skeleton height={60} style={{ marginTop: 8 }} />
                     </div>
-                )}
+                ) : null}
 
-                {!loading && !hasMoreRef.current && rows.length > 0 ? <div className="listEnd">Inga fler produkter</div> : null}
+                {!loading && !hasMoreRef.current && displayRows.length > 0 ? (
+                    <div className="listEnd">Inga fler produkter</div>
+                ) : null}
             </div>
 
             <ProductDrawer
                 open={!!selected}
                 onClose={() => setSelected(null)}
                 product={selected}
-                fetchJson={api.request.bind(api)}
-                onProductUpdate={applyOverride}
+                onProductUpdate={applyUpdateToRows}
             />
         </section>
     );

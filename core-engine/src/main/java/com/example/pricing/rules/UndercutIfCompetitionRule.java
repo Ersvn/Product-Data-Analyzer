@@ -13,10 +13,7 @@ import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
-/**
- * Undercut marketMin med X% om vi har konkurrens.
- * requireCompetitors=true => competitorCount måste vara > 0.
- */
+
 public class UndercutIfCompetitionRule implements PricingRule {
 
     private final BigDecimal undercutPercent;

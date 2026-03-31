@@ -1,0 +1,242 @@
+.app-shell {
+    display: flex;
+    height: 100%;
+    overflow: hidden;
+}
+
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.content {
+    flex: 1;
+    min-height: 0;
+    padding: 28px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+}
+
+.sidebar {
+    width: 280px;
+    height: 100%;
+    background: var(--panel);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-right: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+    box-shadow: var(--glass-shadow);
+    overflow: hidden;
+}
+
+.sidebar__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.48);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-normal);
+    z-index: 30;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo__mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-glow);
+    position: relative;
+    overflow: hidden;
+}
+
+.logo__mark::after {
+    content: "P";
+    color: #fff;
+    font-weight: 800;
+    font-size: 20px;
+}
+
+.logo__name {
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+}
+
+.logo__sub {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+
+.nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    overflow: hidden;
+}
+
+.nav__groupTitle {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
+    padding-left: 12px;
+    font-weight: 700;
+}
+
+.nav__items {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.nav__link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 12px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 600;
+    transition: all var(--duration-fast) var(--ease-out);
+    position: relative;
+    overflow: hidden;
+}
+
+.nav__link::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, var(--accent-bg), transparent);
+    opacity: 0;
+    transition: opacity var(--duration-fast);
+}
+
+.nav__link:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.nav__link:hover::before {
+    opacity: 0.45;
+}
+
+.nav__link--active {
+    color: var(--accent-light);
+    background: rgba(96, 165, 250, 0.1);
+    font-weight: 800;
+    border: 1px solid rgba(96, 165, 250, 0.14);
+}
+
+.nav__link--active::before {
+    opacity: 1;
+}
+
+.nav__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.88;
+}
+
+.nav__activePip {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    margin-left: auto;
+}
+
+.topbar {
+    height: 72px;
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(11, 16, 32, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.topbar__left,
+.topbar__right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.topbar__title {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 960px) {
+    .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 40;
+        transform: translateX(-100%);
+        transition: transform var(--duration-normal) var(--ease-out);
+    }
+
+    .app-shell--sidebar-open .sidebar {
+        transform: translateX(0);
+    }
+
+    .app-shell--sidebar-open .sidebar-backdrop {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .mobile-only {
+        display: inline-flex;
+    }
+
+    .content {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 640px) {
+    .content {
+        padding: 16px;
+    }
+}

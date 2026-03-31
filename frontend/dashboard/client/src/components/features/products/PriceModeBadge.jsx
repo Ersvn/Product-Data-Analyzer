@@ -6,7 +6,7 @@ export default function PriceModeBadge({ priceMode, manualPrice, size = 'sm' }) 
 
     return (
         <span className={cn('pmBadge', isManual ? 'pmBadge--manual' : 'pmBadge--auto', `pmBadge--${size}`)}>
-      {isManual ? "MANUAL" : "AUTO"}
+      {isManual ? "Manual" : "Auto"}
     </span>
     );
 }

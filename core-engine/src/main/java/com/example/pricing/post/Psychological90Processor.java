@@ -10,7 +10,7 @@ import java.util.List;
 
 public final class Psychological90Processor implements PricingStrategyEngine.PricePostProcessor {
 
-    private final BigDecimal cents; // 0.90
+    private final BigDecimal cents;
 
     public Psychological90Processor() {
         this(new BigDecimal("0.90"));
@@ -27,11 +27,11 @@ public final class Psychological90Processor implements PricingStrategyEngine.Pri
         // Ensure 2 decimals
         var p = price.setScale(2, RoundingMode.HALF_UP);
 
-        // Floor to integer part and add .90 (avoid increasing above original by rounding)
+        // Floor to integer part and add .90
         var floor = p.setScale(0, RoundingMode.FLOOR);
         var adjusted = floor.add(cents).setScale(2, RoundingMode.HALF_UP);
 
-        // If adjusted is greater than original (e.g. price = 10.10 -> floor+0.90=10.90), step down 1
+        // If adjusted is greater than original (if price = 10.10 -> floor+0.90=10.90), step down 1
         if (adjusted.compareTo(p) > 0) {
             adjusted = floor.subtract(BigDecimal.ONE).add(cents).setScale(2, RoundingMode.HALF_UP);
         }

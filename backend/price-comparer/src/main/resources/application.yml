@@ -27,6 +27,10 @@ spring:
     locations: classpath:db/migration
 
 app:
+  scraper:
+    command: node
+    script: main-v2.js
+    workingDir: C:/Users/eriks/eclipse-workspace/Product-Data-Analyzer/scraper
   dashUser: admin
   dashPass: change-me
   storage: DB   # FILES|DB

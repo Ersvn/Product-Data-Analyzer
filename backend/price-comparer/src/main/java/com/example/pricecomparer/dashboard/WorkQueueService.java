@@ -1,11 +1,15 @@
 package com.example.pricecomparer.dashboard;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.example.pricecomparer.db.DbPricingService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class WorkQueueService {
@@ -14,103 +18,69 @@ public class WorkQueueService {
         OVERPRICED, UNDERPRICED, OUTLIERS
     }
 
+    private static final double ACTION_THRESHOLD_PCT = 0.02;   // 2%
+    private static final double OUTLIER_ABS_GAP_PCT = 0.50;    // 50%
 
-    @Value("${app.storage:FILES}")
-    private String storage;
-
-    private static final double SIMILAR_TOL_PCT = 0.005;
-    private static final double OUTLIER_ABS_GAP_PCT = 0.25;
     private final JdbcTemplate jdbc;
+    private final DbPricingService pricingService;
 
-    public WorkQueueService(JdbcTemplate jdbc) {
+    public WorkQueueService(JdbcTemplate jdbc, DbPricingService pricingService) {
         this.jdbc = jdbc;
+        this.pricingService = pricingService;
     }
 
     public Map<String, Object> queue(QueueType type, int limit) {
         if (limit < 1) limit = 1;
         if (limit > 200) limit = 200;
 
-        if ("DB".equalsIgnoreCase(String.valueOf(storage).trim())) {
-            return queueFromDb(type, limit);
+        List<Map<String, Object>> rows = loadBaseRows();
+        List<Map<String, Object>> items = new ArrayList<>();
+
+        for (Map<String, Object> row : rows) {
+            QueueEvaluation eval = evaluate(row);
+
+            if (!matches(type, eval)) continue;
+
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("id", row.get("id"));
+            item.put("companySku", row.get("company_sku"));
+            item.put("ean", row.get("ean"));
+            item.put("mpn", row.get("mpn"));
+            item.put("name", row.get("name"));
+            item.put("brand", row.get("brand"));
+            item.put("category", row.get("category"));
+
+            item.put("ourPrice", round2(num(eval.ourPrice)));
+            item.put("marketPrice", round2(num(eval.marketPrice)));
+            item.put("recommendedPrice", round2(num(eval.recommendedPrice)));
+            item.put("gapKr", round2(eval.gapKr));
+            item.put("gapPct", round4(eval.gapPct));
+
+            item.put("priceMode", row.get("price_mode"));
+            item.put("manualPrice", row.get("manual_price"));
+            item.put("costPrice", row.get("cost_price"));
+            item.put("ourPriceField", row.get("our_price"));
+            item.put("marketPriceMin", row.get("price_min"));
+            item.put("marketPriceMax", row.get("price_max"));
+            item.put("competitorCount", row.get("offers_count"));
+
+            items.add(item);
         }
 
-        return queueLegacy(type, limit);
-    }
+        items.sort((a, b) -> {
+            double aGap = num(a.get("gapPct"));
+            double bGap = num(b.get("gapPct"));
 
-    private Map<String, Object> queueFromDb(QueueType type, int limit) {
+            return switch (type) {
+                case UNDERPRICED -> Double.compare(aGap, bGap); // mest negativ först
+                case OVERPRICED -> Double.compare(bGap, aGap);  // mest positiv först
+                case OUTLIERS -> Double.compare(Math.abs(bGap), Math.abs(aGap));
+            };
+        });
 
-        String filter;
-        switch (type) {
-            case OVERPRICED -> filter = "gap_kr > tol_kr";
-            case UNDERPRICED -> filter = "gap_kr < -tol_kr";
-            case OUTLIERS -> filter = "abs(gap_pct) >= ?";
-            default -> filter = "abs(gap_pct) >= ?";
+        if (items.size() > limit) {
+            items = new ArrayList<>(items.subList(0, limit));
         }
-
-        String order;
-        switch (type) {
-            case OVERPRICED -> order = "gap_kr desc";
-            case UNDERPRICED -> order = "gap_kr asc";
-            case OUTLIERS -> order = "abs(gap_kr) desc";
-            default -> order = "abs(gap_kr) desc";
-        }
-
-        String sql = """
-            with base as (
-              select
-                c.id,
-                c.ean,
-                c.name,
-                c.brand,
-                c.category,
-                upper(coalesce(c.price_mode,'AUTO')) as price_mode,
-                c.manual_price,
-                c.our_price,
-                s.benchmark_price as market_price,
-                (case
-                   when upper(coalesce(c.price_mode,'AUTO')) = 'MANUAL' and coalesce(c.manual_price,0) > 0 then c.manual_price
-                   else c.our_price
-                 end) as our_price_eff
-              from company_listings c
-              join product_market_snapshot s on s.product_id = c.matched_product_id
-              where c.matched_product_id is not null
-                and c.ean is not null and btrim(c.ean) <> ''
-                and s.benchmark_price is not null and s.benchmark_price > 0
-                and (case
-                      when upper(coalesce(c.price_mode,'AUTO')) = 'MANUAL' and coalesce(c.manual_price,0) > 0 then c.manual_price
-                      else c.our_price
-                    end) is not null
-                and (case
-                      when upper(coalesce(c.price_mode,'AUTO')) = 'MANUAL' and coalesce(c.manual_price,0) > 0 then c.manual_price
-                      else c.our_price
-                    end) > 0
-            ),
-            calc as (
-              select
-                id, ean, name, brand, category,
-                price_mode, manual_price, our_price,
-                market_price,
-                our_price_eff,
-                (our_price_eff - market_price) as gap_kr,
-                (our_price_eff - market_price) / market_price as gap_pct,
-                (market_price * ?) as tol_kr
-              from base
-            )
-            select *
-            from calc
-            where
-        """ + " " + filter + " order by " + order + " limit " + limit;
-
-        List<Map<String, Object>> rows;
-        if (type == QueueType.OUTLIERS) {
-            rows = jdbc.queryForList(sql, SIMILAR_TOL_PCT, OUTLIER_ABS_GAP_PCT);
-        } else {
-            rows = jdbc.queryForList(sql, SIMILAR_TOL_PCT);
-        }
-
-        List<Map<String, Object>> items = rows.stream()
-                .map(this::toItemFromDbRow)
-                .collect(Collectors.toList());
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("ok", true);
@@ -120,12 +90,13 @@ public class WorkQueueService {
 
         Map<String, Object> meta = new LinkedHashMap<>();
         meta.put("storage", "DB");
-        meta.put("similarTolerancePct", 0.5);
+        meta.put("marketSource", "SCRAPED");
+        meta.put("actionThresholdPct", ACTION_THRESHOLD_PCT * 100.0);
         meta.put("outlierAbsGapPct", OUTLIER_ABS_GAP_PCT * 100.0);
         meta.put("rules", switch (type) {
-            case OVERPRICED -> "gapKr > (0.5% of benchmark)";
-            case UNDERPRICED -> "gapKr < -(0.5% of benchmark)";
-            case OUTLIERS -> "abs(gapPct) >= 25%";
+            case OVERPRICED -> "ourPrice >= recommendedPrice by at least 2%";
+            case UNDERPRICED -> "ourPrice <= recommendedPrice by at least 2%";
+            case OUTLIERS -> "abs(ourPrice - marketPrice) / marketPrice >= 50%";
         });
         res.put("meta", meta);
 
@@ -133,54 +104,196 @@ public class WorkQueueService {
         return res;
     }
 
-    private Map<String, Object> toItemFromDbRow(Map<String, Object> r) {
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id", r.get("id"));
-        m.put("ean", r.get("ean"));
-        m.put("name", r.get("name"));
-        m.put("brand", r.get("brand"));
-        m.put("category", r.get("category"));
+    public Map<String, Long> summarizeActionCounts() {
+        List<Map<String, Object>> rows = loadBaseRows();
 
-        double our = num(r.get("our_price_eff"));
-        double market = num(r.get("market_price"));
-        double gapKr = num(r.get("gap_kr"));
-        double gapPct = num(r.get("gap_pct"));
+        long overpriced = 0L;
+        long underpriced = 0L;
+        long outliers = 0L;
 
-        m.put("ourPrice", round2(our));
-        m.put("marketPrice", round2(market));
+        for (Map<String, Object> row : rows) {
+            QueueEvaluation eval = evaluate(row);
 
-        m.put("gapKr", round2(gapKr));
-        m.put("gapPct", round4(gapPct));
+            if (matches(QueueType.OVERPRICED, eval)) overpriced++;
+            if (matches(QueueType.UNDERPRICED, eval)) underpriced++;
+            if (matches(QueueType.OUTLIERS, eval)) outliers++;
+        }
 
-        m.put("priceMode", r.get("price_mode"));
-        m.put("manualPrice", r.get("manual_price"));
-        m.put("recommendedPrice", null); // not in DB schema right now
-        m.put("ourPriceField", r.get("our_price"));
-        m.put("priceField", null);
-
-        return m;
+        Map<String, Long> out = new LinkedHashMap<>();
+        out.put("OVERPRICED", overpriced);
+        out.put("UNDERPRICED", underpriced);
+        out.put("OUTLIERS", outliers);
+        return out;
     }
 
-    private Map<String, Object> queueLegacy(QueueType type, int limit) {
-        Map<String, Object> res = new LinkedHashMap<>();
-        res.put("ok", true);
-        res.put("type", type.name());
-        res.put("limit", limit);
-        res.put("count", 0);
+    private List<Map<String, Object>> loadBaseRows() {
+        return jdbc.queryForList("""
+            with base as (
+              select
+                c.id,
+                c.company_sku,
+                c.ean,
+                c.mpn,
+                c.name,
+                c.brand,
+                c.category,
+                upper(coalesce(c.price_mode, 'AUTO')) as price_mode,
+                c.manual_price,
+                c.our_price,
+                c.cost_price,
+                r.offers_count,
+                r.price_min,
+                r.price_max,
+                r.price_median,
+                case
+                  when upper(coalesce(c.price_mode, 'AUTO')) = 'MANUAL'
+                       and coalesce(c.manual_price, 0) > 0
+                    then c.manual_price
+                  else coalesce(c.our_price, 0)
+                end as our_price_eff,
+                case
+                  when coalesce(r.price_median, 0) > 0 then r.price_median
+                  when coalesce(r.price_min, 0) > 0 and coalesce(r.price_max, 0) > 0
+                    then round(((r.price_min + r.price_max) / 2.0)::numeric, 2)
+                  when coalesce(r.price_min, 0) > 0 then r.price_min
+                  when coalesce(r.price_max, 0) > 0 then r.price_max
+                  else null
+                end as market_price
+              from company_listings c
+              join scraped_market_rollup r
+                on r.uid = nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '')
+                or r.uid = nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '')
+            )
+            select *
+            from base
+            where market_price is not null
+              and market_price > 0
+              and our_price_eff > 0
+        """);
+    }
 
-        Map<String, Object> meta = new LinkedHashMap<>();
-        meta.put("storage", "FILES");
-        meta.put("notes", "FILES-mode: queue använder DataStoreService.");
-        res.put("meta", meta);
+    private QueueEvaluation evaluate(Map<String, Object> row) {
+        BigDecimal ourPrice = bd(row.get("our_price_eff"));
+        BigDecimal marketPrice = bd(row.get("market_price"));
 
-        res.put("items", List.of());
-        return res;
+        BigDecimal recommendedPrice = pricingService.computeRecommendedFromInputs(
+                str(row.get("company_sku")),
+                bd(row.get("cost_price")),
+                ourPrice,
+                marketPrice,
+                bd(row.get("price_min")),
+                bd(row.get("price_max")),
+                intVal(row.get("offers_count"))
+        );
+
+        double gapKr;
+        double gapPct;
+
+        if (marketPrice != null
+                && marketPrice.signum() > 0
+                && recommendedPrice != null
+                && recommendedPrice.signum() > 0) {
+            // för under/over använder vi recommended
+            gapKr = diff(ourPrice, recommendedPrice);
+            gapPct = pct(ourPrice, recommendedPrice);
+        } else if (marketPrice != null && marketPrice.signum() > 0) {
+            // fallback så vi alltid har något vettigt för outliers
+            gapKr = diff(ourPrice, marketPrice);
+            gapPct = pct(ourPrice, marketPrice);
+        } else {
+            gapKr = 0.0;
+            gapPct = 0.0;
+        }
+
+        double outlierGapKr = diff(ourPrice, marketPrice);
+        double outlierGapPct = pct(ourPrice, marketPrice);
+
+        return new QueueEvaluation(
+                ourPrice,
+                marketPrice,
+                recommendedPrice,
+                gapKr,
+                gapPct,
+                outlierGapKr,
+                outlierGapPct
+        );
+    }
+
+    private boolean matches(QueueType type, QueueEvaluation eval) {
+        return switch (type) {
+            case UNDERPRICED ->
+                    eval.recommendedPrice != null
+                            && eval.recommendedPrice.signum() > 0
+                            && eval.gapPct <= -ACTION_THRESHOLD_PCT;
+
+            case OVERPRICED ->
+                    eval.recommendedPrice != null
+                            && eval.recommendedPrice.signum() > 0
+                            && eval.gapPct >= ACTION_THRESHOLD_PCT;
+
+            case OUTLIERS ->
+                    eval.marketPrice != null
+                            && eval.marketPrice.signum() > 0
+                            && Math.abs(eval.outlierGapPct) >= OUTLIER_ABS_GAP_PCT;
+        };
+    }
+
+    private record QueueEvaluation(
+            BigDecimal ourPrice,
+            BigDecimal marketPrice,
+            BigDecimal recommendedPrice,
+            double gapKr,
+            double gapPct,
+            double outlierGapKr,
+            double outlierGapPct
+    ) {}
+
+    private static String str(Object o) {
+        return o == null ? null : String.valueOf(o);
+    }
+
+    private static Integer intVal(Object o) {
+        if (o == null) return null;
+        if (o instanceof Number n) return n.intValue();
+        try {
+            return Integer.parseInt(String.valueOf(o));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static BigDecimal bd(Object o) {
+        if (o == null) return null;
+        if (o instanceof BigDecimal b) return b;
+        if (o instanceof Number n) return BigDecimal.valueOf(n.doubleValue());
+        try {
+            return new BigDecimal(String.valueOf(o));
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private static double num(Object o) {
-        if (o == null) return 0;
+        if (o == null) return 0.0;
+        if (o instanceof BigDecimal b) return b.doubleValue();
         if (o instanceof Number n) return n.doubleValue();
-        try { return Double.parseDouble(String.valueOf(o)); } catch (Exception e) { return 0; }
+        try {
+            return Double.parseDouble(String.valueOf(o));
+        } catch (Exception e) {
+            return 0.0;
+        }
+    }
+
+    private static double diff(BigDecimal a, BigDecimal b) {
+        if (a == null || b == null) return 0.0;
+        return a.subtract(b).doubleValue();
+    }
+
+    private static double pct(BigDecimal current, BigDecimal target) {
+        if (current == null || target == null || target.signum() <= 0) return 0.0;
+        return current.subtract(target)
+                .divide(target, 8, RoundingMode.HALF_UP)
+                .doubleValue();
     }
 
     private static double round2(double v) {

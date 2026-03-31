@@ -42,7 +42,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/pricing/quote").permitAll()
                         .requestMatchers("/api/debug/**").authenticated()
                         .requestMatchers("/api/_debug/**").authenticated()
-                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/api/**").permitAll() //Ändra tillbaka till authenticated() sen!
 
                         .anyRequest().permitAll()
                 );
