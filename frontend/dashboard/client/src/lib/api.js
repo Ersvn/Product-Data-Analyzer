@@ -97,9 +97,9 @@ class ApiClient {
         return payload;
     }
 
-    fetchCompare({ q = "" } = {}) {
-        return this.request(`/api/compare${toQuery({ q })}`);
-    }
+    // fetchCompare({ q = "" } = {}) {
+    //     return this.request(`/api/compare${toQuery({ q })}`);
+    // }
 
     fetchDbCompanyListings({ q = "", afterId = 0, limit = 200 } = {}) {
         return this.request(`/api/db/company-listings${toQuery({ q, afterId, limit })}`);

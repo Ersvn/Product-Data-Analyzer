@@ -65,10 +65,10 @@
 }
 
 .logo__mark {
-    width: 42px;
-    height: 42px;
+    width: 52px;
+    height: 52px;
     border-radius: 14px;
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+    background: linear-gradient(135deg, var(--accent) 10%, var(--accent-light) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -78,10 +78,10 @@
 }
 
 .logo__mark::after {
-    content: "P";
+    content: "M";
     color: #fff;
-    font-weight: 800;
-    font-size: 20px;
+    font-weight: 700;
+    font-size: 26px;
 }
 
 .logo__name {

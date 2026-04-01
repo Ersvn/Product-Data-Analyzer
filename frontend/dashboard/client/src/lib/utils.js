@@ -14,30 +14,30 @@ export function formatNumber(value) {
     return num.toLocaleString('sv-SE');
 }
 
-export function formatPercent(value, decimals = 1) {
-    const num = Number(value);
-    if (!Number.isFinite(num)) return '—';
-    return `${num >= 0 ? '+' : ''}${num.toFixed(decimals)}%`;
-}
-
-export function debounce(fn, delay) {
-    let timeoutId;
-    return (...args) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => fn(...args), delay);
-    };
-}
-
-export function throttle(fn, limit) {
-    let inThrottle;
-    return (...args) => {
-        if (!inThrottle) {
-            fn(...args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-        }
-    };
-}
+// export function formatPercent(value, decimals = 1) {
+//     const num = Number(value);
+//     if (!Number.isFinite(num)) return '—';
+//     return `${num >= 0 ? '+' : ''}${num.toFixed(decimals)}%`;
+// }
+//
+// export function debounce(fn, delay) {
+//     let timeoutId;
+//     return (...args) => {
+//         clearTimeout(timeoutId);
+//         timeoutId = setTimeout(() => fn(...args), delay);
+//     };
+// }
+//
+// export function throttle(fn, limit) {
+//     let inThrottle;
+//     return (...args) => {
+//         if (!inThrottle) {
+//             fn(...args);
+//             inThrottle = true;
+//             setTimeout(() => inThrottle = false, limit);
+//         }
+//     };
+// }
 
 export function downloadCSV(data, filename) {
     const csv = convertToCSV(data);
@@ -58,11 +58,11 @@ function convertToCSV(data) {
     return [headers.join(','), ...rows].join('\n');
 }
 
-export function getInitials(name) {
-    return name
-        .split(' ')
-        .map(n => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
-}
+// export function getInitials(name) {
+//     return name
+//         .split(' ')
+//         .map(n => n[0])
+//         .join('')
+//         .toUpperCase()
+//         .slice(0, 2);
+// }

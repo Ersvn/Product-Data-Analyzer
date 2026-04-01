@@ -243,14 +243,14 @@ export default function ProductsPage() {
                     <div className="apage__kicker">Catalog</div>
                     <h1 className="apage__title">Products</h1>
                     <p className="apage__sub">
-                        Browse your inventory and compare it with raw scraped market data.
+                        Browse your inventory and compare it with scraped market data.
                     </p>
                 </div>
 
                 <div className="apage__actions">
                     {source === "inventory" ? (
                         <Button onClick={handleRecomputeAll} disabled={bulkBusy}>
-                            {bulkBusy ? "Recomputing..." : "Recompute all AUTO"}
+                            {bulkBusy ? "Recomputing..." : "Recompute All Auto"}
                         </Button>
                     ) : null}
 

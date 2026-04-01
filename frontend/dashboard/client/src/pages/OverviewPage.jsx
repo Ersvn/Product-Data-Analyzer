@@ -240,7 +240,7 @@ export default function OverviewPage() {
         <section className="apage">
             <header className="apage__header">
                 <div>
-                    <div className="apage__kicker">Dashboard</div>
+                    <div className="apage__kicker">Overview</div>
                     <h1 className="apage__title">Pricing dashboard</h1>
                     <p className="apage__sub">
                         Quick overview of pricing pressure and what needs action next.

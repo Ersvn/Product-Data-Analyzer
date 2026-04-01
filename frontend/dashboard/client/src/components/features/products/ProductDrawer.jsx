@@ -192,7 +192,7 @@ export default function ProductDrawer({ open, onClose, product, onProductUpdate 
                             </div>
 
                             <div style={{ textAlign: "right" }}>
-                                <div className="drawerLabel">Source</div>
+                                <div className="drawerLabel">Source(s)</div>
                                 <div className="drawerEan">
                                     {isMarket ? "Market (Scraped)" : "Our Inventory"}
                                 </div>

@@ -64,8 +64,8 @@ export default function AppShell({ children }) {
                     <div className="logo">
                         <div className="logo__mark" />
                         <div className="logo__text">
-                            <div className="logo__name">Price Comparer</div>
-                            <div className="logo__sub">Student project</div>
+                            <div className="logo__name">Market Comparer</div>
+                            <div className="logo__sub">Ipsum Lorem</div>
                         </div>
                     </div>
                 </div>
@@ -94,29 +94,7 @@ export default function AppShell({ children }) {
                     </div>
                 </nav>
             </aside>
-
             <div className="main">
-                <header className="topbar">
-                    <div className="topbar__left">
-                        <button
-                            type="button"
-                            className="icon-btn mobile-only"
-                            onClick={() => setSidebarOpen((prev) => !prev)}
-                            aria-label="Open navigation"
-                        >
-                            ☰
-                        </button>
-
-                        <div className="topbar__title">{currentLabel}</div>
-                    </div>
-
-                    <div className="topbar__right">
-                        <div className="user-pill">
-                            <div className="user-pill__name">Admin</div>
-                        </div>
-                    </div>
-                </header>
-
                 <main className="content">{children}</main>
             </div>
         </div>
