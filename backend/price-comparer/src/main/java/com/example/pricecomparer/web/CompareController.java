@@ -182,19 +182,22 @@ public class CompareController {
     private static Long longVal(Object o) {
         if (o == null) return null;
         if (o instanceof Number n) return n.longValue();
-        try { return Long.parseLong(String.valueOf(o)); } catch (Exception e) { return null; }
+        try { return Long.parseLong(String.valueOf(o)); }
+        catch (Exception e) { return null; }
     }
 
     private static Integer intVal(Object o) {
         if (o == null) return null;
         if (o instanceof Number n) return n.intValue();
-        try { return Integer.parseInt(String.valueOf(o)); } catch (Exception e) { return null; }
+        try { return Integer.parseInt(String.valueOf(o)); }
+        catch (Exception e) { return null; }
     }
 
     private static Double dbl(Object o) {
         if (o == null) return null;
         if (o instanceof Number n) return n.doubleValue();
-        try { return Double.parseDouble(String.valueOf(o)); } catch (Exception e) { return null; }
+        try { return Double.parseDouble(String.valueOf(o)); }
+        catch (Exception e) { return null; }
     }
 
     private static String tsToIso(Object o) {
