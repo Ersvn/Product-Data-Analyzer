@@ -241,9 +241,9 @@ export default function OverviewPage() {
             <header className="apage__header">
                 <div>
                     <div className="apage__kicker">Overview</div>
-                    <h1 className="apage__title">Pricing dashboard</h1>
+                    <h1 className="apage__title">Price Comparer</h1>
                     <p className="apage__sub">
-                        Quick overview of pricing pressure and what needs action next.
+                        Quick overview of pricing pressure and what action is recommended.
                     </p>
                 </div>
 
