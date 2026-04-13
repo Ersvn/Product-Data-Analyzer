@@ -1,272 +1,110 @@
 # Product-Data-Analyzer
 
-![Java](https://img.shields.io/badge/Java-21-007396?style=for-the-badge\&logo=java\&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.x-6DB33F?style=for-the-badge\&logo=springboot\&logoColor=white)
-![React](https://img.shields.io/badge/React-19-20232A?style=for-the-badge\&logo=react\&logoColor=61DAFB)
-![Vite](https://img.shields.io/badge/Vite-Frontend-646CFF?style=for-the-badge\&logo=vite\&logoColor=white)
-![REST API](https://img.shields.io/badge/API-REST-FF6F00?style=for-the-badge)
+![Java](https://img.shields.io/badge/Java-21-007396?style=for-the-badge&logo=java&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![React](https://img.shields.io/badge/React-19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-Frontend-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-336791?style=for-the-badge&logo=postgresql&logoColor=white)
 
-![Preview](docs/screenshots/hero-preview.png)
+![Preview](docs/screenshots/overview.png)
 
-**Product Data Analyzer** är en fullstack-plattform för realtidsanalys av produktdata och marknadspriser.
-Systemet analyserar produktfeeds (JSON/XML/API/CSV), matchar produkter via identifierare och genererar beslutsstöd för prissättning i en interaktiv dashboard.
+**Product-Data-Analyzer** är ett examensprojekt byggt för att analysera egna produktpriser mot marknaden i en lokal dashboard.
 
-Projektet är designat som en **skalbar analys- och pricing-engine för e-handel** där fokus ligger på automation, datakvalitet och beslutsstöd.
+Projektet består av:
+- en **Spring Boot-backend**
+- en **React/Vite-frontend**
+- en separat **core pricing engine**
+- en fristående **scraper-del** för att samla in marknadsdata
 
----
-
-# 🚀 Quick start (2 minuter)
-
-### Backend
-
-```
-cd backend/price-comparer
-gradlew.bat bootRun
-```
-
-Backend startar på:
-
-```
-http://localhost:3001
-```
+Fokus i nuläget är att:
+- läsa in och visa eget sortiment från databasen
+- jämföra produkter mot marknadsdata
+- visa över-/underprissättning
+- ge rekommenderade priser
+- låta användaren växla mellan **AUTO** och **MANUAL**
+- ge en enkel dashboard för överblick och åtgärder
 
 ---
 
-### Frontend
+# Översikt
 
-```
-cd frontend/dashboard/client
-npm install
-npm run dev
-```
+Systemet arbetar i huvudsak med två dataperspektiv:
 
-Frontend startar på:
+- **Our Inventory**  
+  Egna produkter från `company_listings`
 
-```
-http://localhost:5173
-```
+- **Market**  
+  Marknadsdata från scrape:ade källor, aggregerat i `scraped_market_rollup`
 
----
+Frontend visar detta i två huvudvyer:
 
-### Environment setup
-
-Skapa `.env` i:
-
-```
-frontend/dashboard/client/
-```
-
-```
-VITE_API_URL=http://localhost:3001
-VITE_DASH_USER=admin
-VITE_DASH_PASS=change-me
-```
+- **Dashboard**
+- **Products**
 
 ---
 
-# 🧱 Systemarkitektur
-
-```
-React Dashboard
-      ↓
-Spring Boot API
-      ↓
-Data sources
-(JSON/XML/API/CSV)
-```
-
-### Backend ansvarar för
-
-* datainsamling
-* normalisering
-* matchning via EAN
-* prisanalys
-* pricing-rekommendationer
-* API-exponering
-
-### Frontend ansvarar för
-
-* visualisering
-* realtidsanalys
-* filter / sök
-* produktdetaljer
-* pricing-kontroller
+# Screenshots
+![Overview](docs/screenshots/market.png)
+![Products](docs/screenshots/our-inventory.png)
+![Pricing](docs/screenshots/product-drawer.png)
 
 ---
 
-# 📊 Funktioner
+# Nuvarande funktioner
 
 ## Dashboard
+Dashboarden visar en snabb överblick över:
+- antal matchade produkter
+- antal överprissatta produkter
+- antal underprissatta produkter
+- antal outliers
+- work queue för produkter som bör granskas
 
-* Virtualized produktlista (snabb även med stora dataset)
-* Dynamisk sökning
-* Pagination + infinite loading
-* Drawer-baserad produktvy
-* Prishistorikgrafer
+## Products
+Products-vyn låter dig:
+- växla mellan **Our Inventory** och **Market**
+- söka i data
+- scrolla igenom större datamängder
+- öppna en produkt i drawer
+- se market snapshot / erbjudanden
+- justera prisläge på inventory-produkter
 
-## Analysmotor
-
-* Marknadspris vs eget pris
-* Matchning via EAN
-* Prisintervall-stöd
-* Historikfilter
-
-## Data Engine
-
-* Multi-source ingestion
-* Automatisk normalisering
-* Robust parserlogik
-* Fel-tolerant datahantering
-
----
-
-# 💰 Pricing Engine (aktiv modul)
-
-Systemet stödjer nu både automatiska och manuella prisstrategier.
-
-### Implementerat
-
-* AUTO-läge → systemet räknar rekommenderat pris
-
-* MANUAL-läge → användaren sätter pris själv
-
-* Effektivt pris beräknas dynamiskt:
-
-  ```
-  MANUAL → manualPrice
-  annars → recommendedPrice
-  annars → fallback price
-  ```
-
-* Medianbaserad rekommendation
-
-* Undercut-strategi (−2%)
-
-* Smart avrundning (.90 pricing)
-
-* Realtids-API för prissättning
+## Pricing
+Projektet stödjer just nu:
+- **AUTO**-läge
+- **MANUAL**-läge
+- rekommenderat pris baserat på market snapshot
+- bulk-recompute för AUTO-produkter
 
 ---
 
-### Pricing API
+# Teknisk struktur
 
-```
-GET  /api/company/products/{id}/pricing
-PUT  /api/company/products/{id}/pricing/manual
-PUT  /api/company/products/{id}/pricing/mode
-POST /api/company/products/{id}/pricing/recompute
-```
+## Backend
+- Java 21
+- Spring Boot
+- Spring JDBC
+- Spring Security
+- PostgreSQL
 
-Alla write-endpoints kräver Basic Auth.
+## Frontend
+- React 19
+- Vite
+- React Router
+- Recharts installerat i frontend
 
----
-
-# 🔐 Säkerhet
-
-Backend skyddas med:
-
-* Spring Security
-* Basic Auth
-* CORS whitelist
-* Request filtering
-
----
-
-# 🎯 Syfte
-
-Målet är att ersätta manuella prisanalyser med automatiserad beslutslogik.
-
-Systemet kan:
-
-* analysera marknadspris
-* identifiera prisskillnader
-* föreslå optimala priser
-* visualisera beslutsstöd
+## Core Engine
+Den separata modulen `core-engine` innehåller pricing-logik och regler, till exempel:
+- undercut-regler
+- ignore-below-cost-regler
+- post-processors som psykologisk prissättning
 
 ---
 
-# 🖥 Screenshots
+# Starta projektet
 
-<p align="center">
-<img src="docs/screenshots/dashboard-overview.png" width="950">
-</p>
+## Snabbaste sättet
+I repo-roten finns ett PowerShell-script:
 
-<p align="center">
-<img src="docs/screenshots/price-history-chart.png" width="950">
-</p>
-
-<p align="center">
-<img src="docs/screenshots/comparison-table.png" width="950">
-</p>
-
-<p align="center">
-<img src="docs/screenshots/product-drawer.png" width="950">
-</p>
-
----
-
-# 🧠 Arkitekturprincip
-
-Projektet är byggt enligt principen:
-
-> **Extensibility without modification**
-
-Det innebär att nya datakällor, analysmotorer eller pricingstrategier kan läggas till utan att ändra existerande logik.
-
----
-
-# 🔮 Roadmap
-
-Nästa planerade steg:
-
-### Kort sikt
-
-* persistens av manuella priser
-* audit log
-* bulk-pricing actions
-* pricing rules config
-
-### Medellång sikt
-
-* ML-baserad pricing-modell
-* multi-tenant-stöd
-* databaslager
-* webhook-notifieringar
-
-### Lång sikt
-
-* SaaS-version
-* plugin-system
-* real-time competitor scraping
-* pricing automation engine
-
----
-
-# 🧩 Designfilosofi
-
-Arkitekturen följer enterprise-principer:
-
-* modulär struktur
-* separerad domänlogik
-* testbar service-layer
-* tydlig API-struktur
-* framtidssäker design
-
----
-
-# 👨‍💻 Användningsområden
-
-Systemet kan användas för:
-
-* e-handelsanalys
-* pricing automation
-* konkurrensbevakning
-* beslutsstöd
-* intern BI
-* marknadsanalys
-
----
-
-# 📄 Licens
-
-MIT License
+```powershell
+.\start-dev.ps1

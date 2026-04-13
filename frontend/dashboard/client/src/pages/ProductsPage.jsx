@@ -255,7 +255,7 @@ export default function ProductsPage() {
                     ) : null}
 
                     <Button variant="ghost" onClick={handleExport} disabled={!displayRows.length}>
-                        Exportera CSV
+                        Export CSV
                     </Button>
                 </div>
             </header>
@@ -286,8 +286,8 @@ export default function ProductsPage() {
                         onChange={(e) => setQ(e.target.value)}
                         placeholder={
                             source === "inventory"
-                                ? 'Sök EAN / MPN / namn… eller skriv "matched" / "unmatched"'
-                                : 'Sök EAN / MPN / namn… eller skriv "matched" / "unmatched"'
+                                ? 'Look up EAN / MPN / Name… or write "matched" / "unmatched"'
+                                : 'Look up EAN / MPN / Name… or write "matched" / "unmatched"'
                         }
                         icon={<SearchIcon />}
                     />

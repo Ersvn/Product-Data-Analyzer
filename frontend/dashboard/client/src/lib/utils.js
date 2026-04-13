@@ -16,10 +16,9 @@ export function formatNumber(value) {
 
 export function downloadCSV(data, filename) {
     const csv = convertToCSV(data);
-
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-
     const link = document.createElement('a');
+
     link.href = URL.createObjectURL(blob);
     link.download = filename;
     link.click();
