@@ -20,105 +20,32 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
+    show-sql: false
 
   flyway:
-    enabled: true
-    locations: classpath:db/migration
+    enabled: false
 
 app:
+  storage: DB
+  dashUser: admin
+  dashPass: change-me
+  allowedOrigins:
+    - "http://localhost:5173"
+
   scraper:
     command: node
     script: main-v2.js
     workingDir: C:/Users/eriks/eclipse-workspace/Product-Data-Analyzer/scraper
-  dashUser: admin
-  dashPass: change-me
-  storage: DB   # FILES|DB
-  allowedOrigins:
-    - "http://localhost:5173"
 
   data:
     marketPath: "classpath:data/market.mock.json"
     companyPath: "classpath:data/inventory.mock.json"
-
     auditPath: "file:./data/audit-log.jsonl"
     useEnrichedMarket: false
-
-
-
-
-
-enrichment:
-  enabled: true
-
-
-
-  scheduler:
-    enabled: false
-    cron: "0 0 2 * * *"
-
-relevance:
-  enabled: true
-  allowedCategoryKeywords:
-    - "monitor"
-    - "display"
-    - "laptop"
-    - "notebook"
-    - "workstation"
-    - "desktop"
-    - "pc"
-    - "printer"
-    - "laserjet"
-    - "toner"
-    - "cartridge"
-    - "ink"
-    - "keyboard"
-    - "mouse"
-    - "router"
-    - "switch"
-    - "access point"
-    - "headset"
-    - "dock"
-    - "ssd"
-    - "hard drive"
-    - "ram"
-    - "memory"
-    - "gpu"
-    - "graphics"
-    - "server"
-
-  blockedKeywords:
-    - "warranty"
-    - "support"
-    - "service"
-    - "onsite"
-    - "nbd"
-    - "accidental damage"
-    - "travel coverage"
-    - "license"
-    - "subscription"
-    - "protection plan"
-    - "extended"
-    - "spare"
-    - "replacement"
-    - "mounting"
-    - "cover"
-    - "case"
-
-  blockedNameRegex:
-    - ".*\\b(NBD|onsite|support|warranty)\\b.*"
-    - ".*\\b(\\d+\\s*year|\\d+\\s*yr)\\b.*"
-
-  minScore: 2
 
 cache:
   pricesapi:
     path: "./data/cache/pricesapi"
-
-icecat:
-  enabled: false
-  path: "file:C:/Users/eriks/Desktop/Icecat/daily.index.xml"
-
 
 pricing:
   mode: FIRST_MATCH_WINS
@@ -136,13 +63,7 @@ pricing:
     psychological90:
       enabled: true
 
-dashboard:
-  queues:
-    underpriced:
-
-
-
 logging:
   level:
-    org.springframework.jdbc.datasource: DEBUG
-    com.zaxxer.hikari: DEBUG
+    org.springframework.jdbc.datasource: INFO
+    com.zaxxer.hikari: INFO

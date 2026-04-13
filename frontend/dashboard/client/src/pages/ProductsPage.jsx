@@ -213,10 +213,10 @@ export default function ProductsPage() {
             Namn: row.name,
             EAN: row.ean ?? "",
             MPN: row.mpn ?? "",
-            Pris: getEffectivePrice(row) ?? "",
+            Price: getEffectivePrice(row) ?? "",
             Offers: row.competitorCount ?? "",
-            Läge: row.priceMode ?? "AUTO",
-            Källa: source,
+            Mode: row.priceMode ?? "AUTO",
+            Source: source,
             UID: row.uid ?? "",
             Status: checkIsMatched(row, source)
                 ? (source === "inventory" ? "Matched" : "Matched to inventory")
