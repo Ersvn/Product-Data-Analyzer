@@ -21,83 +21,6 @@ public class MarketController {
         this.pricingSvc = pricingSvc;
     }
 
-    @GetMapping("/api/db/market-list")
-    public Map<String, Object> marketList(
-            @RequestParam(defaultValue = "200") int limit,
-            @RequestParam(defaultValue = "") String afterUid,
-            @RequestParam(required = false) String q
-    ) {
-        limit = DbRequestParsers.clamp(limit, 1, 500);
-
-        String query = DbRequestParsers.normalizeSearchLower(q);
-        boolean hasQ = !query.isBlank();
-        String like = "%" + query + "%";
-
-        StringBuilder sql = new StringBuilder("""
-            select
-              cast(id as text) as uid,
-              id,
-              site_name,
-              name,
-              brand,
-              ean,
-              mpn,
-              latest_price,
-              previous_price,
-              last_scraped,
-              url
-            from active_products_with_price
-            where 1=1
-        """);
-
-        List<Object> args = new ArrayList<>();
-
-        if (!afterUid.isBlank()) {
-            long afterId = DbRequestParsers.parseLongOrDefault(afterUid, 0L);
-            if (afterId > 0) {
-                sql.append(" and id < ? ");
-                args.add(afterId);
-            }
-        }
-
-        if (hasQ) {
-            sql.append("""
-                and (
-                  lower(coalesce(site_name,'')) like ?
-                  or lower(coalesce(name,'')) like ?
-                  or lower(coalesce(brand,'')) like ?
-                  or lower(coalesce(ean,'')) like ?
-                  or lower(coalesce(mpn,'')) like ?
-                )
-            """);
-            args.add(like);
-            args.add(like);
-            args.add(like);
-            args.add(like);
-            args.add(like);
-        }
-
-        sql.append(" order by last_scraped desc nulls last, id desc limit ? ");
-        args.add(limit);
-
-        List<Map<String, Object>> items = jdbc.queryForList(sql.toString(), args.toArray());
-
-        String nextAfterUid = afterUid;
-        if (!items.isEmpty()) {
-            Object last = items.get(items.size() - 1).get("id");
-            nextAfterUid = last == null ? afterUid : String.valueOf(last);
-        }
-
-        return Map.of(
-                "ok", true,
-                "limit", limit,
-                "afterUid", afterUid,
-                "nextAfterUid", nextAfterUid,
-                "q", query,
-                "items", items
-        );
-    }
-
     @GetMapping("/api/db/scraped-market")
     public Map<String, Object> listScrapedMarket(
             @RequestParam(defaultValue = "200") int limit,
@@ -128,7 +51,14 @@ public class MarketController {
                 where
                   nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '') = r.uid
                   or nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '') = r.uid
-              ) as inventory_matched
+              ) as inventory_matched,
+              (
+                select count(*)
+                from company_listings c
+                where
+                  nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '') = r.uid
+                  or nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '') = r.uid
+              ) as inventory_match_count
             from scraped_market_rollup r
             where 1=1
         """);

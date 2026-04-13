@@ -11,10 +11,7 @@ public final class DbValueUtils {
     }
 
     public static String str(Object value) {
-        if (value == null) return null;
-        String s = String.valueOf(value).trim();
-        if (s.isBlank() || "null".equalsIgnoreCase(s)) return null;
-        return s;
+        return DbSeedUtils.str(value);
     }
 
     public static String normEan(String raw) {
@@ -62,12 +59,6 @@ public final class DbValueUtils {
         } catch (Exception ignored) {
             return null;
         }
-    }
-
-    public static boolean isPlaceholderName(String name) {
-        if (name == null || name.isBlank()) return true;
-        String trimmed = name.trim().toUpperCase(Locale.ROOT);
-        return trimmed.startsWith("EAN:");
     }
 
     @SuppressWarnings("unchecked")

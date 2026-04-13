@@ -21,7 +21,7 @@ import {
     filterAndSortRows,
 } from "./products/productsPageAdapters";
 
-const PAGE_SIZE = 200;
+const PAGE_SIZE = 50;
 
 const SearchIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -202,6 +202,12 @@ export default function ProductsPage() {
         return filterAndSortRows(rows, source, debouncedQ);
     }, [rows, source, debouncedQ]);
 
+    const checkIsMatched = useCallback((product, currentSource) => {
+        return currentSource === "inventory"
+            ? isMatchedInventoryProduct(product)
+            : isMatchedMarketRow(product);
+    }, []);
+
     const handleExport = useCallback(() => {
         const data = displayRows.map((row) => ({
             Namn: row.name,
@@ -212,19 +218,14 @@ export default function ProductsPage() {
             Läge: row.priceMode ?? "AUTO",
             Källa: source,
             UID: row.uid ?? "",
-            Status:
-                source === "inventory"
-                    ? isMatchedInventoryProduct(row)
-                        ? "Matched"
-                        : "Inventory only"
-                    : isMatchedMarketRow(row)
-                        ? "Matched to inventory"
-                        : "Unmatched market row",
+            Status: checkIsMatched(row, source)
+                ? (source === "inventory" ? "Matched" : "Matched to inventory")
+                : (source === "inventory" ? "Inventory only" : "Unmatched market row"),
             InventoryMatches: row.inventoryMatchCount ?? "",
         }));
 
         downloadCSV(data, `produkter-${source}-${new Date().toISOString().split("T")[0]}.csv`);
-    }, [displayRows, source]);
+    }, [displayRows, source, checkIsMatched]);
 
     const loadedBadge = useMemo(
         () => `Loaded: ${displayRows.length.toLocaleString("sv-SE")}${hasMoreRef.current ? "+" : ""}`,
@@ -232,9 +233,8 @@ export default function ProductsPage() {
     );
 
     const matchedCount = useMemo(() => {
-        if (source === "inventory") return displayRows.filter(isMatchedInventoryProduct).length;
-        return displayRows.filter(isMatchedMarketRow).length;
-    }, [displayRows, source]);
+        return displayRows.filter(row => checkIsMatched(row, source)).length;
+    }, [displayRows, source, checkIsMatched]);
 
     return (
         <section className="apage">
@@ -286,8 +286,8 @@ export default function ProductsPage() {
                         onChange={(e) => setQ(e.target.value)}
                         placeholder={
                             source === "inventory"
-                                ? 'Sök EAN / MPN / namn… eller skriv "matched"'
-                                : 'Sök UID / EAN / MPN / namn… eller skriv "matched" / "unmatched"'
+                                ? 'Sök EAN / MPN / namn… eller skriv "matched" / "unmatched"'
+                                : 'Sök EAN / MPN / namn… eller skriv "matched" / "unmatched"'
                         }
                         icon={<SearchIcon />}
                     />
@@ -300,11 +300,7 @@ export default function ProductsPage() {
                 {displayRows.map((product) => {
                     const price = getEffectivePrice(product);
                     const offers = product.competitorCount ?? null;
-                    const isMatched =
-                        source === "inventory"
-                            ? isMatchedInventoryProduct(product)
-                            : isMatchedMarketRow(product);
-
+                    const isMatched = checkIsMatched(product, source);
                     return (
                         <div
                             key={product.__rowKey || product.id || product.uid || product.ean}
@@ -336,20 +332,15 @@ export default function ProductsPage() {
                                         )}
                                     </div>
 
-                                    {source === "market" ? (
-                                        <div className="virtualMeta">
-                                            {product.ean
-                                                ? `EAN: ${product.ean}`
-                                                : product.mpn
-                                                    ? `MPN: ${product.mpn}`
-                                                    : `UID: ${product.uid ?? "—"}`}
-                                            {product.mpn && product.ean ? ` · MPN: ${product.mpn}` : null}
-                                        </div>
-                                    ) : (
-                                        <div className="virtualMeta">
-                                            {product.brand || "—"} · {product.category || "—"} · {product.ean || "—"}
-                                        </div>
-                                    )}
+                                    <div className="virtualMeta">
+                                        {[
+                                            product.ean ? `EAN: ${product.ean}` : null,
+                                            product.mpn ? `MPN: ${product.mpn}` : null,
+                                            product.brand ? product.brand : null,
+                                            !product.ean && !product.mpn && product.uid ? `UID: ${product.uid}` : null,
+                                        ].filter(Boolean).join(" · ") || "—"}
+                                    </div>
+
                                 </div>
                             </div>
 
@@ -361,8 +352,8 @@ export default function ProductsPage() {
                                 ) : null}
 
                                 <span className="virtualPrice">
-                  {price != null ? formatMoney(price) : "—"}
-                </span>
+                                    {price != null ? formatMoney(price) : "—"}
+                                </span>
                             </div>
                         </div>
                     );

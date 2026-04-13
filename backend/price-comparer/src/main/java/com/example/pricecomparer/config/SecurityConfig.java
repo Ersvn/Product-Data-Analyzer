@@ -39,10 +39,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/health", "/robots.txt", "/sitemap.xml").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/pricing/quote").permitAll()
                         .requestMatchers("/api/debug/**").authenticated()
                         .requestMatchers("/api/_debug/**").authenticated()
-                        .requestMatchers("/api/**").permitAll() //Ändra tillbaka till authenticated() sen!
+                        .requestMatchers("/api/**").permitAll() // TODO:Ändra tillbaka till authenticated() sen!
 
                         .anyRequest().permitAll()
                 );

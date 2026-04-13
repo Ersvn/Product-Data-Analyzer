@@ -137,7 +137,7 @@ public class WorkQueueService {
                 c.name,
                 c.brand,
                 c.category,
-                upper(coalesce(c.price_mode, 'AUTO')) as price_mode,
+                upper(c.price_mode) as price_mode,
                 c.manual_price,
                 c.our_price,
                 c.cost_price,
@@ -146,7 +146,7 @@ public class WorkQueueService {
                 r.price_max,
                 r.price_median,
                 case
-                  when upper(coalesce(c.price_mode, 'AUTO')) = 'MANUAL'
+                  when upper(c.price_mode) = 'MANUAL'
                        and coalesce(c.manual_price, 0) > 0
                     then c.manual_price
                   else coalesce(c.our_price, 0)

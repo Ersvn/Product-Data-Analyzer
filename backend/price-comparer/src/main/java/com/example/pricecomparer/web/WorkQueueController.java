@@ -12,15 +12,10 @@ import java.util.Map;
 public class WorkQueueController {
 
     private final WorkQueueService workQueue;
-
     public WorkQueueController(WorkQueueService workQueue) {
         this.workQueue = workQueue;
     }
 
-    /**
-     * GET /api/dashboard/queue?type=OVERPRICED&limit=25
-     * types: OVERPRICED | UNDERPRICED | OUTLIERS
-     */
     @GetMapping("/api/dashboard/queue")
     public Map<String, Object> queue(
             @RequestParam(defaultValue = "OUTLIERS") String type,

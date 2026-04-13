@@ -8,16 +8,23 @@ function buildBasicAuthHeader() {
     return "Basic " + btoa(`${user}:${pass}`);
 }
 
-function isPlainObject(v) {
-    return v != null && typeof v === "object" && !Array.isArray(v) && !(v instanceof FormData);
+function isPlainObject(value) {
+    return (
+        value != null &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        !(value instanceof FormData)
+    );
 }
 
 function toQuery(params = {}) {
     const sp = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => {
-        if (v === undefined || v === null || v === "") return;
-        sp.set(k, String(v));
+
+    Object.entries(params).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === "") return;
+        sp.set(key, String(value));
     });
+
     const qs = sp.toString();
     return qs ? `?${qs}` : "";
 }
@@ -35,57 +42,58 @@ class ApiClient {
             body = JSON.stringify(body);
         }
 
-        const url = `${API_BASE}${path}`;
-
         const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
         const controller = new AbortController();
-        const t = setTimeout(() => controller.abort(), timeoutMs);
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-        let res;
+        let response;
         try {
-            res = await fetch(url, {
+            response = await fetch(`${API_BASE}${path}`, {
                 ...options,
                 headers,
                 body,
                 signal: controller.signal,
             });
         } catch (err) {
-            clearTimeout(t);
-            const msg =
+            clearTimeout(timer);
+            const message =
                 err?.name === "AbortError"
                     ? `TIMEOUT after ${timeoutMs}ms`
                     : `NETWORK_ERROR: ${String(err?.message || err)}`;
-            throw new Error(msg);
+            throw new Error(message);
         } finally {
-            clearTimeout(t);
+            clearTimeout(timer);
         }
 
-        const contentType = res.headers.get("content-type") || "";
+        const contentType = response.headers.get("content-type") || "";
         const isJson = contentType.includes("application/json");
 
-        if (res.status === 204) {
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (response.status === 204) {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return null;
         }
 
         let payload;
         try {
-            payload = isJson ? await res.json() : await res.text();
+            payload = isJson ? await response.json() : await response.text();
         } catch {
             payload = "";
         }
 
-        if (!res.ok) {
+        if (!response.ok) {
             const detail =
                 typeof payload === "string"
                     ? payload
                     : payload?.message || payload?.error || JSON.stringify(payload);
-            throw new Error(`HTTP ${res.status}: ${detail || res.statusText}`);
+            throw new Error(`HTTP ${response.status}: ${detail || response.statusText}`);
         }
 
         if (!isJson && typeof payload === "string") {
             const text = payload.trim();
-            if ((text.startsWith("{") && text.endsWith("}")) || (text.startsWith("[") && text.endsWith("]"))) {
+            if (
+                (text.startsWith("{") && text.endsWith("}")) ||
+                (text.startsWith("[") && text.endsWith("]"))
+            ) {
                 try {
                     return JSON.parse(text);
                 } catch {
@@ -96,10 +104,6 @@ class ApiClient {
 
         return payload;
     }
-
-    // fetchCompare({ q = "" } = {}) {
-    //     return this.request(`/api/compare${toQuery({ q })}`);
-    // }
 
     fetchDbCompanyListings({ q = "", afterId = 0, limit = 200 } = {}) {
         return this.request(`/api/db/company-listings${toQuery({ q, afterId, limit })}`);
@@ -133,38 +137,12 @@ class ApiClient {
         );
     }
 
-
     fetchDbScrapedMarket({ q = "", afterUid = "", limit = 200 } = {}) {
         return this.request(`/api/db/scraped-market${toQuery({ q, afterUid, limit })}`);
     }
 
     fetchDbScrapedProductView(uid) {
         return this.request(`/api/db/scraped-product-view${toQuery({ uid })}`);
-    }
-
-    fetchScraperStatus() {
-        return this.request(`/api/scraper/status`);
-    }
-
-    fetchScraperLogs({ limit = 200 } = {}) {
-        return this.request(`/api/scraper/logs${toQuery({ limit })}`);
-    }
-
-    fetchScraperRuns({ limit = 20 } = {}) {
-        return this.request(`/api/scraper/runs${toQuery({ limit })}`);
-    }
-
-    startScraper() {
-        return this.request(`/api/scraper/start`, {
-            method: "POST",
-            timeoutMs: 120000,
-        });
-    }
-
-    stopScraper() {
-        return this.request(`/api/scraper/stop`, {
-            method: "POST",
-        });
     }
 }
 

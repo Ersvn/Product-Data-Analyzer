@@ -187,7 +187,7 @@ export default function ProductDrawer({ open, onClose, product, onProductUpdate 
                     <div className="drawerCard">
                         <div className="drawerCardTop">
                             <div>
-                                <div className="drawerLabel">{isMarket ? "UID" : "EAN"}</div>
+                                <div className="drawerLabel">{isMarket ? "EAN" : "EAN"}</div>
                                 <div className="drawerEan">{productKey || "—"}</div>
                             </div>
 

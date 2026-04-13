@@ -60,13 +60,13 @@ public class DbSeedService {
         int skipped = 0;
 
         for (Map<String, Object> row : rows) {
-            String ean = DbImportUtils.normEan(DbImportUtils.str(row.get("ean")));
-            String mpn = DbImportUtils.str(row.get("mpn"));
-            String name = DbImportUtils.str(row.get("name"));
-            String brand = DbImportUtils.str(row.get("brand"));
-            String sourceSite = DbImportUtils.str(row.get("site_name"));
+            String ean = DbSeedUtils.normEan(DbSeedUtils.str(row.get("ean")));
+            String mpn = DbSeedUtils.str(row.get("mpn"));
+            String name = DbSeedUtils.str(row.get("name"));
+            String brand = DbSeedUtils.str(row.get("brand"));
+            String sourceSite = DbSeedUtils.str(row.get("site_name"));
 
-            BigDecimal marketPrice = DbImportUtils.toBigDecimal(row.get("price"));
+            BigDecimal marketPrice = DbSeedUtils.toBigDecimal(row.get("price"));
             if (marketPrice == null || marketPrice.signum() <= 0) {
                 skipped++;
                 continue;

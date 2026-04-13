@@ -216,16 +216,6 @@
         transform: translateX(-100%);
         transition: transform var(--duration-normal) var(--ease-out);
     }
-
-    .app-shell--sidebar-open .sidebar {
-        transform: translateX(0);
-    }
-
-    .app-shell--sidebar-open .sidebar-backdrop {
-        opacity: 1;
-        pointer-events: auto;
-    }
-
     .mobile-only {
         display: inline-flex;
     }

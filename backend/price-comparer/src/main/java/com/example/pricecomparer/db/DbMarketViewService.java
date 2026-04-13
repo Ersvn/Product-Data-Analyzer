@@ -152,13 +152,13 @@ public class DbMarketViewService {
         String mpn = str(company.get("mpn"));
 
         if ((name == null || name.isBlank()) && !offers.isEmpty()) {
-            name = str(offers.get(0).get("name"));
+            name = str(offers.getFirst().get("name"));
         }
         if ((ean == null || ean.isBlank()) && !offers.isEmpty()) {
-            ean = str(offers.get(0).get("ean"));
+            ean = str(offers.getFirst().get("ean"));
         }
         if ((mpn == null || mpn.isBlank()) && !offers.isEmpty()) {
-            mpn = str(offers.get(0).get("mpn"));
+            mpn = str(offers.getFirst().get("mpn"));
         }
 
         Map<String, Object> out = new LinkedHashMap<>();

@@ -6,9 +6,10 @@ import com.example.pricing.post.Psychological90Processor;
 import com.example.pricing.rules.IgnoreBelowCostMarketRule;
 import com.example.pricing.rules.SoloMarketPremiumRule;
 import com.example.pricing.rules.UndercutIfCompetitionRule;
+import com.example.pricing.post.NeverBelowCostProcessor;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import com.example.pricing.post.NeverBelowCostProcessor;
 
 import java.util.ArrayList;
 import java.util.List;

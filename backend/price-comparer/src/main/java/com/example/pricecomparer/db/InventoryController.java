@@ -39,56 +39,84 @@ public class InventoryController {
         if (!hasQ) {
             items = jdbc.queryForList("""
                 select
-                  id,
-                  company_sku,
-                  ean,
-                  mpn,
-                  name,
-                  brand,
-                  category,
-                  our_price,
-                  cost_price,
-                  price_mode,
-                  manual_price,
-                  last_updated
-                from company_listings
-                where id > ?
-                order by id asc
+                  c.id,
+                  c.company_sku,
+                  c.ean,
+                  c.mpn,
+                  c.name,
+                  c.brand,
+                  c.category,
+                  c.our_price,
+                  c.cost_price,
+                  c.price_mode,
+                  c.manual_price,
+                  c.last_updated,
+                  exists (
+                    select 1
+                    from scraped_market_rollup r
+                    where r.uid = nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '')
+                       or r.uid = nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '')
+                  ) as market_matched,
+                  coalesce((
+                    select r.offers_count
+                    from scraped_market_rollup r
+                    where r.uid = nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '')
+                       or r.uid = nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '')
+                    order by r.last_scraped desc nulls last
+                    limit 1
+                  ), 0) as competitor_count
+                from company_listings c
+                where c.id > ?
+                order by c.id asc
                 limit ?
             """, afterId, limit);
         } else {
             String like = "%" + query.toLowerCase(Locale.ROOT) + "%";
             items = jdbc.queryForList("""
                 select
-                  id,
-                  company_sku,
-                  ean,
-                  mpn,
-                  name,
-                  brand,
-                  category,
-                  our_price,
-                  cost_price,
-                  price_mode,
-                  manual_price,
-                  last_updated
-                from company_listings
-                where id > ?
+                  c.id,
+                  c.company_sku,
+                  c.ean,
+                  c.mpn,
+                  c.name,
+                  c.brand,
+                  c.category,
+                  c.our_price,
+                  c.cost_price,
+                  c.price_mode,
+                  c.manual_price,
+                  c.last_updated,
+                  exists (
+                    select 1
+                    from scraped_market_rollup r
+                    where r.uid = nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '')
+                       or r.uid = nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '')
+                  ) as market_matched,
+                  coalesce((
+                    select r.offers_count
+                    from scraped_market_rollup r
+                    where r.uid = nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '')
+                       or r.uid = nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '')
+                    order by r.last_scraped desc nulls last
+                    limit 1
+                  ), 0) as competitor_count
+                from company_listings c
+                where c.id > ?
                   and (
-                    lower(company_sku) like ?
-                    or lower(coalesce(ean,'')) like ?
-                    or lower(coalesce(mpn,'')) like ?
-                    or lower(coalesce(name,'')) like ?
-                    or lower(coalesce(brand,'')) like ?
+                    lower(c.company_sku) like ?
+                    or lower(coalesce(c.ean,'')) like ?
+                    or lower(coalesce(c.mpn,'')) like ?
+                    or lower(coalesce(c.name,'')) like ?
+                    or lower(coalesce(c.brand,'')) like ?
                   )
-                order by id asc
+                order by c.id asc
                 limit ?
             """, afterId, like, like, like, like, like, limit);
         }
 
         long nextAfterId = afterId;
         if (!items.isEmpty()) {
-            Object lastId = items.get(items.size() - 1).get("id");
+            Object lastId = items.getLast().get("id");
             if (lastId instanceof Number n) nextAfterId = n.longValue();
         }
 
@@ -150,20 +178,34 @@ public class InventoryController {
 
         Map<String, Object> item = jdbc.queryForMap("""
             select
-              id,
-              company_sku,
-              ean,
-              mpn,
-              name,
-              brand,
-              category,
-              our_price,
-              cost_price,
-              price_mode,
-              manual_price,
-              last_updated
-            from company_listings
-            where id = ?
+              c.id,
+              c.company_sku,
+              c.ean,
+              c.mpn,
+              c.name,
+              c.brand,
+              c.category,
+              c.our_price,
+              c.cost_price,
+              c.price_mode,
+              c.manual_price,
+              c.last_updated,
+              exists (
+                select 1
+                from scraped_market_rollup r
+                where r.uid = nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '')
+                   or r.uid = nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '')
+              ) as market_matched,
+              coalesce((
+                select r.offers_count
+                from scraped_market_rollup r
+                where r.uid = nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '')
+                   or r.uid = nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '')
+                order by r.last_scraped desc nulls last
+                limit 1
+              ), 0) as competitor_count
+            from company_listings c
+            where c.id = ?
         """, id);
 
         return ResponseEntity.ok(Map.of("ok", true, "item", item));

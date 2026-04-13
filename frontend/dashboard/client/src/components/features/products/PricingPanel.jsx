@@ -260,9 +260,6 @@ export default function PricingPanel({ productKey, product, initialView = null, 
                             </Badge>
                         ) : null}
                     </div>
-
-                    {err ? <div className="pricing-panel__error">{err}</div> : null}
-                    {info ? <div className="pricing-panel__info">{info}</div> : null}
                 </div>
 
                 <div className="pricing-panel__actions">
@@ -281,7 +278,15 @@ export default function PricingPanel({ productKey, product, initialView = null, 
             </div>
 
             <div className="pricing-panel__body">
-                <div className="pricing-panel__row">
+                {err ? <div className="pricing-panel__error" style={{ marginBottom: '8px', color: 'red' }}>{err}</div> : null}
+                {info ? <div className="pricing-panel__info" style={{ marginBottom: '8px', color: 'green' }}>{info}</div> : null}
+                <form
+                    className="pricing-panel__row"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        onSaveManual();
+                    }}
+                >
                     <div className="pricing-panel__label">Manual price</div>
 
                     <div className="pricing-panel__field">
@@ -293,20 +298,14 @@ export default function PricingPanel({ productKey, product, initialView = null, 
                         />
 
                         <Button
-                            onClick={onSaveManual}
+                            type="submit"
                             disabled={saving}
                             variant="primary"
                         >
                             Save
                         </Button>
                     </div>
-                </div>
-
-                <div className="pricing-panel__meta">
-                    <div>
-                        EAN: <strong>{productKey}</strong>
-                    </div>
-                </div>
+                </form>
             </div>
         </div>
     );
