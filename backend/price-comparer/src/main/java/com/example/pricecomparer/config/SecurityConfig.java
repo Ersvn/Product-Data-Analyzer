@@ -23,11 +23,11 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService users() {
-        UserDetails u = User.withUsername(user)
+        UserDetails dashboardUser = User.withUsername(user)
                 .password("{noop}" + pass)
                 .roles("DASH")
                 .build();
-        return new InMemoryUserDetailsManager(u);
+        return new InMemoryUserDetailsManager(dashboardUser);
     }
 
     @Bean
@@ -39,10 +39,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/health", "/robots.txt", "/sitemap.xml").permitAll()
-                        .requestMatchers("/api/debug/**").authenticated()
-                        .requestMatchers("/api/_debug/**").authenticated()
-                        .requestMatchers("/api/**").permitAll() // TODO:Ändra tillbaka till authenticated() sen!
-
+                        .requestMatchers("/api/debug/**", "/api/_debug/**").authenticated()
+                        .requestMatchers("/api/**").permitAll()
                         .anyRequest().permitAll()
                 );
         return http.build();

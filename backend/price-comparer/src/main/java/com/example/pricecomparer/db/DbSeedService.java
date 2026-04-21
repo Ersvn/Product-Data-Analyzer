@@ -7,10 +7,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class DbSeedService {
+
+    private static final BigDecimal COST_FACTOR = new BigDecimal("0.78");
+    private static final BigDecimal OUR_PRICE_FACTOR = new BigDecimal("0.97");
 
     private final JdbcTemplate jdbc;
 
@@ -20,14 +24,50 @@ public class DbSeedService {
 
     @Transactional
     public Map<String, Object> seedFromScraped(int percent, int limit, String siteName) {
-        if (percent < 1) percent = 1;
-        if (percent > 100) percent = 100;
-        if (limit < 1) limit = 1;
-        if (limit > 5000) limit = 5000;
-
+        int clampedPercent = DbRequestParsers.clamp(percent, 1, 100);
+        int clampedLimit = DbRequestParsers.clamp(limit, 1, 5000);
         String site = siteName == null ? "" : siteName.trim();
 
-        String sql = """
+        List<Map<String, Object>> rows = jdbc.queryForList(seedCandidatesSql(), site, site, clampedPercent, clampedLimit);
+
+        int inserted = 0;
+        int skipped = 0;
+
+        for (Map<String, Object> row : rows) {
+            BigDecimal marketPrice = DbSeedUtils.toBigDecimal(row.get("price"));
+            if (marketPrice == null || marketPrice.signum() <= 0) {
+                skipped++;
+                continue;
+            }
+
+            int updated = jdbc.update(insertSql(),
+                    buildCompanySku(row),
+                    DbSeedUtils.normEan(DbSeedUtils.str(row.get("ean"))),
+                    DbSeedUtils.str(row.get("mpn")),
+                    DbSeedUtils.str(row.get("name")),
+                    DbSeedUtils.str(row.get("brand")),
+                    "Seeded from scraped market",
+                    scale2(marketPrice.multiply(COST_FACTOR)),
+                    scale2(marketPrice.multiply(OUR_PRICE_FACTOR))
+            );
+
+            if (updated > 0) inserted++;
+            else skipped++;
+        }
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("siteName", site);
+        out.put("percent", clampedPercent);
+        out.put("limit", clampedLimit);
+        out.put("selected", rows.size());
+        out.put("inserted", inserted);
+        out.put("skipped", skipped);
+        return out;
+    }
+
+    private String seedCandidatesSql() {
+        return """
             with candidates as (
               select
                 sp.id,
@@ -42,85 +82,43 @@ public class DbSeedService {
               where sp.price is not null
                 and sp.price > 0
                 and (
-                  nullif(regexp_replace(coalesce(sp.ean, ''), '[^0-9]', '', 'g'), '') is not null
-                  or nullif(regexp_replace(upper(coalesce(sp.mpn, '')), '[^0-9A-Z]', '', 'g'), '') is not null
+                  %s is not null
+                  or %s is not null
                 )
                 and (? = '' or lower(coalesce(sp.site_name, '')) = lower(?))
             )
             select *
             from candidates
-            where ((rn - 1) % 100) < ?
+            where ((rn - 1) %% 100) < ?
             order by rn
             limit ?
-        """;
-
-        var rows = jdbc.queryForList(sql, site, site, percent, limit);
-
-        int inserted = 0;
-        int skipped = 0;
-
-        for (Map<String, Object> row : rows) {
-            String ean = DbSeedUtils.normEan(DbSeedUtils.str(row.get("ean")));
-            String mpn = DbSeedUtils.str(row.get("mpn"));
-            String name = DbSeedUtils.str(row.get("name"));
-            String brand = DbSeedUtils.str(row.get("brand"));
-            String sourceSite = DbSeedUtils.str(row.get("site_name"));
-
-            BigDecimal marketPrice = DbSeedUtils.toBigDecimal(row.get("price"));
-            if (marketPrice == null || marketPrice.signum() <= 0) {
-                skipped++;
-                continue;
-            }
-
-            String companySku = buildCompanySku(ean, mpn, row.get("id"));
-            BigDecimal costPrice = marketPrice.multiply(new BigDecimal("0.78")).setScale(2, RoundingMode.HALF_UP);
-            BigDecimal ourPrice = marketPrice.multiply(new BigDecimal("0.97")).setScale(2, RoundingMode.HALF_UP);
-
-            int updated = jdbc.update("""
-                insert into company_listings
-                  (company_sku, ean, mpn, name, brand, category, cost_price, our_price, price_mode, manual_price, last_updated)
-                values
-                  (?, ?, ?, ?, ?, ?, ?, ?, 'AUTO', null, now())
-                on conflict (company_sku) do nothing
-            """,
-                    companySku,
-                    ean,
-                    mpn,
-                    name,
-                    brand,
-                    "Seeded from scraped market",
-                    costPrice,
-                    ourPrice
-            );
-
-            if (updated > 0) {
-                inserted++;
-            } else {
-                skipped++;
-            }
-        }
-
-        Map<String, Object> out = new LinkedHashMap<>();
-        out.put("ok", true);
-        out.put("siteName", site);
-        out.put("percent", percent);
-        out.put("limit", limit);
-        out.put("selected", rows.size());
-        out.put("inserted", inserted);
-        out.put("skipped", skipped);
-        return out;
+            """.formatted(DbSql.SCRAPED_EAN_UID, DbSql.SCRAPED_MPN_UID);
     }
 
-    private String buildCompanySku(String ean, String mpn, Object id) {
-        if (ean != null && !ean.isBlank()) {
-            return "SEED-EAN-" + ean;
-        }
+    private String insertSql() {
+        return """
+            insert into company_listings
+              (company_sku, ean, mpn, name, brand, category, cost_price, our_price, price_mode, manual_price, last_updated)
+            values
+              (?, ?, ?, ?, ?, ?, ?, ?, 'AUTO', null, now())
+            on conflict (company_sku) do nothing
+            """;
+    }
+
+    private String buildCompanySku(Map<String, Object> row) {
+        String ean = DbSeedUtils.normEan(DbSeedUtils.str(row.get("ean")));
+        if (ean != null && !ean.isBlank()) return "SEED-EAN-" + ean;
+
+        String mpn = DbSeedUtils.str(row.get("mpn"));
         if (mpn != null && !mpn.isBlank()) {
             String normalized = mpn.replaceAll("[^0-9A-Za-z]+", "").toUpperCase();
-            if (!normalized.isBlank()) {
-                return "SEED-MPN-" + normalized;
-            }
+            if (!normalized.isBlank()) return "SEED-MPN-" + normalized;
         }
-        return "SEED-ID-" + String.valueOf(id);
+
+        return "SEED-ID-" + row.get("id");
+    }
+
+    private BigDecimal scale2(BigDecimal value) {
+        return value.setScale(2, RoundingMode.HALF_UP);
     }
 }

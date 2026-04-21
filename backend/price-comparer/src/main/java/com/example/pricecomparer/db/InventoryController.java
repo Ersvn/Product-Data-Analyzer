@@ -5,9 +5,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 @RestController
@@ -29,100 +28,31 @@ public class InventoryController {
             @RequestParam(defaultValue = "0") long afterId,
             @RequestParam(required = false) String q
     ) {
-        limit = DbRequestParsers.clamp(limit, 1, 500);
-
+        int clampedLimit = DbRequestParsers.clamp(limit, 1, 500);
         String query = DbRequestParsers.normalizeSearch(q);
-        boolean hasQ = !query.isBlank();
+        String like = "%" + query.toLowerCase() + "%";
 
-        List<Map<String, Object>> items;
+        List<Map<String, Object>> items = query.isBlank()
+                ? jdbc.queryForList(baseListSql() + " where c.id > ? order by c.id asc limit ?", afterId, clampedLimit)
+                : jdbc.queryForList(baseListSql() + """
+                    where c.id > ?
+                      and (
+                        lower(c.company_sku) like ?
+                        or lower(coalesce(c.ean,'')) like ?
+                        or lower(coalesce(c.mpn,'')) like ?
+                        or lower(coalesce(c.name,'')) like ?
+                        or lower(coalesce(c.brand,'')) like ?
+                      )
+                    order by c.id asc
+                    limit ?
+                    """, afterId, like, like, like, like, like, clampedLimit);
 
-        if (!hasQ) {
-            items = jdbc.queryForList("""
-                select
-                  c.id,
-                  c.company_sku,
-                  c.ean,
-                  c.mpn,
-                  c.name,
-                  c.brand,
-                  c.category,
-                  c.our_price,
-                  c.cost_price,
-                  c.price_mode,
-                  c.manual_price,
-                  c.last_updated,
-                  exists (
-                    select 1
-                    from scraped_market_rollup r
-                    where r.uid = nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '')
-                       or r.uid = nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '')
-                  ) as market_matched,
-                  coalesce((
-                    select r.offers_count
-                    from scraped_market_rollup r
-                    where r.uid = nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '')
-                       or r.uid = nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '')
-                    order by r.last_scraped desc nulls last
-                    limit 1
-                  ), 0) as competitor_count
-                from company_listings c
-                where c.id > ?
-                order by c.id asc
-                limit ?
-            """, afterId, limit);
-        } else {
-            String like = "%" + query.toLowerCase(Locale.ROOT) + "%";
-            items = jdbc.queryForList("""
-                select
-                  c.id,
-                  c.company_sku,
-                  c.ean,
-                  c.mpn,
-                  c.name,
-                  c.brand,
-                  c.category,
-                  c.our_price,
-                  c.cost_price,
-                  c.price_mode,
-                  c.manual_price,
-                  c.last_updated,
-                  exists (
-                    select 1
-                    from scraped_market_rollup r
-                    where r.uid = nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '')
-                       or r.uid = nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '')
-                  ) as market_matched,
-                  coalesce((
-                    select r.offers_count
-                    from scraped_market_rollup r
-                    where r.uid = nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '')
-                       or r.uid = nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '')
-                    order by r.last_scraped desc nulls last
-                    limit 1
-                  ), 0) as competitor_count
-                from company_listings c
-                where c.id > ?
-                  and (
-                    lower(c.company_sku) like ?
-                    or lower(coalesce(c.ean,'')) like ?
-                    or lower(coalesce(c.mpn,'')) like ?
-                    or lower(coalesce(c.name,'')) like ?
-                    or lower(coalesce(c.brand,'')) like ?
-                  )
-                order by c.id asc
-                limit ?
-            """, afterId, like, like, like, like, like, limit);
-        }
+        long nextAfterId = items.isEmpty() ? afterId : DbValueUtils.longOrNull(items.getLast().get("id"));
+        if (nextAfterId == 0L && items.isEmpty()) nextAfterId = afterId;
 
-        long nextAfterId = afterId;
-        if (!items.isEmpty()) {
-            Object lastId = items.getLast().get("id");
-            if (lastId instanceof Number n) nextAfterId = n.longValue();
-        }
-
-        Map<String, Object> out = new HashMap<>();
+        Map<String, Object> out = new LinkedHashMap<>();
         out.put("ok", true);
-        out.put("limit", limit);
+        out.put("limit", clampedLimit);
         out.put("afterId", afterId);
         out.put("nextAfterId", nextAfterId);
         out.put("q", query);
@@ -132,33 +62,23 @@ public class InventoryController {
 
     @PatchMapping("/api/db/company-listings/{id}")
     public ResponseEntity<?> patchCompanyListing(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        String priceMode = DbRequestParsers.str(body, "priceMode", "price_mode");
+        PriceMode priceMode = PriceMode.parseOrNull(DbRequestParsers.str(body, "priceMode", "price_mode"));
+        String rawPriceMode = DbRequestParsers.str(body, "priceMode", "price_mode");
         BigDecimal manualPrice = DbRequestParsers.dec(body, "manualPrice", "manual_price");
         BigDecimal ourPrice = DbRequestParsers.dec(body, "ourPrice", "our_price");
         BigDecimal costPrice = DbRequestParsers.dec(body, "costPrice", "cost_price");
 
-        if (priceMode != null && !priceMode.isBlank()) {
-            String pm = priceMode.trim().toUpperCase(Locale.ROOT);
-            if (!pm.equals("AUTO") && !pm.equals("MANUAL")) {
-                return ResponseEntity.badRequest().body(Map.of("ok", false, "error", "priceMode must be AUTO or MANUAL"));
-            }
-            priceMode = pm;
-        } else {
-            priceMode = null;
+        if (rawPriceMode != null && priceMode == null) {
+            return ResponseEntity.badRequest().body(ApiResponses.error("BAD_REQUEST", "priceMode must be AUTO or MANUAL"));
         }
-
-        if ("MANUAL".equals(priceMode) && manualPrice == null) {
-            return ResponseEntity.badRequest().body(Map.of("ok", false, "error", "manualPrice is required when priceMode=MANUAL"));
+        if (priceMode == PriceMode.MANUAL && manualPrice == null) {
+            return ResponseEntity.badRequest().body(ApiResponses.error("BAD_REQUEST", "manualPrice is required when priceMode=MANUAL"));
         }
-
-        if ("MANUAL".equals(priceMode) && ourPrice == null) {
+        if (priceMode == PriceMode.MANUAL && ourPrice == null) {
             ourPrice = manualPrice;
         }
 
-        boolean clearManual = "AUTO".equals(priceMode)
-                && !body.containsKey("manualPrice")
-                && !body.containsKey("manual_price");
-
+        boolean clearManual = priceMode == PriceMode.AUTO && !body.containsKey("manualPrice") && !body.containsKey("manual_price");
         BigDecimal manualToPersist = clearManual ? null : manualPrice;
 
         int updated = jdbc.update("""
@@ -170,45 +90,13 @@ public class InventoryController {
               cost_price   = coalesce(?, cost_price),
               last_updated = now()
             where id = ?
-        """, priceMode, manualToPersist, ourPrice, costPrice, id);
+            """, priceMode == null ? null : priceMode.name(), manualToPersist, ourPrice, costPrice, id);
 
         if (updated == 0) {
-            return ResponseEntity.status(404).body(Map.of("ok", false, "error", "Not found"));
+            return ResponseEntity.status(404).body(ApiResponses.error("NOT_FOUND", "company_listing not found"));
         }
 
-        Map<String, Object> item = jdbc.queryForMap("""
-            select
-              c.id,
-              c.company_sku,
-              c.ean,
-              c.mpn,
-              c.name,
-              c.brand,
-              c.category,
-              c.our_price,
-              c.cost_price,
-              c.price_mode,
-              c.manual_price,
-              c.last_updated,
-              exists (
-                select 1
-                from scraped_market_rollup r
-                where r.uid = nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '')
-                   or r.uid = nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '')
-              ) as market_matched,
-              coalesce((
-                select r.offers_count
-                from scraped_market_rollup r
-                where r.uid = nullif(regexp_replace(coalesce(c.ean, ''), '[^0-9]', '', 'g'), '')
-                   or r.uid = nullif(regexp_replace(upper(coalesce(c.mpn, '')), '[^0-9A-Z]', '', 'g'), '')
-                order by r.last_scraped desc nulls last
-                limit 1
-              ), 0) as competitor_count
-            from company_listings c
-            where c.id = ?
-        """, id);
-
-        return ResponseEntity.ok(Map.of("ok", true, "item", item));
+        return ResponseEntity.ok(ApiResponses.ok("item", jdbc.queryForMap(baseListSql() + " where c.id = ?", id)));
     }
 
     @PostMapping("/api/db/company-listings/{id}/apply-auto")
@@ -238,5 +126,13 @@ public class InventoryController {
             @RequestParam(defaultValue = "") String siteName
     ) {
         return seedSvc.seedFromScraped(percent, limit, siteName);
+    }
+
+    private String baseListSql() {
+        return """
+            select
+              %s
+            from company_listings c
+            """.formatted(DbSql.COMPANY_LISTING_SELECT);
     }
 }

@@ -17,12 +17,11 @@ public class PricingProperties {
     }
 
     private Mode mode = Mode.FIRST_MATCH_WINS;
-
     private Rules rules = new Rules();
     private Post post = new Post();
 
-    @Getter
     @Setter
+    @Getter
     public static class Rules {
         private UndercutIfCompetition undercutIfCompetition = new UndercutIfCompetition();
         private SoloMarketPremium soloMarketPremium = new SoloMarketPremium();
@@ -34,7 +33,6 @@ public class PricingProperties {
             private boolean enabled = true;
             private BigDecimal undercutPercent = new BigDecimal("0.01");
             private boolean requireCompetitors = true;
-
         }
 
         @Setter
@@ -42,14 +40,12 @@ public class PricingProperties {
         public static class SoloMarketPremium {
             private boolean enabled = true;
             private BigDecimal premiumFactor = new BigDecimal("0.98");
-
         }
 
         @Setter
         @Getter
         public static class IgnoreBelowCostMarket {
             private boolean enabled = true;
-
         }
     }
 
@@ -62,7 +58,6 @@ public class PricingProperties {
         @Getter
         public static class Psychological90 {
             private boolean enabled = true;
-
         }
     }
 }

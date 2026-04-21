@@ -7,33 +7,16 @@ public final class DbSeedUtils {
     private DbSeedUtils() {
     }
 
-    public static String str(Object v) {
-        if (v == null) return null;
-        String s = String.valueOf(v).trim();
-        if (s.isBlank() || "null".equalsIgnoreCase(s)) return null;
-        return s;
+    public static String str(Object value) {
+        return DbValueUtils.str(value);
     }
 
-
-    public static BigDecimal toBigDecimal(Object v) {
-        if (v == null) return null;
-
-        try {
-            if (v instanceof Number n) return BigDecimal.valueOf(n.doubleValue());
-
-            String s = String.valueOf(v).trim();
-            if (s.isBlank() || "null".equalsIgnoreCase(s)) return null;
-
-            return new BigDecimal(s.replace(",", "."));
-        } catch (Exception ignored) {
-            return null;
-        }
+    public static BigDecimal toBigDecimal(Object value) {
+        return DbValueUtils.dec(value);
     }
 
     public static String normEan(String ean) {
-        if (ean == null) return null;
-        String normalized = ean.replaceAll("[^0-9]", "");
+        String normalized = DbValueUtils.normEan(ean);
         return normalized.isBlank() ? null : normalized;
     }
-
 }

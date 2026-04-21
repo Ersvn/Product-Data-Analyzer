@@ -17,8 +17,6 @@ public class DashboardController {
 
     @GetMapping("/api/dashboard/overview")
     public DashboardOverview overview(@RequestParam(defaultValue = "30") int days) {
-        if (days < 1) days = 1;
-        if (days > 365) days = 365;
-        return dashboard.overview(days);
+        return dashboard.overview(Math.max(1, Math.min(days, 365)));
     }
 }

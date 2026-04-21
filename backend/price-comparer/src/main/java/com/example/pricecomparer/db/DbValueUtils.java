@@ -11,7 +11,10 @@ public final class DbValueUtils {
     }
 
     public static String str(Object value) {
-        return DbSeedUtils.str(value);
+        if (value == null) return null;
+        String s = String.valueOf(value).trim();
+        if (s.isBlank() || "null".equalsIgnoreCase(s)) return null;
+        return s;
     }
 
     public static String normEan(String raw) {
@@ -24,22 +27,19 @@ public final class DbValueUtils {
         return raw.trim().replaceAll("[^0-9A-Za-z]", "");
     }
 
-    public static String normKey(String value) {
-        if (value == null) return null;
-        String normalized = value.replaceAll("\\s+", "").toUpperCase(Locale.ROOT);
+    public static String normKey(String raw) {
+        if (raw == null) return null;
+        String normalized = raw.replaceAll("\\s+", "").toUpperCase(Locale.ROOT);
         return normalized.isBlank() ? null : normalized;
     }
 
     public static BigDecimal dec(Object value) {
         if (value == null) return null;
-
         try {
             if (value instanceof BigDecimal bd) return bd;
             if (value instanceof Number n) return BigDecimal.valueOf(n.doubleValue());
-
             String s = String.valueOf(value).trim().replace(",", ".");
-            if (s.isBlank()) return null;
-
+            if (s.isBlank() || "null".equalsIgnoreCase(s)) return null;
             return new BigDecimal(s);
         } catch (Exception ignored) {
             return null;
@@ -48,32 +48,45 @@ public final class DbValueUtils {
 
     public static Integer intOrNull(Object value) {
         if (value == null) return null;
-
         try {
             if (value instanceof Number n) return n.intValue();
-
             String s = String.valueOf(value).trim();
             if (s.isBlank()) return null;
-
             return Integer.parseInt(s);
         } catch (Exception ignored) {
             return null;
         }
     }
 
+    public static Long longOrNull(Object value) {
+        if (value == null) return null;
+        try {
+            if (value instanceof Number n) return n.longValue();
+            String s = String.valueOf(value).trim();
+            if (s.isBlank()) return null;
+            return Long.parseLong(s);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    public static double doubleOrZero(Object value) {
+        if (value == null) return 0.0;
+        if (value instanceof Number n) return n.doubleValue();
+        try {
+            return Double.parseDouble(String.valueOf(value));
+        } catch (Exception ignored) {
+            return 0.0;
+        }
+    }
+
     @SuppressWarnings("unchecked")
     public static List<Map<String, Object>> listOfMaps(Object value) {
-        if (value instanceof List<?> list) {
-            return (List<Map<String, Object>>) list;
-        }
-        return List.of();
+        return value instanceof List<?> list ? (List<Map<String, Object>>) list : List.of();
     }
 
     @SuppressWarnings("unchecked")
     public static Map<String, Object> mapOrNull(Object value) {
-        if (value instanceof Map<?, ?> map) {
-            return (Map<String, Object>) map;
-        }
-        return null;
+        return value instanceof Map<?, ?> map ? (Map<String, Object>) map : null;
     }
 }
