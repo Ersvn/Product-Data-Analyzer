@@ -14,6 +14,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.example.pricecomparer.db.DbValueUtils.round2;
+import static com.example.pricecomparer.db.DbValueUtils.round4;
+
 @Service
 public class WorkQueueService {
 
@@ -209,13 +212,5 @@ public class WorkQueueService {
     private double pct(BigDecimal current, BigDecimal target) {
         if (current == null || target == null || target.signum() <= 0) return 0.0;
         return current.subtract(target).divide(target, 8, RoundingMode.HALF_UP).doubleValue();
-    }
-
-    private double round2(double v) {
-        return Math.round(v * 100.0) / 100.0;
-    }
-
-    private double round4(double v) {
-        return Math.round(v * 10000.0) / 10000.0;
     }
 }

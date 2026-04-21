@@ -1,7 +1,6 @@
 package com.example.pricecomparer.db;
 
 import java.math.BigDecimal;
-import java.util.Locale;
 import java.util.Map;
 
 public final class DbRequestParsers {
@@ -38,10 +37,6 @@ public final class DbRequestParsers {
 
     public static String normalizeSearch(String q) {
         return q == null ? "" : q.trim();
-    }
-
-    public static String normalizeSearchLower(String q) {
-        return normalizeSearch(q).toLowerCase(Locale.ROOT);
     }
 
     public static int clamp(int value, int min, int max) {

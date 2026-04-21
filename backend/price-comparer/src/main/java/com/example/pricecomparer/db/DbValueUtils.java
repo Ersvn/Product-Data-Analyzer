@@ -1,6 +1,7 @@
 package com.example.pricecomparer.db;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -88,5 +89,23 @@ public final class DbValueUtils {
     @SuppressWarnings("unchecked")
     public static Map<String, Object> mapOrNull(Object value) {
         return value instanceof Map<?, ?> map ? (Map<String, Object>) map : null;
+    }
+
+    public static BigDecimal benchmarkPrice(BigDecimal preferred, BigDecimal min, BigDecimal max) {
+        if (preferred != null && preferred.signum() > 0) return preferred;
+        if (min != null && min.signum() > 0 && max != null && max.signum() > 0) {
+            return min.add(max).divide(new BigDecimal("2"), 2, RoundingMode.HALF_UP);
+        }
+        if (min != null && min.signum() > 0) return min;
+        if (max != null && max.signum() > 0) return max;
+        return null;
+    }
+
+    public static double round2(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
+    public static double round4(double value) {
+        return Math.round(value * 10000.0) / 10000.0;
     }
 }

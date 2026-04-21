@@ -10,6 +10,9 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.example.pricecomparer.db.DbValueUtils.round2;
+import static com.example.pricecomparer.db.DbValueUtils.round4;
+
 @Service
 public class DashboardService {
 
@@ -215,13 +218,5 @@ public class DashboardService {
 
     private double pct(long part, long total) {
         return total <= 0 ? 0.0 : (part * 100.0) / total;
-    }
-
-    private double round2(double v) {
-        return Math.round(v * 100.0) / 100.0;
-    }
-
-    private double round4(double v) {
-        return Math.round(v * 10000.0) / 10000.0;
     }
 }

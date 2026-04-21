@@ -5,11 +5,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.example.pricecomparer.db.DbValueUtils.benchmarkPrice;
 import static com.example.pricecomparer.db.DbValueUtils.dec;
 import static com.example.pricecomparer.db.DbValueUtils.intOrNull;
 import static com.example.pricecomparer.db.DbValueUtils.normEan;
@@ -132,18 +132,8 @@ public class DbMarketViewService {
         snapshot.put("price_min", priceMin);
         snapshot.put("price_max", priceMax);
         snapshot.put("price_median", priceMedian);
-        snapshot.put("benchmark_price", benchmark(priceMedian, priceMin, priceMax));
+        snapshot.put("benchmark_price", benchmarkPrice(priceMedian, priceMin, priceMax));
         return snapshot;
-    }
-
-    private BigDecimal benchmark(BigDecimal median, BigDecimal min, BigDecimal max) {
-        if (median != null && median.signum() > 0) return median;
-        if (min != null && min.signum() > 0 && max != null && max.signum() > 0) {
-            return min.add(max).divide(new BigDecimal("2"), 2, RoundingMode.HALF_UP);
-        }
-        if (min != null && min.signum() > 0) return min;
-        if (max != null && max.signum() > 0) return max;
-        return null;
     }
 
     private String firstNonBlank(String current, List<Map<String, Object>> offers, String key) {

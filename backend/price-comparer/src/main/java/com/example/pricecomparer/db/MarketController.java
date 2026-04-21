@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @RestController
@@ -28,7 +29,7 @@ public class MarketController {
             @RequestParam(required = false) String q
     ) {
         int clampedLimit = DbRequestParsers.clamp(limit, 1, 500);
-        String query = DbRequestParsers.normalizeSearchLower(q);
+        String query = DbRequestParsers.normalizeSearch(q).toLowerCase(Locale.ROOT);
         String like = "%" + query + "%";
 
         StringBuilder sql = new StringBuilder(baseSql());

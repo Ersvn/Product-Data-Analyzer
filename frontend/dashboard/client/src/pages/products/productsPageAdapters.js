@@ -1,3 +1,5 @@
+import { getProductImage } from "../../lib/productImageMap";
+
 export function rowKeyFor(source, row) {
     if (!row) return "unknown";
     if (source === "inventory") return `inv:${row.__companyId ?? row.id ?? row.ean ?? row.mpn ?? "unknown"}`;
@@ -27,7 +29,7 @@ export function normalizeInventoryRow(row) {
         marketMatched: Boolean(row?.market_matched ?? row?.marketMatched ?? false),
         competitorCount: row?.competitor_count ?? row?.competitorCount ?? 0,
 
-        imageUrl: row?.image_url ?? row?.imageUrl ?? null,
+        imageUrl: row?.image_url ?? row?.imageUrl ?? getProductImage(row),
         url: row?.url ?? null,
     };
 
@@ -59,6 +61,7 @@ export function normalizeMarketRow(row) {
 
         marketMatched: Boolean(row?.inventory_matched ?? row?.inventoryMatched ?? false),
         inventoryMatchCount: Number(row?.inventory_match_count ?? row?.inventoryMatchCount ?? 0),
+        imageUrl: row?.image_url ?? row?.imageUrl ?? getProductImage(row),
     };
 
     return { ...normalized, __rowKey: rowKeyFor("market", normalized) };

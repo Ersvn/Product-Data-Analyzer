@@ -10,12 +10,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import static com.example.pricecomparer.db.DbValueUtils.benchmarkPrice;
 import static com.example.pricecomparer.db.DbValueUtils.dec;
 import static com.example.pricecomparer.db.DbValueUtils.intOrNull;
 import static com.example.pricecomparer.db.DbValueUtils.listOfMaps;
@@ -217,7 +217,7 @@ public class DbPricingService {
         BigDecimal marketMin = dec(snapshot.get("price_min"));
         BigDecimal marketMax = dec(snapshot.get("price_max"));
         Integer competitors = intOrNull(snapshot.get("offers_count"));
-        BigDecimal base = benchmark(snapshot, marketMin, marketMax);
+        BigDecimal base = benchmarkPrice(dec(snapshot.get("benchmark_price")), marketMin, marketMax);
         if (base == null) return null;
 
         PricingResult result = engine.price(
@@ -240,21 +240,6 @@ public class DbPricingService {
             return manual;
         }
         return dec(company.get("our_price"));
-    }
-
-    private BigDecimal benchmark(Map<String, Object> snapshot, BigDecimal marketMin, BigDecimal marketMax) {
-        BigDecimal base = dec(snapshot.get("benchmark_price"));
-        if (base != null && base.signum() > 0) return base;
-
-        base = dec(snapshot.get("price_median"));
-        if (base != null && base.signum() > 0) return base;
-
-        if (marketMin != null && marketMin.signum() > 0 && marketMax != null && marketMax.signum() > 0) {
-            return marketMin.add(marketMax).divide(new BigDecimal("2"), 2, RoundingMode.HALF_UP);
-        }
-        if (marketMin != null && marketMin.signum() > 0) return marketMin;
-        if (marketMax != null && marketMax.signum() > 0) return marketMax;
-        return null;
     }
 
     private Map<String, Object> buildScrapedDisplay(Map<String, Object> rollup, List<Map<String, Object>> offers) {

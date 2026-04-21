@@ -34,7 +34,7 @@ public class DbSeedService {
         int skipped = 0;
 
         for (Map<String, Object> row : rows) {
-            BigDecimal marketPrice = DbSeedUtils.toBigDecimal(row.get("price"));
+            BigDecimal marketPrice = DbValueUtils.dec(row.get("price"));
             if (marketPrice == null || marketPrice.signum() <= 0) {
                 skipped++;
                 continue;
@@ -42,10 +42,10 @@ public class DbSeedService {
 
             int updated = jdbc.update(insertSql(),
                     buildCompanySku(row),
-                    DbSeedUtils.normEan(DbSeedUtils.str(row.get("ean"))),
-                    DbSeedUtils.str(row.get("mpn")),
-                    DbSeedUtils.str(row.get("name")),
-                    DbSeedUtils.str(row.get("brand")),
+                    normalizedEan(row.get("ean")),
+                    DbValueUtils.str(row.get("mpn")),
+                    DbValueUtils.str(row.get("name")),
+                    DbValueUtils.str(row.get("brand")),
                     "Seeded from scraped market",
                     scale2(marketPrice.multiply(COST_FACTOR)),
                     scale2(marketPrice.multiply(OUR_PRICE_FACTOR))
@@ -106,10 +106,10 @@ public class DbSeedService {
     }
 
     private String buildCompanySku(Map<String, Object> row) {
-        String ean = DbSeedUtils.normEan(DbSeedUtils.str(row.get("ean")));
+        String ean = normalizedEan(row.get("ean"));
         if (ean != null && !ean.isBlank()) return "SEED-EAN-" + ean;
 
-        String mpn = DbSeedUtils.str(row.get("mpn"));
+        String mpn = DbValueUtils.str(row.get("mpn"));
         if (mpn != null && !mpn.isBlank()) {
             String normalized = mpn.replaceAll("[^0-9A-Za-z]+", "").toUpperCase();
             if (!normalized.isBlank()) return "SEED-MPN-" + normalized;
@@ -120,5 +120,10 @@ public class DbSeedService {
 
     private BigDecimal scale2(BigDecimal value) {
         return value.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private String normalizedEan(Object value) {
+        String normalized = DbValueUtils.normEan(DbValueUtils.str(value));
+        return normalized.isBlank() ? null : normalized;
     }
 }
