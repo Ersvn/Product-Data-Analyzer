@@ -5,19 +5,20 @@ import { Button } from "../../ui/Button";
 import { Input } from "../../ui/Input";
 import { Badge } from "../../ui/Badge";
 
-function toNumber(v) {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
+function toNumber(value) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : null;
 }
 
 function parseMoney(value) {
-    const n = Number(
+    const num = Number(
         String(value ?? "")
             .trim()
             .replace(/[\s\u00A0]/g, "")
             .replace(",", ".")
     );
-    return Number.isFinite(n) ? n : null;
+
+    return Number.isFinite(num) ? num : null;
 }
 
 function getEffectivePrice(product) {
@@ -48,15 +49,15 @@ function patchFromView(view) {
     const snapshot = view?.snapshot ?? {};
 
     return {
-        priceMode: company?.price_mode ?? company?.priceMode ?? "AUTO",
-        manualPrice: company?.manual_price ?? company?.manualPrice ?? null,
-        ourPrice: toNumber(company?.our_price ?? company?.ourPrice),
-        costPrice: toNumber(company?.cost_price ?? company?.costPrice),
+        priceMode: company.price_mode ?? company.priceMode ?? "AUTO",
+        manualPrice: company.manual_price ?? company.manualPrice ?? null,
+        ourPrice: toNumber(company.our_price ?? company.ourPrice),
+        costPrice: toNumber(company.cost_price ?? company.costPrice),
         recommendedPrice: toNumber(view?.recommendedPrice),
-        marketPriceMin: snapshot?.price_min ?? null,
-        marketPriceMax: snapshot?.price_max ?? null,
-        marketBenchmarkPrice: snapshot?.benchmark_price ?? null,
-        competitorCount: snapshot?.offers_count ?? null,
+        marketPriceMin: snapshot.price_min ?? null,
+        marketPriceMax: snapshot.price_max ?? null,
+        marketBenchmarkPrice: snapshot.benchmark_price ?? null,
+        competitorCount: snapshot.offers_count ?? null,
     };
 }
 
@@ -98,7 +99,7 @@ export default function PricingPanel({ productKey, product, initialView = null, 
     const refreshDb = useCallback(async () => {
         const companyId = product?.__dbCompanyId;
         if (!companyId) {
-            setErr("Saknar companyId – kan inte uppdatera från DB.");
+            setErr("Saknar companyId - kan inte uppdatera från DB.");
             return null;
         }
 
@@ -108,8 +109,8 @@ export default function PricingPanel({ productKey, product, initialView = null, 
             setServerPatch((prev) => ({ ...(prev || {}), ...patch }));
             setManualInput(patch.manualPrice != null ? String(patch.manualPrice) : "");
             return patch;
-        } catch (e) {
-            setErr(e?.message || "Kunde inte ladda DB-prissättning");
+        } catch (error) {
+            setErr(error?.message || "Kunde inte ladda DB-prissättning.");
             return null;
         }
     }, [product]);
@@ -129,7 +130,7 @@ export default function PricingPanel({ productKey, product, initialView = null, 
         setInfo("");
 
         if (!companyId) {
-            setErr("Saknar companyId – kan inte spara MANUAL i DB.");
+            setErr("Saknar companyId - kan inte spara MANUAL i DB.");
             return;
         }
 
@@ -145,14 +146,13 @@ export default function PricingPanel({ productKey, product, initialView = null, 
                 manualPrice,
             });
 
-            const itemPatch = patchFromItem(res?.item ?? {});
-            applyPatch(itemPatch);
+            applyPatch(patchFromItem(res?.item ?? {}));
             setManualInput(String(manualPrice));
             setInfo("Manuellt pris sparat.");
 
             await refreshDb();
-        } catch (e) {
-            setErr(e?.message || "Kunde inte spara.");
+        } catch (error) {
+            setErr(error?.message || "Kunde inte spara.");
         } finally {
             setSaving(false);
         }
@@ -161,11 +161,12 @@ export default function PricingPanel({ productKey, product, initialView = null, 
     const onSwitchMode = useCallback(
         async (mode) => {
             const companyId = product?.__dbCompanyId;
+
             setErr("");
             setInfo("");
 
             if (!companyId) {
-                setErr("Saknar companyId – kan inte växla läge i DB.");
+                setErr("Saknar companyId - kan inte växla läge i DB.");
                 return;
             }
 
@@ -193,13 +194,12 @@ export default function PricingPanel({ productKey, product, initialView = null, 
             try {
                 const res = await api.patchDbCompanyListing(companyId, payload);
 
-                const itemPatch = patchFromItem(res?.item ?? {});
-                applyPatch(itemPatch);
+                applyPatch(patchFromItem(res?.item ?? {}));
                 setInfo(`Växlade till ${mode}.`);
 
                 await refreshDb();
-            } catch (e) {
-                setErr(e?.message || "Kunde inte växla läge.");
+            } catch (error) {
+                setErr(error?.message || "Kunde inte växla läge.");
             } finally {
                 setSaving(false);
             }
@@ -209,11 +209,12 @@ export default function PricingPanel({ productKey, product, initialView = null, 
 
     const onRecompute = useCallback(async () => {
         const companyId = product?.__dbCompanyId;
+
         setErr("");
         setInfo("");
 
         if (!companyId) {
-            setErr("Saknar companyId – kan inte räkna om.");
+            setErr("Saknar companyId - kan inte räkna om.");
             return;
         }
 
@@ -227,8 +228,8 @@ export default function PricingPanel({ productKey, product, initialView = null, 
 
             setInfo("Pris uppdaterat.");
             await refreshDb();
-        } catch (e) {
-            setErr(e?.message || "Kunde inte räkna om.");
+        } catch (error) {
+            setErr(error?.message || "Kunde inte räkna om.");
         } finally {
             setSaving(false);
         }
@@ -256,7 +257,7 @@ export default function PricingPanel({ productKey, product, initialView = null, 
 
                         {hasSpread ? (
                             <Badge variant="default">
-                                Spread: {formatMoney(spreadMin)} – {formatMoney(spreadMax)}
+                                Spread: {formatMoney(spreadMin)} - {formatMoney(spreadMax)}
                             </Badge>
                         ) : null}
                     </div>
@@ -278,8 +279,9 @@ export default function PricingPanel({ productKey, product, initialView = null, 
             </div>
 
             <div className="pricing-panel__body">
-                {err ? <div className="pricing-panel__error" style={{ marginBottom: '8px', color: 'red' }}>{err}</div> : null}
-                {info ? <div className="pricing-panel__info" style={{ marginBottom: '8px', color: 'green' }}>{info}</div> : null}
+                {err ? <div className="pricing-panel__error">{err}</div> : null}
+                {info ? <div className="pricing-panel__info">{info}</div> : null}
+
                 <form
                     className="pricing-panel__row"
                     onSubmit={(e) => {
@@ -297,11 +299,7 @@ export default function PricingPanel({ productKey, product, initialView = null, 
                             disabled={saving}
                         />
 
-                        <Button
-                            type="submit"
-                            disabled={saving}
-                            variant="primary"
-                        >
+                        <Button type="submit" disabled={saving} variant="primary">
                             Save
                         </Button>
                     </div>

@@ -132,55 +132,25 @@ export default function OverviewPage() {
         loadQueue(queueType);
     }, [queueType, loadQueue]);
 
-    const coverage = dashboard?.meta?.coverage || {};
-    const pricing = dashboard?.meta?.pricing || {};
-    const rawActionCounts = dashboard?.meta?.actionCounts || {};
-
     const actionCounts = useMemo(() => {
+        const rawActionCounts = dashboard?.meta?.actionCounts ?? {};
+
         return {
-            OVERPRICED: Number(
-                rawActionCounts?.OVERPRICED ??
-                rawActionCounts?.moreExpensive ??
-                0
-            ),
-            UNDERPRICED: Number(
-                rawActionCounts?.UNDERPRICED ??
-                rawActionCounts?.cheaper ??
-                0
-            ),
-            OUTLIERS: Number(
-                rawActionCounts?.OUTLIERS ??
-                rawActionCounts?.outliers ??
-                0
-            ),
+            OVERPRICED: Number(rawActionCounts.OVERPRICED ?? rawActionCounts.moreExpensive ?? 0),
+            UNDERPRICED: Number(rawActionCounts.UNDERPRICED ?? rawActionCounts.cheaper ?? 0),
+            OUTLIERS: Number(rawActionCounts.OUTLIERS ?? rawActionCounts.outliers ?? 0),
         };
-    }, [rawActionCounts]);
+    }, [dashboard]);
 
     const derived = useMemo(() => {
-        const matchedMarket = Number(
-            coverage?.matchedProducts ??
-            dashboard?.matchedProducts ??
-            0
-        );
+        const coverage = dashboard?.meta?.coverage ?? {};
+        const pricing = dashboard?.meta?.pricing ?? {};
 
-        const matchedPriced = Number(
-            coverage?.matchedPriced ??
-            coverage?.comparableCount ??
-            0
-        );
-
-        const needsPricing = Number(
-            coverage?.needsPricing ??
-            Math.max(0, matchedMarket - matchedPriced)
-        );
-
-        const totalOverprice = Number(
-            pricing?.totalOverpriceKr ?? 0
-        );
-
-        const avgGapLabel = buildAverageGapLabel(
-            pricing?.avgAbsGapKr
-        );
+        const matchedMarket = Number(coverage.matchedProducts ?? dashboard?.matchedProducts ?? 0);
+        const matchedPriced = Number(coverage.matchedPriced ?? coverage.comparableCount ?? 0);
+        const needsPricing = Number(coverage.needsPricing ?? Math.max(0, matchedMarket - matchedPriced));
+        const totalOverprice = Number(pricing.totalOverpriceKr ?? 0);
+        const avgGapLabel = buildAverageGapLabel(pricing.avgAbsGapKr);
 
         return {
             matchedMarket,
@@ -189,7 +159,7 @@ export default function OverviewPage() {
             totalOverprice,
             avgGapLabel,
         };
-    }, [coverage, pricing, dashboard]);
+    }, [dashboard]);
 
     function openQueue(type) {
         setQueueType(type);
@@ -256,48 +226,48 @@ export default function OverviewPage() {
 
             <section className="bento-grid">
                 <MetricCard
-                    icon="📦"
+                    icon="INV"
                     label="Matched products"
-                    value={dashboardLoading ? "…" : formatNumber(derived.matchedMarket)}
+                    value={dashboardLoading ? "..." : formatNumber(derived.matchedMarket)}
                     tone="neutral"
                     hint={
                         dashboardLoading
                             ? ""
-                            : `Priced: ${formatNumber(derived.matchedPriced)} · Needs: ${formatNumber(derived.needsPricing)}`
+                            : `Priced: ${formatNumber(derived.matchedPriced)} | Needs: ${formatNumber(derived.needsPricing)}`
                     }
                 />
 
                 <MetricCard
-                    icon="🔥"
+                    icon="HIGH"
                     label="Overpriced"
-                    value={dashboardLoading ? "…" : formatNumber(actionCounts.OVERPRICED)}
+                    value={dashboardLoading ? "..." : formatNumber(actionCounts.OVERPRICED)}
                     tone="negative"
                     hint="Fix in Work Queue"
                     onClick={() => openQueue("OVERPRICED")}
                 />
 
                 <MetricCard
-                    icon="🧊"
+                    icon="LOW"
                     label="Underpriced"
-                    value={dashboardLoading ? "…" : formatNumber(actionCounts.UNDERPRICED)}
+                    value={dashboardLoading ? "..." : formatNumber(actionCounts.UNDERPRICED)}
                     tone="positive"
                     hint="Fix in Work Queue"
                     onClick={() => openQueue("UNDERPRICED")}
                 />
 
                 <MetricCard
-                    icon="⚠️"
+                    icon="WARN"
                     label="Outliers"
-                    value={dashboardLoading ? "…" : formatNumber(actionCounts.OUTLIERS)}
+                    value={dashboardLoading ? "..." : formatNumber(actionCounts.OUTLIERS)}
                     tone="negative"
                     hint="Weird gap"
                     onClick={() => openQueue("OUTLIERS")}
                 />
 
                 <MetricCard
-                    icon="💰"
+                    icon="SEK"
                     label="Total overprice"
-                    value={dashboardLoading ? "…" : formatMoney(Math.round(derived.totalOverprice))}
+                    value={dashboardLoading ? "..." : formatMoney(Math.round(derived.totalOverprice))}
                     tone="neutral"
                     hint={dashboardLoading ? "" : derived.avgGapLabel}
                 />
@@ -329,81 +299,81 @@ export default function OverviewPage() {
                             <EmptyState
                                 title="No items in queue"
                                 description="Everything is currently inside acceptable limits."
-                                icon="✅"
+                                icon="OK"
                             />
                         ) : (
                             <div className="tableWrap">
                                 <table className="table">
                                     <thead>
-                                    <tr>
-                                        <th className="th">Product</th>
-                                        <th className="th">EAN</th>
-                                        <th className="th">Market</th>
-                                        <th className="th">Ours</th>
-                                        <th className="th">Gap</th>
-                                        <th className="th"></th>
-                                    </tr>
+                                        <tr>
+                                            <th className="th">Product</th>
+                                            <th className="th">EAN</th>
+                                            <th className="th">Market</th>
+                                            <th className="th">Ours</th>
+                                            <th className="th">Gap</th>
+                                            <th className="th"></th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    {queueData.items.map((item) => {
-                                        const gapKr = Number(item?.gapKr ?? 0);
-                                        const gapPct = Number(item?.gapPct ?? 0) * 100;
-                                        const tone = getGapTone(gapKr);
+                                        {queueData.items.map((item) => {
+                                            const gapKr = Number(item?.gapKr ?? 0);
+                                            const gapPct = Number(item?.gapPct ?? 0) * 100;
+                                            const tone = getGapTone(gapKr);
 
-                                        return (
-                                            <tr
-                                                key={`${item.id}-${item.ean}`}
-                                                className="tr"
-                                                onClick={() => openProductByEan(item.ean)}
-                                                style={{ cursor: "pointer" }}
-                                                title="Open in Products"
-                                            >
-                                                <td className="td">
-                                                    <div className="overview-product">
-                                                        <div className="overview-product__name">{item.name || "—"}</div>
-                                                        <div className="overview-product__meta">
-                                                            {item.brand || "—"} · {item.category || "—"} · ID: {item.id}
-                                                        </div>
-                                                    </div>
-                                                </td>
-
-                                                <td
-                                                    className="td"
-                                                    style={{
-                                                        fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                                                        fontSize: 13,
-                                                        color: "var(--text-secondary)",
-                                                    }}
+                                            return (
+                                                <tr
+                                                    key={`${item.id}-${item.ean}`}
+                                                    className="tr"
+                                                    onClick={() => openProductByEan(item.ean)}
+                                                    style={{ cursor: "pointer" }}
+                                                    title="Open in Products"
                                                 >
-                                                    {item.ean || "—"}
-                                                </td>
+                                                    <td className="td">
+                                                        <div className="overview-product">
+                                                            <div className="overview-product__name">{item.name || "-"}</div>
+                                                            <div className="overview-product__meta">
+                                                                {item.brand || "-"} | {item.category || "-"} | ID: {item.id}
+                                                            </div>
+                                                        </div>
+                                                    </td>
 
-                                                <td className="td">{formatMoney(item.marketPrice)}</td>
-                                                <td className="td">{formatMoney(item.ourPrice)}</td>
-
-                                                <td className="td">
-                                                    <span className={`statusPill statusPill--${tone}`}>
-                                                        {gapKr >= 0 ? "+" : ""}
-                                                        {formatMoney(gapKr).replace(" kr", "")} kr ({gapPct >= 0 ? "+" : ""}
-                                                        {gapPct.toFixed(1)}%)
-                                                    </span>
-                                                </td>
-
-                                                <td className="td" style={{ textAlign: "right", width: 180 }}>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            openProductByEan(item.ean);
+                                                    <td
+                                                        className="td"
+                                                        style={{
+                                                            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                                                            fontSize: 13,
+                                                            color: "var(--text-secondary)",
                                                         }}
                                                     >
-                                                        Open →
-                                                    </Button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
+                                                        {item.ean || "-"}
+                                                    </td>
+
+                                                    <td className="td">{formatMoney(item.marketPrice)}</td>
+                                                    <td className="td">{formatMoney(item.ourPrice)}</td>
+
+                                                    <td className="td">
+                                                        <span className={`statusPill statusPill--${tone}`}>
+                                                            {gapKr >= 0 ? "+" : ""}
+                                                            {formatMoney(gapKr).replace(" kr", "")} kr ({gapPct >= 0 ? "+" : ""}
+                                                            {gapPct.toFixed(1)}%)
+                                                        </span>
+                                                    </td>
+
+                                                    <td className="td" style={{ textAlign: "right", width: 180 }}>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                openProductByEan(item.ean);
+                                                            }}
+                                                        >
+                                                            Open -&gt;
+                                                        </Button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>

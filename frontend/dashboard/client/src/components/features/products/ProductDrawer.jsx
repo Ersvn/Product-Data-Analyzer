@@ -98,19 +98,20 @@ export default function ProductDrawer({ open, onClose, product, onProductUpdate 
     }, [open, p, isInventory, isMarket]);
 
     const offers = Array.isArray(view?.offers) ? view.offers : [];
-    const rollup = view?.rollup || {};
-    const snapshot = view?.snapshot || {};
-    const company = view?.company || {};
-    const display = view?.display || {};
 
     const merged = useMemo(() => {
         if (!p) return null;
+
+        const rollup = view?.rollup ?? {};
+        const snapshot = view?.snapshot ?? {};
+        const company = view?.company ?? {};
+        const display = view?.display ?? {};
 
         if (isMarket) {
             return {
                 ...p,
                 uid: p?.uid ?? p?.__uid ?? rollup?.uid ?? "",
-                name: display?.name ?? rollup?.display_name ?? p?.name ?? "—",
+                name: display?.name ?? rollup?.display_name ?? p?.name ?? "-",
                 ean: rollup?.ean ?? p?.ean ?? "",
                 mpn: rollup?.mpn ?? p?.mpn ?? "",
                 recommendedPrice: view?.recommendedPrice ?? rollup?.price_median ?? p?.recommendedPrice ?? null,
@@ -126,7 +127,7 @@ export default function ProductDrawer({ open, onClose, product, onProductUpdate 
         return {
             ...p,
             __dbCompanyId: p?.__dbCompanyId ?? company?.id ?? p?.id,
-            name: display?.name ?? company?.name ?? p?.name ?? "—",
+            name: display?.name ?? company?.name ?? p?.name ?? "-",
             brand: company?.brand ?? p?.brand ?? "",
             category: company?.category ?? p?.category ?? "",
             ean: display?.ean ?? company?.ean ?? p?.ean ?? "",
@@ -140,7 +141,7 @@ export default function ProductDrawer({ open, onClose, product, onProductUpdate 
             marketPriceMax: snapshot?.price_max ?? null,
             competitorCount: snapshot?.offers_count ?? offers.length,
         };
-    }, [p, isMarket, rollup, snapshot, company, display, view, offers.length]);
+    }, [p, isMarket, view, offers.length]);
 
     if (!open || !p || !merged) return null;
 
@@ -166,13 +167,13 @@ export default function ProductDrawer({ open, onClose, product, onProductUpdate 
                         <div className="drawerSub">
                             {merged.brand || merged.category ? (
                                 <>
-                                    {merged.brand || "—"}
-                                    {merged.category ? ` · ${merged.category}` : ""}
+                                    {merged.brand || "-"}
+                                    {merged.category ? ` | ${merged.category}` : ""}
                                 </>
                             ) : (
                                 <>
-                                    {merged.ean ? `EAN: ${merged.ean}` : "EAN: —"}
-                                    {merged.mpn ? ` · MPN: ${merged.mpn}` : ""}
+                                    {merged.ean ? `EAN: ${merged.ean}` : "EAN: -"}
+                                    {merged.mpn ? ` | MPN: ${merged.mpn}` : ""}
                                 </>
                             )}
                         </div>
@@ -187,8 +188,8 @@ export default function ProductDrawer({ open, onClose, product, onProductUpdate 
                     <div className="drawerCard">
                         <div className="drawerCardTop">
                             <div>
-                                <div className="drawerLabel">{isMarket ? "EAN" : "EAN"}</div>
-                                <div className="drawerEan">{productKey || "—"}</div>
+                                <div className="drawerLabel">EAN</div>
+                                <div className="drawerEan">{productKey || "-"}</div>
                             </div>
 
                             <div style={{ textAlign: "right" }}>
@@ -222,12 +223,12 @@ export default function ProductDrawer({ open, onClose, product, onProductUpdate 
                         <div className="drawerCardTop">
                             <div>
                                 <div className="drawerLabel">Market</div>
-                                <div className="drawerEan">{loading ? "Loading…" : "OK"}</div>
+                                <div className="drawerEan">{loading ? "Loading..." : "OK"}</div>
                             </div>
 
                             <div style={{ textAlign: "right" }}>
                                 <div className="drawerLabel">Offers</div>
-                                <div className="drawerEan">{merged.competitorCount ?? offers.length ?? "—"}</div>
+                                <div className="drawerEan">{merged.competitorCount ?? offers.length ?? "-"}</div>
                             </div>
                         </div>
 
@@ -236,17 +237,17 @@ export default function ProductDrawer({ open, onClose, product, onProductUpdate 
                                 <div style={{ marginTop: 10, display: "grid", gap: 6 }}>
                                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                                         <span style={{ opacity: 0.75 }}>Recommended</span>
-                                        <span>{recommended ? formatMoney(recommended) : "—"}</span>
+                                        <span>{recommended ? formatMoney(recommended) : "-"}</span>
                                     </div>
 
                                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                                         <span style={{ opacity: 0.75 }}>Min</span>
-                                        <span>{minPrice ? formatMoney(minPrice) : "—"}</span>
+                                        <span>{minPrice ? formatMoney(minPrice) : "-"}</span>
                                     </div>
 
                                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                                         <span style={{ opacity: 0.75 }}>Max</span>
-                                        <span>{maxPrice ? formatMoney(maxPrice) : "—"}</span>
+                                        <span>{maxPrice ? formatMoney(maxPrice) : "-"}</span>
                                     </div>
                                 </div>
 
@@ -262,7 +263,7 @@ export default function ProductDrawer({ open, onClose, product, onProductUpdate 
                                                     offer?.site_name ??
                                                     offer?.siteName ??
                                                     offer?.merchant ??
-                                                    "—";
+                                                    "-";
 
                                                 const url = offer?.url ? String(offer.url) : "";
                                                 const price = normMoney(offer?.price);
@@ -300,7 +301,7 @@ export default function ProductDrawer({ open, onClose, product, onProductUpdate 
                                                                     rel="noreferrer"
                                                                     style={{ fontSize: 12, opacity: 0.8 }}
                                                                 >
-                                                                    Open →
+                                                                    Open -&gt;
                                                                 </a>
                                                             ) : (
                                                                 <div style={{ fontSize: 12, opacity: 0.6 }}>
@@ -310,7 +311,7 @@ export default function ProductDrawer({ open, onClose, product, onProductUpdate 
                                                         </div>
 
                                                         <div style={{ fontWeight: 700 }}>
-                                                            {price ? formatMoney(price) : "—"}
+                                                            {price ? formatMoney(price) : "-"}
                                                         </div>
                                                     </div>
                                                 );

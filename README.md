@@ -30,10 +30,10 @@ Fokus i nuläget är att:
 
 Systemet arbetar i huvudsak med två dataperspektiv:
 
-- **Our Inventory**  
+- **Our Inventory**
   Egna produkter från `company_listings`
 
-- **Market**  
+- **Market**
   Marknadsdata från scrape:ade källor, aggregerat i `scraped_market_rollup`
 
 Frontend visar detta i två huvudvyer:
@@ -108,3 +108,4 @@ I repo-roten finns ett PowerShell-script:
 
 ```powershell
 .\start-dev.ps1
+```

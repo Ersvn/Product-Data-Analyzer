@@ -1,13 +1,6 @@
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 const DEFAULT_TIMEOUT_MS = 85000;
 
-function buildBasicAuthHeader() {
-    const user = import.meta.env.VITE_DASH_USER;
-    const pass = import.meta.env.VITE_DASH_PASS;
-    if (!user || !pass) return null;
-    return "Basic " + btoa(`${user}:${pass}`);
-}
-
 function isPlainObject(value) {
     return (
         value != null &&
@@ -32,9 +25,6 @@ function toQuery(params = {}) {
 class ApiClient {
     async request(path, options = {}) {
         const headers = { ...(options.headers || {}) };
-
-        const auth = buildBasicAuthHeader();
-        if (auth) headers.Authorization = auth;
 
         let body = options.body;
         if (isPlainObject(body)) {

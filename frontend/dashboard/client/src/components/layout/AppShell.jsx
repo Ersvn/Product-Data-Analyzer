@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "../../lib/utils";
 
@@ -39,16 +38,13 @@ const Icons = {
     ),
 };
 
+const NAV_ITEMS = [
+    { key: "overview", label: "Dashboard", path: "/" },
+    { key: "products", label: "Products", path: "/products" },
+];
+
 export default function AppShell({ children }) {
     const { pathname } = useLocation();
-
-    const navItems = useMemo(
-        () => [
-            { key: "overview", label: "Dashboard", path: "/" },
-            { key: "products", label: "Products", path: "/products" },
-        ],
-        []
-    );
 
     return (
         <div className="app-shell">
@@ -68,7 +64,7 @@ export default function AppShell({ children }) {
                         <div className="nav__groupTitle">Navigation</div>
 
                         <div className="nav__items">
-                            {navItems.map((item) => {
+                            {NAV_ITEMS.map((item) => {
                                 const active = pathname === item.path;
 
                                 return (

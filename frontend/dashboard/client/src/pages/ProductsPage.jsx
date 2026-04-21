@@ -233,7 +233,7 @@ export default function ProductsPage() {
     );
 
     const matchedCount = useMemo(() => {
-        return displayRows.filter(row => checkIsMatched(row, source)).length;
+        return displayRows.filter((row) => checkIsMatched(row, source)).length;
     }, [displayRows, source, checkIsMatched]);
 
     return (
@@ -284,11 +284,7 @@ export default function ProductsPage() {
                     <Input
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
-                        placeholder={
-                            source === "inventory"
-                                ? 'Look up EAN / MPN / Name… or write "matched" / "unmatched"'
-                                : 'Look up EAN / MPN / Name… or write "matched" / "unmatched"'
-                        }
+                        placeholder='Look up EAN / MPN / Name... or write "matched" / "unmatched"'
                         icon={<SearchIcon />}
                     />
                 </div>
@@ -296,7 +292,7 @@ export default function ProductsPage() {
 
             {err ? <ErrorState error={{ message: err }} retry={fetchFirstPage} /> : null}
 
-            <div ref={listRef} className={cn("virtualWrap", selected && "virtualWrap--with-drawer")}>
+            <div ref={listRef} className="virtualWrap">
                 {displayRows.map((product) => {
                     const price = getEffectivePrice(product);
                     const offers = product.competitorCount ?? null;
@@ -338,9 +334,8 @@ export default function ProductsPage() {
                                             product.mpn ? `MPN: ${product.mpn}` : null,
                                             product.brand ? product.brand : null,
                                             !product.ean && !product.mpn && product.uid ? `UID: ${product.uid}` : null,
-                                        ].filter(Boolean).join(" · ") || "—"}
+                                        ].filter(Boolean).join(" | ") || "-"}
                                     </div>
-
                                 </div>
                             </div>
 
@@ -352,7 +347,7 @@ export default function ProductsPage() {
                                 ) : null}
 
                                 <span className="virtualPrice">
-                                    {price != null ? formatMoney(price) : "—"}
+                                    {price != null ? formatMoney(price) : "-"}
                                 </span>
                             </div>
                         </div>
