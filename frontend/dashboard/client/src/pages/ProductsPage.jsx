@@ -293,7 +293,7 @@ export default function ProductsPage() {
             {err ? <ErrorState error={{ message: err }} retry={fetchFirstPage} /> : null}
 
             <div ref={listRef} className="virtualWrap">
-                {displayRows.map((product) => {
+                {displayRows.map((product, index) => {
                     const price = getEffectivePrice(product);
                     const offers = product.competitorCount ?? null;
                     const isMatched = checkIsMatched(product, source);
@@ -304,6 +304,7 @@ export default function ProductsPage() {
                             onClick={() => setSelected(product)}
                         >
                             <div className="virtualLeft">
+                                <span className="virtualIndex">{index + 1}</span>
                                 <ProductThumb src={product.imageUrl} alt={product.name} />
 
                                 <div className="virtualTexts">

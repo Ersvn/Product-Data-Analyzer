@@ -38,7 +38,7 @@
 }
 
 .bento-card--clickable:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
     border-color: rgba(96, 165, 250, 0.18);
 }
 
@@ -186,7 +186,7 @@ html[data-theme="dark"] .virtualRow:nth-child(even) {
 
 .virtualRow:hover {
     background: var(--surface-hover);
-    transform: translateX(4px);
+    /*transform: translateX(10px);*/
 }
 
 .virtualRow:active {
@@ -198,6 +198,17 @@ html[data-theme="dark"] .virtualRow:nth-child(even) {
     align-items: center;
     gap: 12px;
     min-width: 0;
+}
+
+.virtualIndex {
+    display: inline-flex;
+    flex: 0 0 28px;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
 }
 
 .virtualTexts {
@@ -263,5 +274,10 @@ html[data-theme="dark"] .virtualRow:nth-child(even) {
 
     .virtualTitle {
         max-width: 100%;
+    }
+
+    .virtualIndex {
+        flex-basis: 24px;
+        font-size: 12px;
     }
 }
