@@ -91,7 +91,6 @@ export default function OverviewPage() {
         const sp = new URLSearchParams(searchParams);
         sp.set("queue", queueType);
         setSearchParams(sp, { replace: true });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [queueType]);
 
     const loadDashboard = useCallback(async () => {
