@@ -284,7 +284,7 @@ export default function ProductsPage() {
                     <Input
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
-                        placeholder='Look up EAN / MPN / Name... or write "matched" / "unmatched"'
+                        placeholder='Look up EAN, MPN, Brand or Name... '
                         icon={<SearchIcon />}
                     />
                 </div>
