@@ -51,9 +51,14 @@ export default function AppShell({ children }) {
             <aside className="sidebar">
                 <div className="sidebar__top">
                     <div className="logo">
-                        <div className="logo__mark" />
+                        <img
+                            src="/product-images/logo.svg"
+                            alt="Price Comparer logo"
+                            className="logo__img"
+                        />
+
                         <div className="logo__text">
-                            <div className="logo__name">MarketFlux</div>
+                            <div className="logo__name">Price Comparer</div>
                             <div className="logo__sub">Ipsum Lorem</div>
                         </div>
                     </div>

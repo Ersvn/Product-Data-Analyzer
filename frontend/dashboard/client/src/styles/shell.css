@@ -54,26 +54,6 @@
     gap: 12px;
 }
 
-.logo__mark {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, var(--accent) 10%, var(--accent-light) 100%);
-    box-shadow: var(--shadow-glow);
-}
-
-.logo__mark::after {
-    content: "M";
-    color: #fff;
-    font-size: 26px;
-    font-weight: 700;
-}
-
 .logo__name {
     font-size: 18px;
     font-weight: 800;
@@ -84,6 +64,13 @@
     font-size: 12px;
     font-weight: 600;
     color: var(--text-tertiary);
+}
+
+.logo__img {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    flex-shrink: 0;
 }
 
 .nav {
